@@ -12,7 +12,6 @@ target/
 *.iml
 *.ipr
 .idea/
-.mvn/wrapper/
 
 
 ### Eclipse ###
