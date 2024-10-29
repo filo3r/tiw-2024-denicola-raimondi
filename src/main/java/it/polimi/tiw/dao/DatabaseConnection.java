@@ -15,8 +15,10 @@ public class DatabaseConnection {
 
     /**
      * The single instance of the database connection used throughout the application.
+     * Declared as volatile to ensure visibility of changes across threads,
+     * preventing caching issues and guaranteeing that all threads see the most up-to-date instance.
      */
-    private static Connection connection = null;
+    private static volatile Connection connection = null;
 
     /**
      * Returns a connection to the database, ensuring that only one connection is used throughout the application.
