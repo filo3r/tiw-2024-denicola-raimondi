@@ -19,41 +19,67 @@ public class DatabaseConnection {
     private static Connection connection = null;
 
     /**
-     * Establishes and returns a connection to the database.
-     * The method ensures that only one connection is used throughout the application (Singleton pattern).
+     * Returns a connection to the database, ensuring that only one connection is used throughout the application.
+     * The Singleton pattern is applied to prevent multiple connections being opened.
      * @return Connection object to the database
      */
     public static synchronized Connection getConnection() {
+        // Check if the connection is already initialized
         if (connection == null) {
-            // Load properties from database.properties file
-            try (InputStream inputStream = DatabaseConnection.class.getClassLoader().getResourceAsStream("database/database.properties")) {
-                // Check if the properties file is found
-                if (inputStream == null)
-                    throw new IOException("Database property file not found.");
-                // Load properties from the input stream
-                Properties properties = new Properties();
-                properties.load(inputStream);
-                // Retrieve database connection properties
-                String driver = properties.getProperty("database.driver");
-                String url = properties.getProperty("database.url");
-                String username = properties.getProperty("database.user");
-                String password = properties.getProperty("database.password");
-                // Load the database driver class
-                Class.forName(driver);
-                // Establish the connection to the database
-                connection = DriverManager.getConnection(url, username, password);
-            } catch (IOException e) {
-                System.err.println("Error reading properties file: " + e.getMessage());
-                System.exit(1);
-            } catch (ClassNotFoundException e) {
-                System.err.println("Error loading database driver: " + e.getMessage());
-                System.exit(1);
-            } catch (SQLException e) {
-                System.err.println("Database connection error: " + e.getMessage());
-                System.exit(1);
+            // Double-check locking to initialize connection only once
+            synchronized (DatabaseConnection.class) {
+                if (connection == null) {
+                    initializeConnection();
+                }
             }
         }
         return connection;
+    }
+
+    /**
+     * Initializes the database connection by loading database properties and establishing
+     * a connection using the provided driver, URL, username, and password.
+     */
+    private static void initializeConnection() {
+        try {
+            // Load database properties from a properties file
+            Properties properties = loadDatabaseProperties();
+            // Retrieve driver, URL, username, and password from properties
+            String driver = properties.getProperty("database.driver");
+            String url = properties.getProperty("database.url");
+            String username = properties.getProperty("database.username");
+            String password = properties.getProperty("database.password");
+            // Load the database driver class
+            Class.forName(driver);
+            // Establish the database connection using the DriverManager
+            connection = DriverManager.getConnection(url, username, password);
+        } catch (IOException e) {
+            System.err.println("Error reading properties file: " + e.getMessage());
+            System.exit(1);
+        } catch (ClassNotFoundException e) {
+            System.err.println("Error loading database driver: " + e.getMessage());
+            System.exit(1);
+        } catch (SQLException e) {
+            System.err.println("Database connection error: " + e.getMessage());
+            System.exit(1);
+        }
+    }
+
+    /**
+     * Loads the database properties from a properties file.
+     * @return Properties object containing database configuration settings
+     * @throws IOException if the properties file is not found or cannot be read
+     */
+    private static Properties loadDatabaseProperties() throws IOException {
+        Properties properties = new Properties();
+        // Load the properties file from the classpath
+        try (InputStream inputStream = DatabaseConnection.class.getClassLoader().getResourceAsStream("database/database.properties")) {
+            if (inputStream == null)
+                throw new IOException("Database property file not found.");
+            // Load properties from the input stream
+            properties.load(inputStream);
+        }
+        return properties;
     }
 
     /**
