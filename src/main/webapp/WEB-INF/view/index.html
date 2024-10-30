@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sign In / Sign Up</title>
+  <link rel="stylesheet" type="text/css" href="../../css/style.css">
+</head>
+<body>
+<div class="container">
+  <!-- Radio buttons hidden -->
+  <input type="radio" name="panel" id="signInPanel" checked hidden>
+  <input type="radio" name="panel" id="signUpPanel" hidden>
+
+  <!-- Sign Up Form -->
+  <div class="sign-up">
+    <form action="#">
+      <h1>Sign Up</h1>
+      <input type="email" name="email" placeholder="Email" required>
+      <input type="text" name="username" placeholder="Username" required>
+      <input type="password" name="password1" placeholder="Password" required>
+      <input type="password" name="password2" placeholder="Confirm Password" required>
+      <button type="submit">Sign Up</button>
+    </form>
+  </div>
+
+  <!-- Sign In Form -->
+  <div class="sign-in">
+    <form action="#">
+      <h1>Sign In</h1>
+      <input type="email" name="email" placeholder="Email" required>
+      <input type="password" name="password" placeholder="Password" required>
+      <button type="submit">Sign In</button>
+    </form>
+  </div>
+
+  <!-- Overlay Container -->
+  <div class="overlay-container">
+    <div class="overlay">
+      <div class="overlay-left">
+        <h1>Welcome Back</h1>
+        <p>To keep connected with us please login with your personal info</p>
+        <!-- Label acting as button for Sign In -->
+        <label for="signInPanel" class="button">Sign In</label>
+      </div>
+      <div class="overlay-right">
+        <h1>Welcome Friend</h1>
+        <p>Enter your personal details and start your journey with us</p>
+        <!-- Label acting as button for Sign Up -->
+        <label for="signUpPanel" class="button">Sign Up</label>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
