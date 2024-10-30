@@ -1,42 +1,31 @@
 package it.polimi.tiw.dao;
 
-import it.polimi.tiw.model.User;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-public class UserDAO {
+public class CommentDAO {
 
     private Connection connection;
 
-    public UserDAO(Connection connection) {
+    public CommentDAO(Connection connection) {
         this.connection = connection;
     }
 
-
-    /**
-     * Create a new user in User's table
-     * @param username
-     * @param email
-     * @param password
-     * @return
-     * @throws SQLException
-     */
-    public int createUser(String username, String email, String password) throws SQLException {
+    public int createComment(String commentText, String commentAuthor, int imageId) throws SQLException {
+        //INSERT INTO album (title, IDUser) VALUES ('Le città italiane', 'andreariboni');
+        String query = "INSERT into comment (comment_text, comment_author, image_id) VALUES(?, ?, ?)";
         int raw = 0;
-        String query = "INSERT INTO User (username, email, password) VALUES (?, ?, ?)";
         PreparedStatement preparedStatement = null;
-
-        try{
+        try {
             preparedStatement = connection.prepareStatement(query);
-            preparedStatement.setString(1, username);
-            preparedStatement.setString(2, email);
-            preparedStatement.setString(3, password);
+            preparedStatement.setString(1, commentText);
+            preparedStatement.setString(2, commentAuthor);
+            preparedStatement.setInt(3, imageId);
             raw = preparedStatement.executeUpdate();
-        }catch (SQLException e){
+        } catch (SQLException e) {
             throw new SQLException(e);
-        }finally{
+        } finally {
             try {
                 if (preparedStatement != null) {
                     preparedStatement.close();
@@ -45,10 +34,7 @@ public class UserDAO {
                 throw new SQLException("Failed to close PreparedStatement", e1);
             }
         }
-
-        //raw = 1 --> success
         return raw;
     }
-
 
 }
