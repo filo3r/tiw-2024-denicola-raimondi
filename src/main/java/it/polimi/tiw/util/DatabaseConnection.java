@@ -1,4 +1,4 @@
-package it.polimi.tiw.dao;
+package it.polimi.tiw.util;
 
 import java.io.IOException;
 import java.io.InputStream;

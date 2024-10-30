@@ -1,4 +1,4 @@
-package it.polimi.tiw.controller;
+package it.polimi.tiw.util;
 
 import jakarta.servlet.ServletContext;
 import org.thymeleaf.TemplateEngine;
