@@ -13,7 +13,6 @@ public class CommentDAO {
     }
 
     public int createComment(String commentText, String commentAuthor, int imageId) throws SQLException {
-        //INSERT INTO album (title, IDUser) VALUES ('Le città italiane', 'andreariboni');
         String query = "INSERT into comment (comment_text, comment_author, image_id) VALUES(?, ?, ?)";
         int raw = 0;
         PreparedStatement preparedStatement = null;
