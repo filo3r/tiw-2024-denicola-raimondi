@@ -1,6 +1,6 @@
 package it.polimi.tiw.util;
 
-import jakarta.servlet.ServletContext;
+import javax.servlet.ServletContext;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
