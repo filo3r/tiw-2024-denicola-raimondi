@@ -2,7 +2,7 @@ package it.polimi.tiw.util;
 
 import javax.servlet.ServletContext;
 import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
+import org.thymeleaf.templateresolver.ServletContextTemplateResolver;
 
 /**
  * ViewEngine is a utility class that provides a singleton instance of the TemplateEngine
@@ -43,7 +43,7 @@ public class ViewEngine {
      */
     private static void initializeTemplateEngine(ServletContext servletContext) {
         // Create a new template resolver to define the configuration for locating templates
-        ClassLoaderTemplateResolver templateResolver = createTemplateResolver();
+        ServletContextTemplateResolver templateResolver = createTemplateResolver(servletContext);
         // Instantiate the TemplateEngine and set the configured template resolver
         templateEngine = new TemplateEngine();
         templateEngine.setTemplateResolver(templateResolver);
@@ -54,9 +54,9 @@ public class ViewEngine {
      * The template resolver is responsible for finding and reading HTML template files.
      * @return a fully configured ClassLoaderTemplateResolver instance
      */
-    private static ClassLoaderTemplateResolver createTemplateResolver() {
+    private static ServletContextTemplateResolver createTemplateResolver(ServletContext servletContext) {
         // Instantiate a new template resolver that loads resources using the class loader
-        ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
+        ServletContextTemplateResolver templateResolver = new ServletContextTemplateResolver(servletContext);
         // Set the mode to HTML5 to support all modern HTML features
         templateResolver.setTemplateMode("HTML5");
         // Set the prefix path where Thymeleaf will search for template files
