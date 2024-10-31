@@ -12,9 +12,17 @@ public class ImageDAO {
         this.connection = connection;
     }
 
+    /**
+     * create a new image in Image's table
+     * @param imageUploader
+     * @param imageTitle
+     * @param imageText
+     * @param imagePath
+     * @throws SQLException
+     */
     public int createImage(String imageUploader, String imageTitle, String imageText, String imagePath) throws SQLException {
-        int raw = 0;
-        String query = "INSERT INTO Album (image_uploader, image_title, image_text, image_path) VALUES (?, ?, ?, ?)";
+        int row = 0;
+        String query = "INSERT INTO Image (image_uploader, image_title, image_text, image_path) VALUES (?, ?, ?, ?)";
         PreparedStatement preparedStatement = null;
 
         try{
@@ -23,7 +31,7 @@ public class ImageDAO {
             preparedStatement.setString(2, imageTitle);
             preparedStatement.setString(3, imageText);
             preparedStatement.setString(4, imagePath);
-            raw = preparedStatement.executeUpdate();
+            row = preparedStatement.executeUpdate();
         }catch(SQLException e){
             throw new SQLException(e);
         }finally{
@@ -36,7 +44,7 @@ public class ImageDAO {
             }
         }
 
-        return raw;
+        return row;
     }
 
 }

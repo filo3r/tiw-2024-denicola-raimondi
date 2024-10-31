@@ -22,6 +22,11 @@ public class User {
     private String password;
 
     /**
+     * Constructs a new User without parameters
+     */
+    public User() {}
+
+    /**
      * Constructs a new User with the specified username, email, and password.
      * @param username the username of the user
      * @param email    the email address of the user

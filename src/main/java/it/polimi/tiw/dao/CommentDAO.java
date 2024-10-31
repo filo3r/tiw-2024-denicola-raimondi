@@ -12,16 +12,23 @@ public class CommentDAO {
         this.connection = connection;
     }
 
+    /**
+     * create a new comment in comment's table
+     * @param commentText
+     * @param commentAuthor
+     * @param imageId
+     * @throws SQLException
+     */
     public int createComment(String commentText, String commentAuthor, int imageId) throws SQLException {
-        String query = "INSERT into comment (comment_text, comment_author, image_id) VALUES(?, ?, ?)";
-        int raw = 0;
+        String query = "INSERT into Comment (comment_text, comment_author, image_id) VALUES(?, ?, ?)";
+        int row = 0;
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = connection.prepareStatement(query);
             preparedStatement.setString(1, commentText);
             preparedStatement.setString(2, commentAuthor);
             preparedStatement.setInt(3, imageId);
-            raw = preparedStatement.executeUpdate();
+            row = preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new SQLException(e);
         } finally {
@@ -33,7 +40,7 @@ public class CommentDAO {
                 throw new SQLException("Failed to close PreparedStatement", e1);
             }
         }
-        return raw;
+        return row;
     }
 
 }
