@@ -8,6 +8,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import static it.polimi.tiw.util.PasswordEncrypt.hashPassword;
+
 public class UserDAO {
 
     private Connection connection;
@@ -29,10 +31,12 @@ public class UserDAO {
         PreparedStatement preparedStatement = null;
 
         try{
+            String hashedPassword = PasswordEncrypt.hashPassword(password);
+
             preparedStatement = connection.prepareStatement(query);
             preparedStatement.setString(1, username);
             preparedStatement.setString(2, email);
-            preparedStatement.setString(3, password);
+            preparedStatement.setString(3, hashedPassword);
             row = preparedStatement.executeUpdate();
         }catch (SQLException e){
             throw new SQLException(e);
@@ -57,7 +61,7 @@ public class UserDAO {
      * @throws SQLException if a database access error occurs
      */
     public User getUserByUsername(String username) throws SQLException {
-        String query = "SELECT username, email FROM user WHERE username = ?";
+        String query = "SELECT username, email FROM User WHERE username = ?";
         try (PreparedStatement preparedStatement = connection.prepareStatement(query);
              ResultSet result = preparedStatement.executeQuery()) {
             preparedStatement.setString(1, username);
@@ -119,7 +123,7 @@ public class UserDAO {
      * @throws SQLException if a database error occurs
      */
     public User checkCredentials(String username, String password) throws SQLException {
-        String query = "SELECT username, email, password FROM user WHERE username = ?";
+        String query = "SELECT username, email, password FROM User WHERE username = ?";
         try (PreparedStatement pstatement = connection.prepareStatement(query)) {
             pstatement.setString(1, username);
             try (ResultSet result = pstatement.executeQuery()) {
