@@ -9,28 +9,30 @@
 <body>
 <div class="container">
   <!-- Radio buttons hidden -->
-  <input type="radio" name="panel" id="signInPanel" checked hidden>
-  <input type="radio" name="panel" id="signUpPanel" hidden>
+  <input type="radio" name="panel" id="signInPanel" th:checked="${activePanel == 'signIn' || activePanel == null}" hidden>
+  <input type="radio" name="panel" id="signUpPanel" th:checked="${activePanel == 'signUp'}" hidden>
 
   <!-- Sign Up Form -->
   <div class="sign-up">
-    <form action="#">
+    <form action="IndexServlet" method="post">
       <h1>Sign Up</h1>
-      <input type="email" name="email" placeholder="Email" required>
-      <input type="text" name="username" placeholder="Username" required>
+      <input type="email" name="email" placeholder="Email" required th:value="${param.email}">
+      <input type="text" name="username" placeholder="Username" required th:value="${param.username}">
       <input type="password" name="password1" placeholder="Password" required>
       <input type="password" name="password2" placeholder="Confirm Password" required>
-      <button type="submit">Sign Up</button>
+      <button type="submit" name="action" value="signUp">Sign Up</button>
+      <div class="error-message" th:if="${signUpErrorMessage != null}" th:text="${signUpErrorMessage}"></div>
     </form>
   </div>
 
   <!-- Sign In Form -->
   <div class="sign-in">
-    <form action="#">
+    <form action="IndexServlet" method="post">
       <h1>Sign In</h1>
-      <input type="email" name="email" placeholder="Email" required>
+      <input type="email" name="email" placeholder="Email" required th:value="${param.email}">
       <input type="password" name="password" placeholder="Password" required>
-      <button type="submit">Sign In</button>
+      <button type="submit" name="action" value="signIn">Sign In</button>
+      <div class="error-message" th:if="${signInErrorMessage != null}" th:text="${signInErrorMessage}"></div>
     </form>
   </div>
 

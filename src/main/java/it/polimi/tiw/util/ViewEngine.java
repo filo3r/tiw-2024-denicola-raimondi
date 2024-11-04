@@ -57,7 +57,7 @@ public class ViewEngine {
     private static ServletContextTemplateResolver createTemplateResolver(ServletContext servletContext) {
         // Instantiate a new template resolver that loads resources using the class loader
         ServletContextTemplateResolver templateResolver = new ServletContextTemplateResolver(servletContext);
-        // Set the mode to HTML5 to support all modern HTML features
+        // Set the mode to HTML
         templateResolver.setTemplateMode("HTML");
         // Set the prefix path where Thymeleaf will search for template files
         templateResolver.setPrefix("/WEB-INF/view/");

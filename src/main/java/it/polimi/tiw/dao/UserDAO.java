@@ -1,6 +1,7 @@
 package it.polimi.tiw.dao;
 
 import it.polimi.tiw.model.User;
+import it.polimi.tiw.util.DatabaseConnectionPool;
 import it.polimi.tiw.util.PasswordEncrypt;
 
 import java.sql.Connection;
@@ -8,140 +9,168 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import static it.polimi.tiw.util.PasswordEncrypt.hashPassword;
-
+/**
+ * Data Access Object for performing CRUD operations on the User entity.
+ * This class provides methods to register a new user, log in a user,
+ * check if a username or email is taken, and retrieve a username by email.
+ */
 public class UserDAO {
 
-    private Connection connection;
-
-    public UserDAO(Connection connection) {
-        this.connection = connection;
-    }
-
     /**
-     * Create a new user in User's table
-     * @param username
-     * @param email
-     * @param password
-     * @throws SQLException
+     * Connection pool to manage database connections efficiently
      */
-    public int createUser(String username, String email, String password) throws SQLException {
-        int row = 0;
-        String query = "INSERT INTO User (username, email, password) VALUES (?, ?, ?)";
-        PreparedStatement preparedStatement = null;
+    private final DatabaseConnectionPool databaseConnectionPool;
 
-        try{
-            String hashedPassword = PasswordEncrypt.hashPassword(password);
-
-            preparedStatement = connection.prepareStatement(query);
-            preparedStatement.setString(1, username);
-            preparedStatement.setString(2, email);
-            preparedStatement.setString(3, hashedPassword);
-            row = preparedStatement.executeUpdate();
-        }catch (SQLException e){
-            throw new SQLException(e);
-        }finally{
-            try {
-                if (preparedStatement != null) {
-                    preparedStatement.close();
-                }
-            } catch (Exception e1) {
-                throw new SQLException("Failed to close PreparedStatement", e1);
-            }
-        }
-
-        //row = 1 --> success
-        return row;
+    /**
+     * Initializes the UserDAO by obtaining an instance of the DatabaseConnectionPool.
+     * @throws SQLException if there is a database access error
+     */
+    public UserDAO() throws SQLException {
+        this.databaseConnectionPool = DatabaseConnectionPool.getInstance();
     }
 
     /**
-     * Retrieves a user by username from the database.
-     * @param username the username to search for
-     * @return a User object populated with username and email if found, otherwise null
+     * Registers a new user in the database.
+     * @param user the User object containing the details to register
+     * @return true if the user was registered successfully, false otherwise
      * @throws SQLException if a database access error occurs
      */
-    public User getUserByUsername(String username) throws SQLException {
-        String query = "SELECT username, email FROM User WHERE username = ?";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(query);
-             ResultSet result = preparedStatement.executeQuery()) {
-            preparedStatement.setString(1, username);
+    public boolean registerUser(User user) throws SQLException {
+        String query = "INSERT INTO User (username, email, password) VALUES (?, ?, ?)";
+        Connection connection = null;
+        PreparedStatement statement = null;
+        try {
+            connection = databaseConnectionPool.getConnection();
+            statement = connection.prepareStatement(query);
+            statement.setString(1, user.getUsername());
+            statement.setString(2, user.getEmail());
+            statement.setString(3, user.getPassword());
+            int rowsInserted = statement.executeUpdate();
+            return rowsInserted > 0;
+        } finally {
+            if (statement != null)
+                statement.close();
+            if (connection != null)
+                databaseConnectionPool.releaseConnection(connection);
+        }
+    }
+
+    /**
+     * Authenticates a user by checking the password against the stored hash in the database.
+     * @param user the User object containing the email and password to authenticate
+     * @return true if the user is authenticated successfully, false otherwise
+     * @throws SQLException if a database access error occurs
+     */
+    public boolean loginUser(User user) throws SQLException {
+        String query = "SELECT password FROM User WHERE email = ?";
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet result = null;
+        try {
+            connection = databaseConnectionPool.getConnection();
+            statement = connection.prepareStatement(query);
+            statement.setString(1, user.getEmail());
+            result = statement.executeQuery();
             if (result.next()) {
-                User user = new User();
-                user.setUsername(result.getString("username"));
-                user.setEmail(result.getString("email"));
-                return user;
+                String hashedPassword = result.getString("password");
+                return PasswordEncrypt.checkPassword(user.getPassword(), hashedPassword);
             }
-        } catch (SQLException e) {
-            throw new SQLException("Error retrieving user by username", e);
+        } finally {
+            if (result != null)
+                result.close();
+            if (statement != null)
+                statement.close();
+            if (connection != null)
+                databaseConnectionPool.releaseConnection(connection);
+        }
+        return false;
+    }
+
+    /**
+     * Checks if a username is already registered in the database.
+     * @param username the username to check
+     * @return true if the username is taken, false otherwise
+     * @throws SQLException if a database access error occurs
+     */
+    public boolean isUsernameTaken(String username) throws SQLException {
+        String query = "SELECT COUNT(*) FROM User WHERE username = ?";
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet result = null;
+        try {
+            connection = databaseConnectionPool.getConnection();
+            statement = connection.prepareStatement(query);
+            statement.setString(1, username);
+            result = statement.executeQuery();
+            if (result.next())
+                return result.getInt(1) > 0;
+        } finally {
+            if (result != null)
+                result.close();
+            if (statement != null)
+                statement.close();
+            if (connection != null)
+                databaseConnectionPool.releaseConnection(connection);
+        }
+        return false;
+    }
+
+    /**
+     * Checks if an email is already registered in the database.
+     * @param email the email address to check
+     * @return true if the email is taken, false otherwise
+     * @throws SQLException if a database access error occurs
+     */
+    public boolean isEmailTaken(String email) throws SQLException {
+        String query = "SELECT COUNT(*) FROM User WHERE email = ?";
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet result = null;
+        try {
+            connection = databaseConnectionPool.getConnection();
+            statement = connection.prepareStatement(query);
+            statement.setString(1, email);
+            result = statement.executeQuery();
+            if (result.next())
+                return result.getInt(1) > 0;
+        } finally {
+            if (result != null)
+                result.close();
+            if (statement != null)
+                statement.close();
+            if (connection != null)
+                databaseConnectionPool.releaseConnection(connection);
+        }
+        return false;
+    }
+
+    /**
+     * Retrieves the username associated with a given email address.
+     * @param email the email address to look up
+     * @return the username associated with the email, or null if not found
+     * @throws SQLException if a database access error occurs
+     */
+    public String getUsernameByEmail(String email) throws SQLException {
+        String query = "SELECT username FROM User WHERE email = ?";
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet result = null;
+        try {
+            connection = databaseConnectionPool.getConnection();
+            statement = connection.prepareStatement(query);
+            statement.setString(1, email);
+            result = statement.executeQuery();
+            if (result.next())
+                return result.getString("username");
+        } finally {
+            if (result != null)
+                result.close();
+            if (statement != null)
+                statement.close();
+            if (connection != null)
+                databaseConnectionPool.releaseConnection(connection);
         }
         return null;
     }
-
-    /**
-     * Check if a user with a username exists
-     * @param username username to check
-     * @return true if it exists, false otherwise
-     * @throws SQLException an error occurred
-     */
-    public boolean checkByUsername(String username) throws SQLException {
-        String query = "SELECT username FROM User WHERE username = ? LIMIT 1";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            preparedStatement.setString(1, username);
-            try (ResultSet result = preparedStatement.executeQuery()) {
-                // Return true if any row is found
-                return result.next();
-            }
-        } catch (SQLException e) {
-            throw new SQLException("Error checking username availability", e);
-        }
-    }
-
-    /**
-     * Check if a user with a specified email exists in the database.
-     * @param email the email address to check for existence.
-     * @return true if an existing user with the specified email is found, false otherwise.
-     * @throws SQLException if an error occurs during the database query execution.
-     */
-    public boolean checkByEmail(String email) throws SQLException {
-        String query = "SELECT email FROM User WHERE mail = ? LIMIT 1";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            preparedStatement.setString(1, email);
-            try (ResultSet result = preparedStatement.executeQuery()) {
-                // Return true if the email exists in the database
-                return result.next();
-            }
-        } catch (SQLException e) {
-            throw new SQLException("Error checking email availability", e);
-        }
-    }
-
-    /**
-     * Validates user credentials against the database by comparing hashed passwords.
-     * @param username the username of the user
-     * @param password the plaintext password to validate
-     * @return a User object if credentials are valid, null otherwise
-     * @throws SQLException if a database error occurs
-     */
-    public User checkCredentials(String username, String password) throws SQLException {
-        String query = "SELECT username, email, password FROM User WHERE username = ?";
-        try (PreparedStatement pstatement = connection.prepareStatement(query)) {
-            pstatement.setString(1, username);
-            try (ResultSet result = pstatement.executeQuery()) {
-                if (result.next()) {
-                    String hashedPassword = result.getString("password");
-                    if (PasswordEncrypt.checkPassword(password, hashedPassword)) {
-                        User user = new User();
-                        user.setUsername(result.getString("username"));
-                        user.setEmail(result.getString("email"));
-                        return user;
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            throw new SQLException("Error checking user credentials", e);
-        }
-        return null;
-    }
-
 
 }
