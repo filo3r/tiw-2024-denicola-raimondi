@@ -173,4 +173,28 @@ public class UserDAO {
         return null;
     }
 
+    /**
+     * Deletes a user from the database by their username.
+     * @param username the username of the user to delete
+     * @return true if the user was deleted successfully, false otherwise
+     * @throws SQLException if a database access error occurs
+     */
+    public boolean deleteUser(String username) throws SQLException {
+        String query = "DELETE FROM User WHERE username = ?";
+        Connection connection = null;
+        PreparedStatement statement = null;
+        try {
+            connection = databaseConnectionPool.getConnection();
+            statement = connection.prepareStatement(query);
+            statement.setString(1, username);
+            int rowsDeleted = statement.executeUpdate();
+            return rowsDeleted > 0;
+        } finally {
+            if (statement != null)
+                statement.close();
+            if (connection != null)
+                databaseConnectionPool.releaseConnection(connection);
+        }
+    }
+
 }

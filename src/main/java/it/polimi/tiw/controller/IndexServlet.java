@@ -1,6 +1,8 @@
 package it.polimi.tiw.controller;
 
+import it.polimi.tiw.dao.AlbumDAO;
 import it.polimi.tiw.dao.UserDAO;
+import it.polimi.tiw.model.Album;
 import it.polimi.tiw.model.User;
 import it.polimi.tiw.util.PasswordEncrypt;
 import it.polimi.tiw.util.StringUtil;
@@ -99,10 +101,20 @@ public class IndexServlet extends HttpServlet {
                 return;
             UserDAO userDAO = new UserDAO();
             User user = new User(username, email, PasswordEncrypt.hashPassword(password1));
-            boolean success = userDAO.registerUser(user);
-            if (success) {
+            boolean successSignUp = userDAO.registerUser(user);
+            boolean successCreateAlbum = false;
+            if (successSignUp) {
+                AlbumDAO albumDAO = new AlbumDAO();
+                Album album = new Album(username, "@" + username);
+                successCreateAlbum = albumDAO.createAlbum(album);
+            }
+            if (successSignUp && successCreateAlbum) {
                 request.getSession().setAttribute("user", user);
                 response.sendRedirect("./home");
+            } else if (successSignUp && !successCreateAlbum) {
+                userDAO.deleteUser(username);
+                showErrorPage(request, response, "Database error. Please try again.", "signUpErrorMessage", "signUp");
+                return;
             } else {
                 showErrorPage(request, response, "Wrong credentials.", "signUpErrorMessage", "signUp");
                 return;

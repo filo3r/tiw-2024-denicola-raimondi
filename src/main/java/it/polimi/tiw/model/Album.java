@@ -29,16 +29,13 @@ public class Album {
 
     /**
      * Constructs a new Album with the specified attributes.
-     * @param albumId       the unique identifier for the album
      * @param albumCreator  the username of the album creator
      * @param albumTitle    the title of the album
-     * @param albumDate     the date and time the album was created
      */
-    public Album(int albumId, String albumCreator, String albumTitle, Timestamp albumDate) {
-        this.albumId = albumId;
+    public Album(String albumCreator, String albumTitle) {
         this.albumCreator = albumCreator;
         this.albumTitle = albumTitle;
-        this.albumDate = albumDate;
+        this.albumDate = new Timestamp(System.currentTimeMillis());
     }
 
     /**

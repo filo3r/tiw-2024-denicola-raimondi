@@ -1,63 +1,113 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
-    <link rel="stylesheet" href="../../css/home.css">
+  <meta charset="UTF-8">
+  <title>Home</title>
+  <link rel="stylesheet" th:href="@{/css/home.css}">
 </head>
 <body>
+<nav>
+  <ul>
+    <li>
+      <label for="tab1">My Albums</label>
+    </li>
+    <li>
+      <label for="tab2">Other's Albums</label>
+    </li>
+    <li>
+      <label for="tab3">Create Album</label>
+    </li>
+    <li>
+      <label for="tab4">Add Photo</label>
+    </li>
+  </ul>
+</nav>
 
-<input type="radio" name="Images" id="check1" checked>
-<input type="radio" name="Images" id="check2">
-<input type="radio" name="Images" id="check3">
-<input type="radio" name="Images" id="check4">
+<!-- Hidden radio inputs -->
+<input type="radio" name="tabs" id="tab1" checked hidden>
+<input type="radio" name="tabs" id="tab2" hidden>
+<input type="radio" name="tabs" id="tab3" hidden>
+<input type="radio" name="tabs" id="tab4" hidden>
 
-<div class="container">
-  <h1>Image Gallery</h1>
-  <div class="top-content">
-    <h3>TIW 2023-2024 </h3>
-    <label for="check1">My Album</label>
-    <label for="check2">Add Album</label>
-    <label for="check3">Add Image</label>
-    <label for="check4">Others Album</label>
-  </div>
-
-<!-- Album/Folder space -->
+<!-- My Albums Content -->
+<div class="content" id="content1">
+  <h2>My Albums</h2>
+  <!-- Album container -->
   <div class="album-container">
-    <div class="folder">
-        <img src="folder.png">
+    <th:block th:if="${myAlbums != null and !#lists.isEmpty(myAlbums)}" th:each="album : ${myAlbums}">
+      <div class="album">
+        <img th:src="@{/img/folder.png}" alt="Album Image">
+        <p th:text="${album.albumTitle}">Album Title</p>
+      </div>
+    </th:block>
+    <div th:if="${myAlbums == null or #lists.isEmpty(myAlbums)}">
+      <p>You have no albums.</p>
     </div>
-      <div class="folder">
-          <img src="folder.png">
-      </div>
-      <div class="folder">
-          <img src="folder.png">
-      </div>
-      <div class="folder">
-          <img src="folder.png">
-      </div>
-      <div class="folder">
-          <img src="folder.png">
-      </div>
-      <div class="folder">
-          <img src="folder.png">
-      </div>
-      <div class="folder">
-          <img src="folder.png">
-      </div>
-      <div class="folder">
-          <img src="folder.png">
-      </div>
-      <div class="folder">
-          <img src="folder.png">
-      </div>
-      <div class="folder">
-          <img src="folder.png">
-      </div>
   </div>
-
 </div>
 
+<!-- Other's Albums Content -->
+<div class="content" id="content2">
+  <h2>Other's Albums</h2>
+  <!-- Album container -->
+  <div class="album-container">
+    <th:block th:if="${otherAlbums != null and !#lists.isEmpty(otherAlbums)}" th:each="album : ${otherAlbums}">
+      <div class="album">
+        <img th:src="@{/img/folder.png}" alt="Album Image">
+        <p th:text="${album.albumTitle}">Album Title</p>
+        <p th:text="'Created by: ' + ${album.albumCreator}">Creator</p>
+      </div>
+    </th:block>
+    <div th:if="${otherAlbums == null or #lists.isEmpty(otherAlbums)}">
+      <p>There are no other albums.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Create Album Page -->
+<div class="content" id="content3">
+  <h2>Create Album</h2>
+  <form class="form-album" th:action="@{/CreateAlbumServlet}" th:method="post">
+    <div class="form-group">
+      <label for="album-title">Album Title:</label>
+      <input type="text" id="album-title" name="album-title" required>
+    </div>
+    <button type="submit">Create Album</button>
+  </form>
+</div>
+
+<!-- Add Photo Page -->
+<div class="content" id="content4">
+  <h2>Add Photo</h2>
+  <form class="form-photo" th:action="@{/AddPhotoServlet}" th:method="post" enctype="multipart/form-data">
+    <div class="form-group">
+      <label for="photo-title">Photo Title:</label>
+      <input type="text" id="photo-title" name="photo-title" required>
+    </div>
+    <div class="form-group">
+      <label for="photo-description">Description:</label>
+      <textarea id="photo-description" name="photo-description" rows="4" required></textarea>
+    </div>
+    <div class="form-group">
+      <label for="photo-file">Select Image:</label>
+      <input type="file" id="photo-file" name="photo-file" accept="image/*" required>
+    </div>
+    <div class="form-group">
+      <label>Choose Album(s):</label>
+      <div class="checkbox-group">
+        <th:block th:if="${myAlbums != null and !#lists.isEmpty(myAlbums)}" th:each="album : ${myAlbums}">
+          <label>
+            <input type="checkbox" name="album-select" th:value="${album.albumId}">
+            <span th:text="${album.albumTitle}">Album Title</span>
+          </label>
+        </th:block>
+        <div th:if="${myAlbums == null or #lists.isEmpty(myAlbums)}">
+          <p>You have no albums to select.</p>
+        </div>
+      </div>
+    </div>
+    <button type="submit">Add Photo</button>
+  </form>
+</div>
 </body>
 </html>

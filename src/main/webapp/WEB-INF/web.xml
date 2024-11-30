@@ -19,6 +19,10 @@
         <servlet-name>default</servlet-name>
         <url-pattern>*.css</url-pattern>
     </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>default</servlet-name>
+        <url-pattern>/img/*</url-pattern>
+    </servlet-mapping>
 
     <!-- Declaration and mapping of Servlet -->
     <servlet>
@@ -28,6 +32,15 @@
     <servlet-mapping>
         <servlet-name>IndexServlet</servlet-name>
         <url-pattern>/</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>HomeServlet</servlet-name>
+        <servlet-class>it.polimi.tiw.controller.HomeServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>HomeServlet</servlet-name>
+        <url-pattern>/home</url-pattern>
     </servlet-mapping>
 
 </web-app>

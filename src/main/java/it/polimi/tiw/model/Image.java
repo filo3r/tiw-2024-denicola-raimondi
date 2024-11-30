@@ -39,18 +39,15 @@ public class Image {
 
     /**
      * Constructs a new Image with the specified attributes.
-     * @param imageId      the unique identifier for the image
      * @param imageUploader the username of the uploader
      * @param imageTitle   the title of the image
-     * @param imageDate    the date and time the image was uploaded
      * @param imageText    the description of the image
      * @param imagePath    the path to the image file
      */
-    public Image(int imageId, String imageUploader, String imageTitle, Timestamp imageDate, String imageText, String imagePath) {
-        this.imageId = imageId;
+    public Image(String imageUploader, String imageTitle, String imageText, String imagePath) {
         this.imageUploader = imageUploader;
         this.imageTitle = imageTitle;
-        this.imageDate = imageDate;
+        this.imageDate = new Timestamp(System.currentTimeMillis());
         this.imageText = imageText;
         this.imagePath = imagePath;
     }

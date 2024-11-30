@@ -27,13 +27,11 @@ public class Comment {
 
     /**
      * Constructs a new Comment with the specified attributes.
-     * @param commentId     the unique identifier for the comment
      * @param imageId       the unique identifier of the associated image
      * @param commentAuthor the username of the author of the comment
      * @param commentText   the text content of the comment
      */
-    public Comment(int commentId, int imageId, String commentAuthor, String commentText) {
-        this.commentId = commentId;
+    public Comment(int imageId, String commentAuthor, String commentText) {
         this.imageId = imageId;
         this.commentAuthor = commentAuthor;
         this.commentText = commentText;
