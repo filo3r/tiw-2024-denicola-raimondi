@@ -109,16 +109,15 @@ public class AlbumDAO {
      * @throws SQLException if a database access error occurs
      */
     public boolean createAlbum(Album album) throws SQLException {
-        String query = "INSERT INTO Album (album_id, album_creator, album_title, album_date) VALUES (?, ?, ?, ?)";
+        String query = "INSERT INTO Album (album_creator, album_title, album_date) VALUES (?, ?, ?)";
         Connection connection = null;
         PreparedStatement statement = null;
         try {
             connection = databaseConnectionPool.getConnection();
             statement = connection.prepareStatement(query);
-            statement.setInt(1, album.getAlbumId());
-            statement.setString(2, album.getAlbumCreator());
-            statement.setString(3, album.getAlbumTitle());
-            statement.setTimestamp(4, album.getAlbumDate());
+            statement.setString(1, album.getAlbumCreator());
+            statement.setString(2, album.getAlbumTitle());
+            statement.setTimestamp(3, album.getAlbumDate());
             int rowsInserted = statement.executeUpdate();
             return rowsInserted > 0;
         } finally {

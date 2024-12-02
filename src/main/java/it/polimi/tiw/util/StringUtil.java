@@ -93,4 +93,14 @@ public class StringUtil {
         return (!isNullOrEmpty(password) && !hasSpaces(password) && PASSWORD_PATTERN.matcher(password).matches());
     }
 
+    /**
+     * Validates if the provided album title is valid.
+     * An album title is considered valid if it is not null and does not start with the '@' character.
+     * @param albumTitle the album title to validate
+     * @return true if the album title is valid, false otherwise
+     */
+    public static boolean isValidAlbumTitle(String albumTitle) {
+        return albumTitle != null && !albumTitle.startsWith("@");
+    }
+
 }

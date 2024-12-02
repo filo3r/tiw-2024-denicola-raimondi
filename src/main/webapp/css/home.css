@@ -21,13 +21,14 @@ nav li label {
     text-align: center;
     padding: 14px 0;
     cursor: pointer;
+    user-select: none; /* Prevents text selection on click */
 }
 
 nav li label:hover {
     background-color: #111;
 }
 
-input[name="tabs"] {
+input[name="panel"] {
     display: none;
 }
 
@@ -37,10 +38,10 @@ input[name="tabs"] {
 }
 
 /* Show the content corresponding to the selected radio button */
-#tab1:checked ~ #content1,
-#tab2:checked ~ #content2,
-#tab3:checked ~ #content3,
-#tab4:checked ~ #content4 {
+#myAlbumsPanel:checked ~ #myAlbumsContent,
+#otherAlbumsPanel:checked ~ #otherAlbumsContent,
+#createAlbumPanel:checked ~ #createAlbumContent,
+#addImagePanel:checked ~ #addImageContent {
     display: block;
 }
 
@@ -60,6 +61,7 @@ input[name="tabs"] {
     width: 100%;
     padding-top: 100%; /* Maintains a 1:1 aspect ratio */
     overflow: hidden;
+    text-align: center;
 }
 
 /* Album image */
@@ -73,6 +75,15 @@ input[name="tabs"] {
     display: block;
 }
 
+/* Album title and creator */
+.album p {
+    position: relative;
+    margin: 5px 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: inline-block;
+    padding: 2px 5px;
+}
+
 /* --- Styles for the forms --- */
 
 /* General form styles */
@@ -81,25 +92,19 @@ form {
     margin: 0 auto;
 }
 
-.form-group {
-    margin-bottom: 15px;
-}
-
-.form-group label {
+form label {
     display: block;
     font-weight: bold;
     margin-bottom: 5px;
 }
 
-.form-group input[type="text"],
-.form-group textarea {
+form input[type="text"],
+form input[type="file"],
+form textarea {
     width: 100%;
     padding: 8px;
     box-sizing: border-box;
-}
-
-.form-group input[type="file"] {
-    padding: 5px;
+    margin-bottom: 15px;
 }
 
 button[type="submit"] {
@@ -114,13 +119,19 @@ button[type="submit"]:hover {
     background-color: #111;
 }
 
-/* Styles for the checkbox group */
-.checkbox-group {
+/* Styles for the albumsCheckbox */
+.albumsCheckbox {
     display: flex;
     flex-direction: column;
+    margin-bottom: 15px;
 }
 
-.checkbox-group label {
+.albumsCheckbox label {
     margin-bottom: 5px;
     font-weight: normal;
+}
+
+.error-message {
+    color: red;
+    margin-top: 10px;
 }
