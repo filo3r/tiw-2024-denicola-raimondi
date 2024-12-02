@@ -110,7 +110,7 @@ public class IndexServlet extends HttpServlet {
             }
             if (successSignUp && successCreateAlbum) {
                 request.getSession().setAttribute("user", user);
-                response.sendRedirect("./home");
+                response.sendRedirect(request.getContextPath() + "/home");
             } else if (successSignUp && !successCreateAlbum) {
                 userDAO.deleteUser(username);
                 showErrorPage(request, response, "Database error. Please try again.", "signUpErrorMessage", "signUp");
@@ -146,7 +146,7 @@ public class IndexServlet extends HttpServlet {
                 user.setPassword(null);
                 user.setUsername(userDAO.getUsernameByEmail(user.getEmail()));
                 request.getSession().setAttribute("user", user);
-                response.sendRedirect("./home");
+                response.sendRedirect(request.getContextPath() + "/home");
             } else {
                 showErrorPage(request, response, "Unknown error. Please try again.", "signInErrorMessage", "signIn");
                 return;
