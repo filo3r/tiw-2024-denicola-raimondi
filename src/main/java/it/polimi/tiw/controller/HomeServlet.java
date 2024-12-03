@@ -86,6 +86,14 @@ public class HomeServlet extends HttpServlet {
             final WebContext webContext = new WebContext(request, response, servletContext, request.getLocale());
             webContext.setVariable("myAlbums", myAlbums);
             webContext.setVariable("otherAlbums", otherAlbums);
+            // Success message when creating an album
+            String createAlbumSuccessMessage = (String) request.getAttribute("createAlbumSuccessMessage");
+            if (createAlbumSuccessMessage != null)
+                webContext.setVariable("createAlbumSuccessMessage", createAlbumSuccessMessage);
+            // Success message when adding an image
+            String addImageSuccessMessage = (String) request.getAttribute("addImageSuccessMessage");
+            if (addImageSuccessMessage != null)
+                webContext.setVariable("addImageSuccessMessage", addImageSuccessMessage);
             templateEngine.process("home.html", webContext, response.getWriter());
         } catch (SQLException e) {
             showErrorPage(request, response, "Database error. Please try again.", "albumsErrorMessage");
@@ -103,10 +111,12 @@ public class HomeServlet extends HttpServlet {
         try {
             AlbumDAO albumDAO = new AlbumDAO();
             boolean success = albumDAO.createAlbum(album);
-            if (success)
-                response.sendRedirect(request.getContextPath() + "/home");
-            else
+            if (success) {
+                request.setAttribute("createAlbumSuccessMessage", "Album created successfully.");
+                handleLoadAlbums(request, response, username);
+            } else {
                 showErrorPage(request, response, "Database error. Please try again.", "createAlbumErrorMessage");
+            }
         } catch (SQLException e) {
             showErrorPage(request, response, "Database error. Please try again.", "createAlbumErrorMessage");
         }

@@ -77,6 +77,7 @@
     <button type="submit" name="action" value="createAlbum">Create</button>
   </form>
   <div class="error-message" th:if="${createAlbumErrorMessage != null}" th:text="${createAlbumErrorMessage}"></div>
+  <div class="success-message" th:if="${createAlbumSuccessMessage != null}" th:text="${createAlbumSuccessMessage}"></div>
 </div>
 
 <!-- Add Image Page -->
@@ -104,6 +105,7 @@
     <button type="submit" name="action" value="addImage">Add</button>
   </form>
   <div class="error-message" th:if="${addImageErrorMessage != null}" th:text="${addImageErrorMessage}"></div>
+  <div class="success-message" th:if="${addImageSuccessMessage != null}" th:text="${addImageSuccessMessage}"></div>
 </div>
 </body>
 </html>
