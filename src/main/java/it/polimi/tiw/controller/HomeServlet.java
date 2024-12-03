@@ -19,7 +19,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 /**
- *
+ * HomeServlet handles requests for the home page of the application.
+ * It manages album loading, album creation, and adding images to albums.
  */
 public class HomeServlet extends HttpServlet {
 
@@ -35,12 +36,25 @@ public class HomeServlet extends HttpServlet {
      */
     private TemplateEngine templateEngine;
 
+    /**
+     * Initializes the servlet and retrieves the TemplateEngine instance
+     * from the ServletContext.
+     * @throws ServletException if an error occurs during initialization.
+     */
     @Override
     public void init() throws ServletException {
         ServletContext servletContext = getServletContext();
         this.templateEngine = ViewEngine.getTemplateEngine(servletContext);
     }
 
+    /**
+     * Handles GET requests to the servlet.
+     * Verifies user authentication and loads user albums for display on the home page.
+     * @param request  the HTTP request object.
+     * @param response the HTTP response object.
+     * @throws ServletException if an error occurs during processing.
+     * @throws IOException      if an I/O error occurs during processing.
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // Check if user is logged in
@@ -53,9 +67,17 @@ public class HomeServlet extends HttpServlet {
         User user = (User) session.getAttribute("user");
         String username = user.getUsername();
         // Load albums
-        handleLoadAlbums(request, response, username);
+        handleLoadAlbums(request, response, username, null, null);
     }
 
+    /**
+     * Handles POST requests to the servlet.
+     * Verifies user authentication and processes actions such as album creation and adding images.
+     * @param request  the HTTP request object.
+     * @param response the HTTP response object.
+     * @throws ServletException if an error occurs during processing.
+     * @throws IOException      if an I/O error occurs during processing.
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // Check if user is logged in
@@ -77,7 +99,17 @@ public class HomeServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/home");
     }
 
-    private void handleLoadAlbums(HttpServletRequest request, HttpServletResponse response, String username) throws ServletException, IOException {
+    /**
+     * Loads the user's albums and renders the home page.
+     * @param request        the HTTP request object.
+     * @param response       the HTTP response object.
+     * @param username       the username of the logged-in user.
+     * @param errorMessage   optional error message to display.
+     * @param errorAttribute optional error attribute name.
+     * @throws ServletException if an error occurs during processing.
+     * @throws IOException      if an I/O error occurs during processing.
+     */
+    private void handleLoadAlbums(HttpServletRequest request, HttpServletResponse response, String username, String errorMessage, String errorAttribute) throws ServletException, IOException {
         try {
             AlbumDAO albumDAO = new AlbumDAO();
             ArrayList<Album> myAlbums = albumDAO.getMyAlbums(username);
@@ -86,25 +118,37 @@ public class HomeServlet extends HttpServlet {
             final WebContext webContext = new WebContext(request, response, servletContext, request.getLocale());
             webContext.setVariable("myAlbums", myAlbums);
             webContext.setVariable("otherAlbums", otherAlbums);
-            // Success message when creating an album
+            // Set success messages if any
             String createAlbumSuccessMessage = (String) request.getAttribute("createAlbumSuccessMessage");
             if (createAlbumSuccessMessage != null)
                 webContext.setVariable("createAlbumSuccessMessage", createAlbumSuccessMessage);
-            // Success message when adding an image
             String addImageSuccessMessage = (String) request.getAttribute("addImageSuccessMessage");
             if (addImageSuccessMessage != null)
                 webContext.setVariable("addImageSuccessMessage", addImageSuccessMessage);
+            // Set error messages if any
+            if (errorMessage != null && errorAttribute != null) {
+                webContext.setVariable(errorAttribute, errorMessage);
+                webContext.setVariable("activePanel", getActivePanelFromErrorAttribute(errorAttribute));
+            }
             templateEngine.process("home.html", webContext, response.getWriter());
         } catch (SQLException e) {
-            showErrorPage(request, response, "Database error. Please try again.", "albumsErrorMessage");
+            showErrorPage(request, response, "Database error. Please reload the page.", "albumsErrorMessage", false);
             e.printStackTrace();
         }
     }
 
+    /**
+     * Handles album creation for the logged-in user.
+     * @param request  the HTTP request object.
+     * @param response the HTTP response object.
+     * @param username the username of the logged-in user.
+     * @throws ServletException if an error occurs during processing.
+     * @throws IOException      if an I/O error occurs during processing.
+     */
     private void handleCreateAlbum(HttpServletRequest request, HttpServletResponse response, String username) throws ServletException, IOException {
         String albumTitle = request.getParameter("albumTitle");
         if (StringUtil.isNullOrEmpty(albumTitle) || !StringUtil.isValidAlbumTitle(albumTitle)) {
-            showErrorPage(request, response, "Invalid album title.", "createAlbumErrorMessage");
+            showErrorPage(request, response, "Invalid album title.", "createAlbumErrorMessage", true);
             return;
         }
         Album album = new Album(username, albumTitle);
@@ -113,12 +157,12 @@ public class HomeServlet extends HttpServlet {
             boolean success = albumDAO.createAlbum(album);
             if (success) {
                 request.setAttribute("createAlbumSuccessMessage", "Album created successfully.");
-                handleLoadAlbums(request, response, username);
+                handleLoadAlbums(request, response, username, null, null);
             } else {
-                showErrorPage(request, response, "Database error. Please try again.", "createAlbumErrorMessage");
+                showErrorPage(request, response, "Database error. Please try again.", "createAlbumErrorMessage", true);
             }
         } catch (SQLException e) {
-            showErrorPage(request, response, "Database error. Please try again.", "createAlbumErrorMessage");
+            showErrorPage(request, response, "Database error. Please try again.", "createAlbumErrorMessage", true);
         }
     }
 
@@ -126,7 +170,17 @@ public class HomeServlet extends HttpServlet {
 
     }
 
-    private void showErrorPage(HttpServletRequest request, HttpServletResponse response, String errorMessage, String errorAttribute) throws ServletException, IOException {
+    /**
+     * Displays an error page with a specified message and optional album loading.
+     * @param request        the HTTP request object.
+     * @param response       the HTTP response object.
+     * @param errorMessage   the error message to display.
+     * @param errorAttribute the error attribute name.
+     * @param loadAlbums     whether to load albums before rendering the page.
+     * @throws ServletException if an error occurs during processing.
+     * @throws IOException      if an I/O error occurs during processing.
+     */
+    private void showErrorPage(HttpServletRequest request, HttpServletResponse response, String errorMessage, String errorAttribute, boolean loadAlbums) throws ServletException, IOException {
         // Check if user is logged in
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("user") == null) {
@@ -136,22 +190,24 @@ public class HomeServlet extends HttpServlet {
         // Get user
         User user = (User) session.getAttribute("user");
         String username = user.getUsername();
-        // Reload albums
-        try {
-            AlbumDAO albumDAO = new AlbumDAO();
-            ArrayList<Album> myAlbums = albumDAO.getMyAlbums(username);
-            ArrayList<Album> otherAlbums = albumDAO.getOtherAlbums(username);
-            WebContext webContext = new WebContext(request, response, request.getServletContext(), request.getLocale());
-            webContext.setVariable("myAlbums", myAlbums);
-            webContext.setVariable("otherAlbums", otherAlbums);
+        if (loadAlbums) {
+            // Call handleLoadAlbums with error details
+            handleLoadAlbums(request, response, username, errorMessage, errorAttribute);
+        } else {
+            // Render the page without loading albums
+            ServletContext servletContext = getServletContext();
+            final WebContext webContext = new WebContext(request, response, servletContext, request.getLocale());
             webContext.setVariable(errorAttribute, errorMessage);
             webContext.setVariable("activePanel", getActivePanelFromErrorAttribute(errorAttribute));
             templateEngine.process("home.html", webContext, response.getWriter());
-        } catch (SQLException e) {
-            response.sendRedirect(request.getContextPath() + "/home");
         }
     }
 
+    /**
+     * Determines the active panel based on the provided error attribute.
+     * @param errorAttribute the error attribute name.
+     * @return the corresponding active panel.
+     */
     private String getActivePanelFromErrorAttribute(String errorAttribute) {
         switch (errorAttribute) {
             case "createAlbumErrorMessage":
