@@ -21,6 +21,9 @@
     <li>
       <label for="addImagePanel">Add Image</label>
     </li>
+    <li>
+      <label for="profilePanel">Profile</label>
+    </li>
   </ul>
 </nav>
 
@@ -30,6 +33,7 @@
 <input type="radio" name="panel" id="otherAlbumsPanel" th:checked="${activePanel == 'otherAlbums'}" hidden>
 <input type="radio" name="panel" id="createAlbumPanel" th:checked="${activePanel == 'createAlbum'}" hidden>
 <input type="radio" name="panel" id="addImagePanel" th:checked="${activePanel == 'addImage'}" hidden>
+<input type="radio" name="panel" id="profilePanel" th:checked="${activePanel == 'profile'}" hidden>
 
 <!-- My Albums Content -->
 <div class="content" id="myAlbumsContent">
@@ -106,6 +110,25 @@
   </form>
   <div class="error-message" th:if="${addImageErrorMessage != null}" th:text="${addImageErrorMessage}"></div>
   <div class="success-message" th:if="${addImageSuccessMessage != null}" th:text="${addImageSuccessMessage}"></div>
+</div>
+
+<!-- Profile page -->
+<div class="content" id="profileContent">
+  <h2>Profile</h2>
+  <th:block th:if="${user != null}">
+    <p><strong>Email:</strong> <span th:text="${user.email}">user@email.com</span></p>
+    <p><strong>Username:</strong> <span th:text="${user.username}">username</span></p>
+    <p><strong>Number of Albums:</strong> <span th:text="${userStats.numAlbums}">0</span></p>
+    <p><strong>Number of Images:</strong> <span th:text="${userStats.numImages}">0</span></p>
+    <p><strong>Number of Comments:</strong> <span th:text="${userStats.numComments}">0</span></p>
+    <form th:action="@{/home}" method="post">
+      <button type="submit" name="action" value="logout">Logout</button>
+    </form>
+  </th:block>
+  <th:block th:if="${user == null}">
+    <p>User information is not available.</p>
+  </th:block>
+  <div class="error-message" th:if="${profileErrorMessage != null}" th:text="${profileErrorMessage}"></div>
 </div>
 </body>
 </html>

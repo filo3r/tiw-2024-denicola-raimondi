@@ -41,7 +41,8 @@ input[name="panel"] {
 #myAlbumsPanel:checked ~ #myAlbumsContent,
 #otherAlbumsPanel:checked ~ #otherAlbumsContent,
 #createAlbumPanel:checked ~ #createAlbumContent,
-#addImagePanel:checked ~ #addImageContent {
+#addImagePanel:checked ~ #addImageContent,
+#profilePanel:checked ~ #profileContent {
     display: block;
 }
 

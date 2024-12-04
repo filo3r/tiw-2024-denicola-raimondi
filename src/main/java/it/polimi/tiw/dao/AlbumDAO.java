@@ -128,4 +128,28 @@ public class AlbumDAO {
         }
     }
 
+    public int getAlbumsCountByUser(String username) throws SQLException {
+        String query = "SELECT COUNT(*) AS albums_count FROM Album WHERE album_creator = ?";
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet result = null;
+        try {
+            connection = databaseConnectionPool.getConnection();
+            statement = connection.prepareStatement(query);
+            statement.setString(1, username);
+            result = statement.executeQuery();
+            if (result.next())
+                return result.getInt("albums_count");
+            else
+                return 0;
+        } finally {
+            if (result != null)
+                result.close();
+            if (statement != null)
+                statement.close();
+            if (connection != null)
+                databaseConnectionPool.releaseConnection(connection);
+        }
+    }
+
 }

@@ -1,46 +1,42 @@
 package it.polimi.tiw.dao;
 
+import it.polimi.tiw.util.DatabaseConnectionPool;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class CommentDAO {
 
-    private Connection connection;
+    private final DatabaseConnectionPool databaseConnectionPool;
 
-    public CommentDAO(Connection connection) {
-        this.connection = connection;
+    public CommentDAO() throws SQLException {
+        this.databaseConnectionPool = DatabaseConnectionPool.getInstance();
     }
 
-    /**
-     * create a new comment in comment's table
-     * @param commentText
-     * @param commentAuthor
-     * @param imageId
-     * @throws SQLException
-     */
-    public int createComment(String commentText, String commentAuthor, int imageId) throws SQLException {
-        String query = "INSERT into Comment (comment_text, comment_author, image_id) VALUES(?, ?, ?)";
-        int row = 0;
-        PreparedStatement preparedStatement = null;
+    public int getCommentsByUser(String username) throws SQLException {
+        String query = "SELECT COUNT(*) AS comments_count FROM Comment WHERE comment_author = ?";
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet result = null;
         try {
-            preparedStatement = connection.prepareStatement(query);
-            preparedStatement.setString(1, commentText);
-            preparedStatement.setString(2, commentAuthor);
-            preparedStatement.setInt(3, imageId);
-            row = preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new SQLException(e);
+            connection = databaseConnectionPool.getConnection();
+            statement = connection.prepareStatement(query);
+            statement.setString(1, username);
+            result = statement.executeQuery();
+            if (result.next())
+                return result.getInt("comments_count");
+            else
+                return 0;
         } finally {
-            try {
-                if (preparedStatement != null) {
-                    preparedStatement.close();
-                }
-            } catch (Exception e1) {
-                throw new SQLException("Failed to close PreparedStatement", e1);
-            }
+            if (result != null)
+                result.close();
+            if (statement != null)
+                statement.close();
+            if (connection != null)
+                databaseConnectionPool.releaseConnection(connection);
         }
-        return row;
     }
 
 }
