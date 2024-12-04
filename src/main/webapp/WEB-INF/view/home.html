@@ -38,7 +38,7 @@
 <!-- My Albums Content -->
 <div class="content" id="myAlbumsContent">
   <h2>My Albums</h2>
-  <div class="error-message" th:if="${albumsErrorMessage != null}" th:text="${albumsErrorMessage}"></div>
+  <div class="error-message" th:if="${myAlbumsErrorMessage != null}" th:text="${myAlbumsErrorMessage}"></div>
   <!-- Album container -->
   <div class="album-container">
     <th:block th:if="${myAlbums != null and !#lists.isEmpty(myAlbums)}" th:each="album : ${myAlbums}">
@@ -57,6 +57,7 @@
 <!-- Other's Albums Content -->
 <div class="content" id="otherAlbumsContent">
   <h2>Other's Albums</h2>
+  <div class="error-message" th:if="${otherAlbumsErrorMessage != null}" th:text="${otherAlbumsErrorMessage}"></div>
   <!-- Album container -->
   <div class="album-container">
     <th:block th:if="${otherAlbums != null and !#lists.isEmpty(otherAlbums)}" th:each="album : ${otherAlbums}">
@@ -118,9 +119,15 @@
   <th:block th:if="${user != null}">
     <p><strong>Email:</strong> <span th:text="${user.email}">user@email.com</span></p>
     <p><strong>Username:</strong> <span th:text="${user.username}">username</span></p>
-    <p><strong>Number of Albums:</strong> <span th:text="${userStats.numAlbums}">0</span></p>
-    <p><strong>Number of Images:</strong> <span th:text="${userStats.numImages}">0</span></p>
-    <p><strong>Number of Comments:</strong> <span th:text="${userStats.numComments}">0</span></p>
+    <p><strong>Number of Albums:</strong>
+      <span th:text="${userStats.numAlbums != null ? userStats.numAlbums : 'Error'}">0</span>
+    </p>
+    <p><strong>Number of Images:</strong>
+      <span th:text="${userStats.numImages != null ? userStats.numImages : 'Error'}">0</span>
+    </p>
+    <p><strong>Number of Comments:</strong>
+      <span th:text="${userStats.numComments != null ? userStats.numComments : 'Error'}">0</span>
+    </p>
     <form th:action="@{/home}" method="post">
       <button type="submit" name="action" value="logout">Logout</button>
     </form>

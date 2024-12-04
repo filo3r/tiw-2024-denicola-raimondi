@@ -74,7 +74,7 @@ public class HomeServlet extends HttpServlet {
         WebContext webContext = new WebContext(request, response, servletContext, request.getLocale());
         webContext.setVariable("user", user);
         // Render page
-        renderHomePage(request, response, webContext, username, null, null);
+        renderHomePage(request, response, webContext, username);
     }
 
     /**
@@ -112,45 +112,54 @@ public class HomeServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/home");
     }
 
-    private void renderHomePage(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username, String errorMessage, String errorAttribute) throws ServletException, IOException {
-        handleLoadAlbums(request, response, webContext, username, errorMessage, errorAttribute);
-        handleProfile(request, response, webContext, username);
+    private void renderHomePage(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
+        try {
+            handleLoadAlbums(webContext, username);
+            handleLoadProfile(request, webContext, username);
+        } catch (SQLException e) {
+            webContext.setVariable("myAlbums", null);
+            webContext.setVariable("otherAlbums", null);
+            webContext.setVariable("userStats", Map.of(
+                    "numAlbums", "Error",
+                    "numImages", "Error",
+                    "numComments", "Error"
+            ));
+            webContext.setVariable("myAlbumsErrorMessage", "Database error. Please reload page.");
+            webContext.setVariable("otherAlbumsErrorMessage", "Database error. Please reload page.");
+            webContext.setVariable("createAlbumErrorMessage", "Database error. Please reload page.");
+            webContext.setVariable("addImageErrorMessage", "Database error. Please reload page.");
+            webContext.setVariable("profileErrorMessage", "Database error. Please reload page.");
+            e.printStackTrace();
+        }
         templateEngine.process("home.html", webContext, response.getWriter());
     }
 
     /**
      * Loads the user's albums and renders the home page.
-     * @param request        the HTTP request object.
-     * @param response       the HTTP response object.
      * @param username       the username of the logged-in user.
-     * @param errorMessage   optional error message to display.
-     * @param errorAttribute optional error attribute name.
-     * @throws ServletException if an error occurs during processing.
-     * @throws IOException      if an I/O error occurs during processing.
      */
-    private void handleLoadAlbums(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username, String errorMessage, String errorAttribute) throws ServletException, IOException {
-        try {
-            AlbumDAO albumDAO = new AlbumDAO();
-            ArrayList<Album> myAlbums = albumDAO.getMyAlbums(username);
-            ArrayList<Album> otherAlbums = albumDAO.getOtherAlbums(username);
-            webContext.setVariable("myAlbums", myAlbums);
-            webContext.setVariable("otherAlbums", otherAlbums);
-            // Set success messages if any
-            String createAlbumSuccessMessage = (String) request.getAttribute("createAlbumSuccessMessage");
-            if (createAlbumSuccessMessage != null)
-                webContext.setVariable("createAlbumSuccessMessage", createAlbumSuccessMessage);
-            String addImageSuccessMessage = (String) request.getAttribute("addImageSuccessMessage");
-            if (addImageSuccessMessage != null)
-                webContext.setVariable("addImageSuccessMessage", addImageSuccessMessage);
-            // Set error messages if any
-            if (errorMessage != null && errorAttribute != null) {
-                webContext.setVariable(errorAttribute, errorMessage);
-                webContext.setVariable("activePanel", getActivePanelFromErrorAttribute(errorAttribute));
-            }
-        } catch (SQLException e) {
-            showErrorPage(request, response, webContext, "Database error. Please reload the page.", "albumsErrorMessage", false);
-            e.printStackTrace();
-        }
+    private void handleLoadAlbums(WebContext webContext, String username) throws SQLException, ServletException, IOException {
+        AlbumDAO albumDAO = new AlbumDAO();
+        ArrayList<Album> myAlbums = albumDAO.getMyAlbums(username);
+        ArrayList<Album> otherAlbums = albumDAO.getOtherAlbums(username);
+        webContext.setVariable("myAlbums", myAlbums);
+        webContext.setVariable("otherAlbums", otherAlbums);
+    }
+
+    private void handleLoadProfile(HttpServletRequest request, WebContext webContext, String username) throws SQLException, ServletException, IOException {
+        AlbumDAO albumDAO = new AlbumDAO();
+        ImageDAO imageDAO = new ImageDAO();
+        CommentDAO commentDAO = new CommentDAO();
+        int numAlbums = albumDAO.getAlbumsCountByUser(username);
+        int numImages = imageDAO.getImagesCountByUser(username);
+        int numComments = commentDAO.getCommentsByUser(username);
+        User user = (User) request.getSession().getAttribute("user");
+        webContext.setVariable("user", user);
+        webContext.setVariable("userStats", Map.of(
+                "numAlbums", numAlbums,
+                "numImages", numImages,
+                "numComments", numComments
+        ));
     }
 
     /**
@@ -164,7 +173,8 @@ public class HomeServlet extends HttpServlet {
     private void handleCreateAlbum(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
         String albumTitle = request.getParameter("albumTitle");
         if (StringUtil.isNullOrEmpty(albumTitle) || !StringUtil.isValidAlbumTitle(albumTitle)) {
-            showErrorPage(request, response, webContext, "Invalid album title.", "createAlbumErrorMessage", true);
+            request.setAttribute("createAlbumErrorMessage", "Invalid album title");
+            renderHomePage(request, response, webContext, username);
             return;
         }
         Album album = new Album(username, albumTitle);
@@ -173,94 +183,28 @@ public class HomeServlet extends HttpServlet {
             boolean success = albumDAO.createAlbum(album);
             if (success) {
                 request.setAttribute("createAlbumSuccessMessage", "Album created successfully.");
-                renderHomePage(request, response, webContext, username, null, null);
+                response.sendRedirect(request.getContextPath() + "/home");
             } else {
-                showErrorPage(request, response, webContext, "Database error. Please try again.", "createAlbumErrorMessage", true);
+                request.setAttribute("createAlbumErrorMessage", "Database error. Please reload page.");
+                renderHomePage(request, response, webContext, username);
             }
         } catch (SQLException e) {
-            showErrorPage(request, response, webContext, "Database error. Please try again.", "createAlbumErrorMessage", false);
+            renderHomePage(request, response, webContext, username);
+            e.printStackTrace();
         }
     }
+
 
     private void handleAddImage(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
 
     }
 
-    private void handleProfile(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
-        try {
-            AlbumDAO albumDAO = new AlbumDAO();
-            ImageDAO imageDAO = new ImageDAO();
-            CommentDAO commentDAO = new CommentDAO();
-            int numAlbums = albumDAO.getAlbumsCountByUser(username);
-            int numImages = imageDAO.getImagesCountByUser(username);
-            int numComments = commentDAO.getCommentsByUser(username);
-            User user = (User) request.getSession().getAttribute("user");
-            webContext.setVariable("user", user);
-            webContext.setVariable("userStats", Map.of(
-                    "numAlbums", numAlbums,
-                    "numImages", numImages,
-                    "numComments", numComments
-            ));
-        } catch (SQLException e) {
-            showErrorPage(request, response, webContext, "Database error. Please reload the page.", "profileErrorMessage", false);
-            e.printStackTrace();
-        }
-    }
 
     private void handleLogout(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession(false);
         if (session != null)
             session.invalidate();
         response.sendRedirect(request.getContextPath() + "/");
-    }
-
-    /**
-     * Displays an error page with a specified message and optional album loading.
-     * @param request        the HTTP request object.
-     * @param response       the HTTP response object.
-     * @param errorMessage   the error message to display.
-     * @param errorAttribute the error attribute name.
-     * @param renderHomePage     whether to load albums before rendering the page.
-     * @throws ServletException if an error occurs during processing.
-     * @throws IOException      if an I/O error occurs during processing.
-     */
-    private void showErrorPage(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String errorMessage, String errorAttribute, boolean renderHomePage) throws ServletException, IOException {
-        // Check if user is logged in
-        HttpSession session = request.getSession(false);
-        if (session == null || session.getAttribute("user") == null) {
-            response.sendRedirect(request.getContextPath() + "/");
-            return;
-        }
-        // Get user
-        User user = (User) session.getAttribute("user");
-        String username = user.getUsername();
-        if (renderHomePage) {
-            // Reload page
-            renderHomePage(request, response, webContext, username, errorMessage, errorAttribute);
-        } else {
-            // Render the page without loading albums
-            webContext.setVariable(errorAttribute, errorMessage);
-            webContext.setVariable("activePanel", getActivePanelFromErrorAttribute(errorAttribute));
-            templateEngine.process("home.html", webContext, response.getWriter());
-        }
-    }
-
-    /**
-     * Determines the active panel based on the provided error attribute.
-     * @param errorAttribute the error attribute name.
-     * @return the corresponding active panel.
-     */
-    private String getActivePanelFromErrorAttribute(String errorAttribute) {
-        switch (errorAttribute) {
-            case "createAlbumErrorMessage":
-                return "createAlbum";
-            case "addImageErrorMessage":
-                return "addImage";
-            case "albumsErrorMessage":
-                return "myAlbums";
-            default:
-                return "myAlbums";
-        }
     }
 
 }
