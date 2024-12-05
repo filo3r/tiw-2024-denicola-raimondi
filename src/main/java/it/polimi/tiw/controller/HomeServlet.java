@@ -189,6 +189,7 @@ public class HomeServlet extends HttpServlet {
                 renderHomePage(request, response, webContext, username);
             }
         } catch (SQLException e) {
+            request.setAttribute("createAlbumErrorMessage", "Database error. Please reload page.");
             renderHomePage(request, response, webContext, username);
             e.printStackTrace();
         }
