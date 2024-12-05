@@ -110,4 +110,8 @@ public class StringUtil {
         return (!isNullOrEmpty(title) && !title.startsWith("@") && isValidLength(title, 1, 64));
     }
 
+    public static boolean isValidText(String text) {
+        return (!isNullOrEmpty(text) && isValidLength(text, 1, 512));
+    }
+
 }

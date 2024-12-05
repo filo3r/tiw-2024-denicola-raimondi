@@ -97,12 +97,22 @@
     <input type="file" id="imageFile" name="imageFile" accept=".jpg,.jpeg,.png,.webp" required th:value="${param.imageFile}">
     <label>Choose Albums:</label>
     <div class="albumsCheckbox">
+      <!-- User's Personal Album (Always Selected and Disabled) -->
+      <label>
+        <input type="checkbox" name="albumSelect" th:value="${userAlbumId}" checked disabled>
+        <span th:text="'@' + ${user.username}"> @username </span>
+      </label>
+      <!-- Check if there are albums -->
       <th:block th:if="${myAlbums != null and !#lists.isEmpty(myAlbums)}" th:each="album : ${myAlbums}">
-        <label>
-          <input type="checkbox" name="albumSelect" th:value="${album.albumId}">
-          <span th:text="${album.albumTitle}">Album Title</span>
-        </label>
+        <!-- Exclude album with title matching @username -->
+        <th:block th:if="${album.albumTitle != ('@' + user.username)}">
+          <label>
+            <input type="checkbox" name="albumSelect" th:value="${album.albumId}">
+            <span th:text="${album.albumTitle}">Album Title</span>
+          </label>
+        </th:block>
       </th:block>
+      <!-- Message if no albums are available -->
       <div th:if="${myAlbums == null or #lists.isEmpty(myAlbums)}">
         <p>You have no albums to select.</p>
       </div>

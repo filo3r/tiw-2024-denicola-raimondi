@@ -173,7 +173,7 @@ public class HomeServlet extends HttpServlet {
     private void handleCreateAlbum(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
         String albumTitle = request.getParameter("albumTitle");
         if (!StringUtil.isValidTitle(albumTitle)) {
-            request.setAttribute("createAlbumErrorMessage", "Invalid album title");
+            request.setAttribute("createAlbumErrorMessage", "Invalid album title.");
             renderHomePage(request, response, webContext, username);
             return;
         }
@@ -197,7 +197,26 @@ public class HomeServlet extends HttpServlet {
 
 
     private void handleAddImage(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
+        boolean successStringParameter = getImageStringParameter(request, response, webContext, username);
+        if (!successStringParameter)
+            return;
 
+    }
+
+    private boolean getImageStringParameter(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
+        String imageTitle = request.getParameter("imageTitle");
+        String imageText = request.getParameter("imageText");
+        if (!StringUtil.isValidTitle(imageTitle)) {
+            request.setAttribute("addImageErrorMessage", "Invalid image title.");
+            renderHomePage(request, response, webContext, username);
+            return false;
+        }
+        if (!StringUtil.isValidText(imageText)) {
+            request.setAttribute("addImageErrorMessage", "Invalid image description.");
+            renderHomePage(request, response, webContext, username);
+            return false;
+        }
+        return true;
     }
 
 
