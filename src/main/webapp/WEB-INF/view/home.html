@@ -78,7 +78,7 @@
   <h2>Create Album</h2>
   <form th:action="@{/home}" method="post">
     <label for="albumTitle">Album Title:</label>
-    <input type="text" id="albumTitle" name="albumTitle" required th:value="${param.albumTitle}">
+    <input type="text" id="albumTitle" name="albumTitle" required th:value="${param.albumTitle}" minlength="1" maxlength="64">
     <button type="submit" name="action" value="createAlbum">Create</button>
   </form>
   <div class="error-message" th:if="${createAlbumErrorMessage != null}" th:text="${createAlbumErrorMessage}"></div>
@@ -90,9 +90,9 @@
   <h2>Add Photo</h2>
   <form th:action="@{/home}" method="post" enctype="multipart/form-data">
     <label for="imageTitle">Image Title:</label>
-    <input type="text" id="imageTitle" name="imageTitle" required th:value="${param.imageTitle}">
+    <input type="text" id="imageTitle" name="imageTitle" required th:value="${param.imageTitle}" minlength="1" maxlength="64">
     <label for="imageText">Image Description:</label>
-    <input type="text" id="imageText" name="imageText" required th:value="${param.imageText}">
+    <input type="text" id="imageText" name="imageText" required th:value="${param.imageText}" minlength="1" maxlength="512">
     <label for="imageFile">Select Image:</label>
     <input type="file" id="imageFile" name="imageFile" accept=".jpg,.jpeg,.png,.webp" required th:value="${param.imageFile}">
     <label>Choose Albums:</label>
