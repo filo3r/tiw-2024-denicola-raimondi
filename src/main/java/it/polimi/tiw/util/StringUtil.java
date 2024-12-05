@@ -61,6 +61,13 @@ public class StringUtil {
     }
 
     /**
+     *
+     */
+    public static boolean isValidLength(String string, int minLength, int maxLength) {
+        return (!isNullOrEmpty(string) && string.length() >= minLength && string.length() <= maxLength);
+    }
+
+    /**
      * Validates if the provided email has a valid format.
      * An email is considered valid if it is not null, not empty, does not contain spaces,
      * and matches the specified email pattern.
@@ -68,7 +75,7 @@ public class StringUtil {
      * @return true if the email is valid, false otherwise
      */
     public static boolean isValidEmail(String email) {
-        return (!isNullOrEmpty(email) && !hasSpaces(email) && EMAIL_PATTERN.matcher(email).matches());
+        return (!isNullOrEmpty(email) && !hasSpaces(email) && EMAIL_PATTERN.matcher(email).matches() && isValidLength(email, 6, 64));
     }
 
     /**
@@ -79,7 +86,7 @@ public class StringUtil {
      * @return true if the username is valid, false otherwise
      */
     public static boolean isValidUsername(String username) {
-        return (!isNullOrEmpty(username) && !hasSpaces(username) && USERNAME_PATTERN.matcher(username).matches());
+        return (!isNullOrEmpty(username) && !hasSpaces(username) && USERNAME_PATTERN.matcher(username).matches() && isValidLength(username, 1, 32));
     }
 
     /**
@@ -90,7 +97,7 @@ public class StringUtil {
      * @return true if the password is valid, false otherwise
      */
     public static boolean isValidPassword(String password) {
-        return (!isNullOrEmpty(password) && !hasSpaces(password) && PASSWORD_PATTERN.matcher(password).matches());
+        return (!isNullOrEmpty(password) && !hasSpaces(password) && PASSWORD_PATTERN.matcher(password).matches() && isValidLength(password, 8, 128));
     }
 
     /**
@@ -100,7 +107,7 @@ public class StringUtil {
      * @return true if the album title is valid, false otherwise
      */
     public static boolean isValidAlbumTitle(String albumTitle) {
-        return albumTitle != null && !albumTitle.startsWith("@");
+        return (!isNullOrEmpty(albumTitle) && !albumTitle.startsWith("@") && isValidLength(albumTitle, 1, 64));
     }
 
 }

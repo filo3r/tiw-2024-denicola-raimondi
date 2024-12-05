@@ -17,10 +17,10 @@
   <div class="sign-up">
     <form th:action="@{/}" method="post">
       <h1>Sign Up</h1>
-      <input type="email" name="email" placeholder="Email" required th:value="${param.email}">
-      <input type="text" name="username" placeholder="Username" required th:value="${param.username}">
-      <input type="password" name="password1" placeholder="Password" required>
-      <input type="password" name="password2" placeholder="Confirm Password" required>
+      <input type="email" name="email" placeholder="Email" required th:value="${param.email}" minlength="6" maxlength="64">
+      <input type="text" name="username" placeholder="Username" required th:value="${param.username}" minlength="1" maxlength="32">
+      <input type="password" name="password1" placeholder="Password" required minlength="8" maxlength="128">
+      <input type="password" name="password2" placeholder="Confirm Password" required minlength="8" maxlength="128">
       <button type="submit" name="action" value="signUp">Sign Up</button>
       <div class="error-message" th:if="${signUpErrorMessage != null}" th:text="${signUpErrorMessage}"></div>
     </form>
@@ -30,8 +30,8 @@
   <div class="sign-in">
     <form th:action="@{/}" method="post">
       <h1>Sign In</h1>
-      <input type="email" name="email" placeholder="Email" required th:value="${param.email}">
-      <input type="password" name="password" placeholder="Password" required>
+      <input type="email" name="email" placeholder="Email" required th:value="${param.email}" minlength="6" maxlength="64">
+      <input type="password" name="password" placeholder="Password" required minlength="8" maxlength="128">
       <button type="submit" name="action" value="signIn">Sign In</button>
       <div class="error-message" th:if="${signInErrorMessage != null}" th:text="${signInErrorMessage}"></div>
     </form>

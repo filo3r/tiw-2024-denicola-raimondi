@@ -81,6 +81,8 @@ public class IndexServlet extends HttpServlet {
             handleSignUp(request, response);
         else if ("signIn".equals(action))
             handleSignIn(request, response);
+        else
+            response.sendRedirect(request.getContextPath() + "/");
     }
 
     /**
