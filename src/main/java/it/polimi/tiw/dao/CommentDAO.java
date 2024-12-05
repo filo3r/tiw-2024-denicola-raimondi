@@ -15,7 +15,7 @@ public class CommentDAO {
         this.databaseConnectionPool = DatabaseConnectionPool.getInstance();
     }
 
-    public int getCommentsByUser(String username) throws SQLException {
+    public int getCommentsCountByUser(String username) throws SQLException {
         String query = "SELECT COUNT(*) AS comments_count FROM Comment WHERE comment_author = ?";
         Connection connection = null;
         PreparedStatement statement = null;

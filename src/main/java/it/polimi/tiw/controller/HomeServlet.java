@@ -152,7 +152,7 @@ public class HomeServlet extends HttpServlet {
         CommentDAO commentDAO = new CommentDAO();
         int numAlbums = albumDAO.getAlbumsCountByUser(username);
         int numImages = imageDAO.getImagesCountByUser(username);
-        int numComments = commentDAO.getCommentsByUser(username);
+        int numComments = commentDAO.getCommentsCountByUser(username);
         User user = (User) request.getSession().getAttribute("user");
         webContext.setVariable("user", user);
         webContext.setVariable("userStats", Map.of(
