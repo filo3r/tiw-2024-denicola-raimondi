@@ -103,11 +103,11 @@ public class StringUtil {
     /**
      * Validates if the provided album title is valid.
      * An album title is considered valid if it is not null and does not start with the '@' character.
-     * @param albumTitle the album title to validate
+     * @param title the album title to validate
      * @return true if the album title is valid, false otherwise
      */
-    public static boolean isValidAlbumTitle(String albumTitle) {
-        return (!isNullOrEmpty(albumTitle) && !albumTitle.startsWith("@") && isValidLength(albumTitle, 1, 64));
+    public static boolean isValidTitle(String title) {
+        return (!isNullOrEmpty(title) && !title.startsWith("@") && isValidLength(title, 1, 64));
     }
 
 }

@@ -172,7 +172,7 @@ public class HomeServlet extends HttpServlet {
      */
     private void handleCreateAlbum(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
         String albumTitle = request.getParameter("albumTitle");
-        if (!StringUtil.isValidAlbumTitle(albumTitle)) {
+        if (!StringUtil.isValidTitle(albumTitle)) {
             request.setAttribute("createAlbumErrorMessage", "Invalid album title");
             renderHomePage(request, response, webContext, username);
             return;
