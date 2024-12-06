@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * HomeServlet handles requests for the home page of the application.
@@ -200,6 +201,9 @@ public class HomeServlet extends HttpServlet {
         boolean successStringParameter = getImageStringParameter(request, response, webContext, username);
         if (!successStringParameter)
             return;
+        ArrayList<Integer> selectedAlbums = getSelectedAlbums(request, response, webContext, username);
+        if (selectedAlbums == null || selectedAlbums.isEmpty())
+            return;
 
     }
 
@@ -219,6 +223,51 @@ public class HomeServlet extends HttpServlet {
         return true;
     }
 
+    private ArrayList<Integer> getSelectedAlbums(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
+        ArrayList<Integer> selectedAlbums = new ArrayList<>();
+        String[] selectedAlbumsStr = request.getParameterValues("albumSelect");
+        // Parse album IDs from the request
+        if (selectedAlbumsStr != null) {
+            for (String albumIdStr : selectedAlbumsStr) {
+                try {
+                    int albumIdInt = Integer.parseInt(albumIdStr);
+                    selectedAlbums.add(albumIdInt);
+                } catch (NumberFormatException e) {
+                    webContext.setVariable("addImageErrorMessage", "Invalid albums selected.");
+                    renderHomePage(request, response, webContext, username);
+                    return null;
+                }
+            }
+        }
+        try {
+            AlbumDAO albumDAO = new AlbumDAO();
+            // Add @username album
+            int userAlbumId = albumDAO.getUserPersonalAlbumId(username);
+            // Create personal album if it doesn't exist
+            if (userAlbumId == -1) {
+                Album userAlbum = new Album(username, "@" + username);
+                albumDAO.createAlbum(userAlbum);
+                userAlbumId = albumDAO.getUserPersonalAlbumId(username);
+            }
+            selectedAlbums.add(userAlbumId);
+            // Validate selected albums
+            ArrayList<Integer> userAlbumsIds = albumDAO.getMyAlbumIds(username);
+            for (Integer albumId : selectedAlbums) {
+                if (!userAlbumsIds.contains(albumId)) {
+                    webContext.setVariable("addImageErrorMessage", "Invalid album selection.");
+                    renderHomePage(request, response, webContext, username);
+                    return null;
+                }
+            }
+        } catch (SQLException e) {
+            webContext.setVariable("addImageErrorMessage", "Database error. Please reload page.");
+            renderHomePage(request, response, webContext, username);
+            e.printStackTrace();
+            return null;
+        }
+        // Remove duplicates and return the list
+        return new ArrayList<>(selectedAlbums.stream().distinct().collect(Collectors.toList()));
+    }
 
     private void handleLogout(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession(false);

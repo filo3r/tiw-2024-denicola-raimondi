@@ -152,4 +152,77 @@ public class AlbumDAO {
         }
     }
 
+    public int getUserPersonalAlbumId(String username) throws SQLException {
+        String query = "SELECT album_id FROM Album WHERE album_creator = ? AND album_title = ?";
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet result = null;
+        try {
+            connection = databaseConnectionPool.getConnection();
+            statement = connection.prepareStatement(query);
+            statement.setString(1, username);
+            statement.setString(2, "@" + username);
+            result = statement.executeQuery();
+            if (result.next())
+                return result.getInt("album_id");
+            else
+                return -1;
+        } finally {
+            if (result != null)
+                result.close();
+            if (statement != null)
+                statement.close();
+            if (connection != null)
+                databaseConnectionPool.releaseConnection(connection);
+        }
+    }
+
+    public boolean isAlbumOwnedByUser(int albumId, String username) throws SQLException {
+        String query = "SELECT COUNT(*) AS count FROM Album WHERE album_id = ? AND album_creator = ?";
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet result = null;
+        try {
+            connection = databaseConnectionPool.getConnection();
+            statement = connection.prepareStatement(query);
+            statement.setInt(1, albumId);
+            statement.setString(2, username);
+            result = statement.executeQuery();
+            if (result.next())
+                return result.getInt("count") > 0;
+            return false;
+        } finally {
+            if (result != null)
+                result.close();
+            if (statement != null)
+                statement.close();
+            if (connection != null)
+                databaseConnectionPool.releaseConnection(connection);
+        }
+    }
+
+    public ArrayList<Integer> getMyAlbumIds(String username) throws SQLException {
+        String query = "SELECT album_id FROM Album WHERE album_creator = ?";
+        ArrayList<Integer> albumIds = new ArrayList<>();
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet result = null;
+        try {
+            connection = databaseConnectionPool.getConnection();
+            statement = connection.prepareStatement(query);
+            statement.setString(1, username);
+            result = statement.executeQuery();
+            while (result.next())
+                albumIds.add(result.getInt("album_id"));
+            return albumIds;
+        } finally {
+            if (result != null)
+                result.close();
+            if (statement != null)
+                statement.close();
+            if (connection != null)
+                databaseConnectionPool.releaseConnection(connection);
+        }
+    }
+
 }
