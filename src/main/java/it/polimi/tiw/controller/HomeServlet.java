@@ -4,6 +4,7 @@ import it.polimi.tiw.dao.AlbumDAO;
 import it.polimi.tiw.dao.CommentDAO;
 import it.polimi.tiw.dao.ImageDAO;
 import it.polimi.tiw.model.Album;
+import it.polimi.tiw.model.Image;
 import it.polimi.tiw.model.User;
 import it.polimi.tiw.util.StringUtil;
 import it.polimi.tiw.util.ViewEngine;
@@ -12,13 +13,12 @@ import org.thymeleaf.context.WebContext;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import javax.servlet.http.*;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -198,34 +198,50 @@ public class HomeServlet extends HttpServlet {
 
 
     private void handleAddImage(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
-        boolean successStringParameter = getImageStringParameter(request, response, webContext, username);
-        if (!successStringParameter)
+        ArrayList<String> imageStringParameters = getImageStringParameters(request, response, webContext, username);
+        if (imageStringParameters == null || imageStringParameters.isEmpty())
             return;
         ArrayList<Integer> selectedAlbums = getSelectedAlbums(request, response, webContext, username);
         if (selectedAlbums == null || selectedAlbums.isEmpty())
             return;
-
+        Part imageFile = getImageFile(request, response, webContext, username);
+        if (imageFile == null)
+            return;
+        String imageExtension = getImageExtension(request, response, webContext, username, imageFile);
+        if (imageExtension == null)
+            return;
+        int imageId = insertImageIntoDatabase(request, response, webContext, username, imageStringParameters, selectedAlbums, imageExtension);
+        if (imageId == -1)
+            return;
+        boolean imageSaved = saveImageIntoDisk(request, response, webContext, username, imageFile, imageId, imageExtension);
+        if (!imageSaved)
+            return;
+        request.setAttribute("addImageSuccessMessage", "Image added successfully.");
+        response.sendRedirect(request.getContextPath() + "/home");
     }
 
-    private boolean getImageStringParameter(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
+    private ArrayList<String> getImageStringParameters(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
         String imageTitle = request.getParameter("imageTitle");
         String imageText = request.getParameter("imageText");
+        ArrayList<String> imageStringParameters = new ArrayList<>();
         if (!StringUtil.isValidTitle(imageTitle)) {
             request.setAttribute("addImageErrorMessage", "Invalid image title.");
             renderHomePage(request, response, webContext, username);
-            return false;
+            return null;
         }
         if (!StringUtil.isValidText(imageText)) {
             request.setAttribute("addImageErrorMessage", "Invalid image description.");
             renderHomePage(request, response, webContext, username);
-            return false;
+            return null;
         }
-        return true;
+        imageStringParameters.add(imageTitle);
+        imageStringParameters.add(imageText);
+        return imageStringParameters;
     }
 
     private ArrayList<Integer> getSelectedAlbums(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
-        ArrayList<Integer> selectedAlbums = new ArrayList<>();
         String[] selectedAlbumsStr = request.getParameterValues("albumSelect");
+        ArrayList<Integer> selectedAlbums = new ArrayList<>();
         // Parse album IDs from the request
         if (selectedAlbumsStr != null) {
             for (String albumIdStr : selectedAlbumsStr) {
@@ -267,6 +283,79 @@ public class HomeServlet extends HttpServlet {
         }
         // Remove duplicates and return the list
         return new ArrayList<>(selectedAlbums.stream().distinct().collect(Collectors.toList()));
+    }
+
+    private Part getImageFile(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
+        Part imageFile = request.getPart("imageFile");
+        if (imageFile == null || imageFile.getSize() <= 0) {
+            request.setAttribute("imageFileErrorMessage", "Image not uploaded or empty.");
+            renderHomePage(request, response, webContext, username);
+            return null;
+        }
+        if (imageFile.getSize() > 1024 * 1024 * 100) {
+            request.setAttribute("imageFileErrorMessage", "Image is too large. Maximum allowed size is 100 MB.");
+            renderHomePage(request, response, webContext, username);
+            return null;
+        }
+        String mimeType = imageFile.getContentType();
+        List<String> allowedMimeTypes = Arrays.asList("image/jpg", "image/jpeg", "image/png", "image/webp");
+        if (mimeType == null || !allowedMimeTypes.contains(mimeType)) {
+            request.setAttribute("imageFileErrorMessage", "Invalid image type. Only JPG, JPEG, PNG or WEBP images are allowed.");
+            renderHomePage(request, response, webContext, username);
+            return null;
+        }
+        return imageFile;
+    }
+
+    private String getImageExtension(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username, Part imageFile) throws ServletException, IOException {
+        String imageName = imageFile.getSubmittedFileName();
+        if (imageName == null && !imageName.contains(".")) {
+            request.setAttribute("imageFileErrorMessage", "Image not uploaded or empty.");
+            renderHomePage(request, response, webContext, username);
+            return null;
+        }
+        String imageExtension = "." + imageName.substring(imageName.lastIndexOf(".") + 1).toLowerCase();
+        if (!imageExtension.equals(".jpg") && !imageExtension.equals(".jpeg") && !imageExtension.equals(".png") && !imageExtension.equals(".webp")) {
+            request.setAttribute("imageFileErrorMessage", "Invalid image type. Only JPG, JPEG, PNG or WEBP images are allowed.");
+            renderHomePage(request, response, webContext, username);
+            return null;
+        }
+        return imageExtension;
+    }
+
+    private int insertImageIntoDatabase(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username, ArrayList<String> imageStringParameters, ArrayList<Integer> selectedAlbums, String imageExtension) throws ServletException, IOException {
+        try {
+            Image image = new Image(username, imageStringParameters.get(0), imageStringParameters.get(1));
+            ImageDAO imageDAO = new ImageDAO();
+            int imageId = imageDAO.addImage(image);
+            if (imageId == -1) {
+                webContext.setVariable("addImageErrorMessage", "Database error. Please reload page.");
+                renderHomePage(request, response, webContext, username);
+                return -1;
+            }
+            boolean updatedPath = imageDAO.updateImagePath(imageId, "/uploads/" + imageId + imageExtension);
+            if (!updatedPath) {
+                webContext.setVariable("addImageErrorMessage", "Database error. Please reload page.");
+                renderHomePage(request, response, webContext, username);
+                return -1;
+            }
+            boolean imageIntoAlbums = imageDAO.addImageToAlbums(imageId, selectedAlbums);
+            if (!imageIntoAlbums) {
+                webContext.setVariable("addImageErrorMessage", "Database error. Please reload page.");
+                renderHomePage(request, response, webContext, username);
+                return -1;
+            }
+            return imageId;
+        } catch (SQLException e) {
+            webContext.setVariable("addImageErrorMessage", "Database error. There may have been errors adding the image. Please reload page.");
+            renderHomePage(request, response, webContext, username);
+            return -1;
+        }
+    }
+
+    private boolean saveImageIntoDisk(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username, Part imageFile, int imageId, String imageExtension) throws ServletException, IOException {
+        return false;
+        // DA IMPLEMENTARE
     }
 
     private void handleLogout(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

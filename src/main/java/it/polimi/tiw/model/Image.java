@@ -42,14 +42,13 @@ public class Image {
      * @param imageUploader the username of the uploader
      * @param imageTitle   the title of the image
      * @param imageText    the description of the image
-     * @param imagePath    the path to the image file
      */
-    public Image(String imageUploader, String imageTitle, String imageText, String imagePath) {
+    public Image(String imageUploader, String imageTitle, String imageText) {
         this.imageUploader = imageUploader;
         this.imageTitle = imageTitle;
         this.imageDate = new Timestamp(System.currentTimeMillis());
         this.imageText = imageText;
-        this.imagePath = imagePath;
+        this.imagePath = "/uploads/0.png";
     }
 
     /**

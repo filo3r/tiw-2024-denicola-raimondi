@@ -61,7 +61,11 @@ public class StringUtil {
     }
 
     /**
-     *
+     * Validates if a string's length falls within the specified range.
+     * @param string the string to validate
+     * @param minLength the minimum acceptable length
+     * @param maxLength the maximum acceptable length
+     * @return true if the string length is within the range, false otherwise
      */
     public static boolean isValidLength(String string, int minLength, int maxLength) {
         return (!isNullOrEmpty(string) && string.length() >= minLength && string.length() <= maxLength);
@@ -110,6 +114,12 @@ public class StringUtil {
         return (!isNullOrEmpty(title) && !title.startsWith("@") && isValidLength(title, 1, 64));
     }
 
+    /**
+     * Validates if the provided text is valid.
+     * A text is considered valid if it is not null and its length is within the acceptable range.
+     * @param text the text to validate
+     * @return true if the text is valid, false otherwise
+     */
     public static boolean isValidText(String text) {
         return (!isNullOrEmpty(text) && isValidLength(text, 1, 512));
     }

@@ -128,6 +128,12 @@ public class AlbumDAO {
         }
     }
 
+    /**
+     * Retrieves the number of albums created by a specific user.
+     * @param username the username of the album creator
+     * @return the count of albums created by the user
+     * @throws SQLException if a database access error occurs
+     */
     public int getAlbumsCountByUser(String username) throws SQLException {
         String query = "SELECT COUNT(*) AS albums_count FROM Album WHERE album_creator = ?";
         Connection connection = null;
@@ -152,8 +158,14 @@ public class AlbumDAO {
         }
     }
 
+    /**
+     * Retrieves the ID of the personal album of a specific user, identified by a specific naming convention.
+     * @param username the username of the album creator
+     * @return the ID of the user's personal album, or -1 if not found
+     * @throws SQLException if a database access error occurs
+     */
     public int getUserPersonalAlbumId(String username) throws SQLException {
-        String query = "SELECT album_id FROM Album WHERE album_creator = ? AND album_title = ?";
+        String query = "SELECT album_id FROM Album WHERE album_creator = ? AND album_title = ? ORDER BY album_date ASC";
         Connection connection = null;
         PreparedStatement statement = null;
         ResultSet result = null;
@@ -177,6 +189,13 @@ public class AlbumDAO {
         }
     }
 
+    /**
+     * Checks if a specific album is owned by a given user.
+     * @param albumId the ID of the album
+     * @param username the username of the potential album owner
+     * @return true if the album is owned by the user, false otherwise
+     * @throws SQLException if a database access error occurs
+     */
     public boolean isAlbumOwnedByUser(int albumId, String username) throws SQLException {
         String query = "SELECT COUNT(*) AS count FROM Album WHERE album_id = ? AND album_creator = ?";
         Connection connection = null;
@@ -201,6 +220,12 @@ public class AlbumDAO {
         }
     }
 
+    /**
+     * Retrieves the list of album IDs created by a specific user.
+     * @param username the username of the album creator
+     * @return a list of album IDs created by the user
+     * @throws SQLException if a database access error occurs
+     */
     public ArrayList<Integer> getMyAlbumIds(String username) throws SQLException {
         String query = "SELECT album_id FROM Album WHERE album_creator = ?";
         ArrayList<Integer> albumIds = new ArrayList<>();
@@ -225,6 +250,12 @@ public class AlbumDAO {
         }
     }
 
+    /**
+     * Retrieves an album by its ID.
+     * @param albumId the ID of the album to retrieve
+     * @return the Album object corresponding to the given ID, or null if no album is found
+     * @throws SQLException if a database access error occurs
+     */
     public Album getAlbumById(int albumId) throws SQLException {
         String query = "SELECT * FROM Album WHERE album_id = ?";
         Connection connection = null;
