@@ -225,4 +225,34 @@ public class AlbumDAO {
         }
     }
 
+    public Album getAlbumById(int albumId) throws SQLException {
+        String query = "SELECT * FROM Album WHERE album_id = ?";
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet result = null;
+        try {
+            connection = databaseConnectionPool.getConnection();
+            statement = connection.prepareStatement(query);
+            statement.setInt(1, albumId);
+            result = statement.executeQuery();
+            if (result.next()) {
+                String albumCreator = result.getString("album_creator");
+                String albumTitle = result.getString("album_title");
+                Timestamp albumDate = result.getTimestamp("album_date");
+                Album album = new Album(albumCreator, albumTitle);
+                album.setAlbumId(albumId);
+                album.setAlbumDate(albumDate);
+                return album;
+            }
+            return null;
+        } finally {
+            if (result != null)
+                result.close();
+            if (statement != null)
+                statement.close();
+            if (connection != null)
+                databaseConnectionPool.releaseConnection(connection);
+        }
+    }
+
 }

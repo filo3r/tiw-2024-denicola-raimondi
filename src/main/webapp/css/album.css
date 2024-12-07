@@ -1,0 +1,110 @@
+/* General Styles */
+body {
+    background-color: #f8f8f8;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+}
+
+/* Stili per la barra di navigazione */
+.navbar {
+    background-color: #123456; /* Colore di sfondo */
+    color: #ffffff; /* Colore del testo */
+    font-family: Arial, sans-serif;
+    height: 60px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    box-sizing: border-box; /* Include padding in width calculation */
+}
+
+.navbar-content {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin: 0 auto; /* Center navbar content */
+}
+
+.navbar .nav-button {
+    color: #ffffff;
+    text-decoration: none;
+    margin-right: auto; /* Spinge il titolo al centro */
+    font-size: 1em;
+    padding: 10px 15px;
+}
+
+.nav-button:hover {
+    background-color: #0056b3; /* Effetto hover */
+    border-radius: 15pc;
+}
+
+.navbar-title {
+    font-size: 1.5em;
+    text-align: center;
+    font-weight: bold;
+    flex-grow: 1;
+}
+
+/* Navigation style: buttons "next" and "previous" */
+.navigation {
+    display: flex;
+    justify-content: space-between; /* Allinea i bottoni ai lati opposti del contenitore */
+    width: 100%;
+    margin-top: 15px;
+}
+
+.navigation .nav-button {
+    background-color: #007BFF;
+    color: white;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 9px;
+    margin: 15px; /* Spazio tra i bottoni */
+    transition: background-color 0.3s;
+    box-shadow: 0 4px 8px #9e9e9e;
+    width: 80px;  /* Larghezza fissa */
+    height: 40px;  /* Altezza fissa */
+
+    display: flex; /* Aggiunto per permettere il centrare del contenuto */
+    justify-content: center; /* Centra il contenuto orizzontalmente */
+    align-items: center; /* Centra il contenuto verticalmente */
+
+    box-sizing: border-box; /* Assicura che padding e border siano inclusi nelle dimensioni */
+}
+
+.navigation .nav-button:hover {
+    background-color: #0056b3; /* Colore più scuro al passaggio del mouse */
+}
+
+/* Table Styles */
+.album-table {
+    width: 100%;
+    margin-top: 0.5%;
+    border-collapse: separate;
+    border-spacing: 15px;
+}
+.album-table td {
+    width: 18%;
+    text-align: center;
+}
+.album-table .image-item {
+    width: 100%;
+    height: 190px;
+    object-fit: cover;
+    border-radius: 15px;
+    box-shadow: 0 4px 8px #9e9e9e;
+    transition: opacity 0.2s ease;
+}
+.album-table .image-item:hover {
+    opacity: 0.75;
+}
+.album-table .image-title {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #333;
+}

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Album</title>
+    <link rel="stylesheet" th:href="@{/css/album.css}">
+</head>
+<body>
+<header class="navbar">
+    <nav class="navbar-content">
+        <!-- Link alla home -->
+        <a th:href="@{/home}" class="nav-button">Home</a>
+
+        <!-- Titolo dell'album -->
+        <div class="navbar-title" th:text="${album.albumTitle}">Album Title</div>
+
+        <!-- Logout form -->
+        <form th:action="@{/album}" method="post" class="nav-button">
+            <button type="submit" name="action" value="logout">Logout</button>
+        </form>
+    </nav>
+</header>
+
+
+
+
+
+<!-- ****************************************** DA SISTEMARE ****************************************** -->
+<div class="navigation">
+    <!-- Previous page link -->
+    <a th:if="${hasPrevious}"
+       th:href="@{/album(albumId=${album.albumId}, page=${currentPage - 1})}"
+       class="nav-button">Previous</a>
+
+    <!-- Next page link -->
+    <a th:if="${hasNext}"
+       th:href="@{/album(albumId=${album.albumId}, page=${currentPage + 1})}"
+       class="nav-button">Next</a>
+</div>
+
+<table class="album-table">
+    <tr>
+        <td th:each="i : ${#numbers.sequence(0, 4)}" class="album-cell">
+            <th:block th:if="${i < images.size()}">
+                <img th:src="@{/image(imageId=${images[i].imageId})}"
+                     th:alt="${images[i].imageTitle}"
+                     class="image-item">
+                <div class="image-title" th:text="${images[i].imageTitle}">Image Title</div>
+            </th:block>
+            <th:block th:unless="${i < images.size()}">
+                <!-- Empty cell for when there are fewer than 5 images -->
+                <div class="empty-cell"></div>
+            </th:block>
+        </td>
+    </tr>
+</table>
+</body>
+</html>
