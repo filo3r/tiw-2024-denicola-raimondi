@@ -1,4 +1,5 @@
 database.properties
+uploads.properties
 src/main/webapp/uploads/
 target/
 !.mvn/wrapper/maven-wrapper.jar
