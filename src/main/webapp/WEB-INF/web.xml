@@ -23,6 +23,10 @@
         <servlet-name>default</servlet-name>
         <url-pattern>/img/*</url-pattern>
     </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>default</servlet-name>
+        <url-pattern>/uploads/*</url-pattern>
+    </servlet-mapping>
 
     <!-- Declaration and mapping of Servlet -->
     <servlet>
@@ -37,6 +41,12 @@
     <servlet>
         <servlet-name>HomeServlet</servlet-name>
         <servlet-class>it.polimi.tiw.controller.HomeServlet</servlet-class>
+        <!-- Enabling multipart configuration -->
+        <multipart-config>
+            <max-file-size>104857600</max-file-size> <!-- Max file size: 100 MB -->
+            <max-request-size>125829120</max-request-size> <!-- Max request size: 120 MB -->
+            <file-size-threshold>2097152</file-size-threshold> <!-- Threshold before saving to disk: 2 MB -->
+        </multipart-config>
     </servlet>
     <servlet-mapping>
         <servlet-name>HomeServlet</servlet-name>

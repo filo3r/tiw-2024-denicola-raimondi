@@ -82,7 +82,7 @@ public class DatabaseConnectionPool {
         try {
             Properties properties = new Properties();
             // Load the database properties from the configuration file
-            try (InputStream inputStream = DatabaseConnectionPool.class.getClassLoader().getResourceAsStream("database/database.properties")) {
+            try (InputStream inputStream = DatabaseConnectionPool.class.getClassLoader().getResourceAsStream("properties/database.properties")) {
                 if (inputStream == null)
                     throw new IOException("Database properties file not found");
                 properties.load(inputStream);

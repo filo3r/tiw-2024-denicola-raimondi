@@ -15,11 +15,13 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -354,8 +356,61 @@ public class HomeServlet extends HttpServlet {
     }
 
     private boolean saveImageIntoDisk(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username, Part imageFile, int imageId, String imageExtension) throws ServletException, IOException {
-        return false;
-        // DA IMPLEMENTARE
+        // Destination directory to save images
+        String uploadsPathString = getUploadsPath();
+        if (uploadsPathString == null) {
+            webContext.setVariable("addImageErrorMessage", "Server error. Please reload page.");
+            renderHomePage(request, response, webContext, username);
+            return false;
+        }
+        // Create Path object from the loaded uploads path
+        Path uploadsPath = Paths.get(uploadsPathString);
+        // Create uploads directory (if it doesn't already exist)
+        Files.createDirectories(uploadsPath); // thread-safe
+        // Full path of the file to save
+        Path imagePath = uploadsPath.resolve(imageId + imageExtension);
+        // Save the file contents to the destination
+        try (InputStream inputStream = imageFile.getInputStream()) {
+            Files.copy(inputStream, imagePath, StandardCopyOption.REPLACE_EXISTING);
+            // Verify that the file has been created
+            if (!Files.exists(imagePath)) {
+                webContext.setVariable("addImageErrorMessage", "Error saving image to server. Please reload page.");
+                renderHomePage(request, response, webContext, username);
+                return false;
+            }
+        } catch (IOException save) {
+            // Rollback: delete the partial file, if it exists
+            try {
+                Files.deleteIfExists(imagePath);
+            } catch (IOException delete) {
+                delete.printStackTrace();
+            }
+            webContext.setVariable("addImageErrorMessage", "Error saving image to server. Please reload page.");
+            renderHomePage(request, response, webContext, username);
+            save.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+    private String getUploadsPath() {
+        try (InputStream input = getClass().getClassLoader().getResourceAsStream("/properties/uploads.properties")) {
+            if (input == null) {
+                System.err.println("Could not find uploads.properties file.");
+                return null;
+            }
+            Properties properties = new Properties();
+            properties.load(input);
+            String uploadsPath = properties.getProperty("uploads.path");
+            if (uploadsPath == null || uploadsPath.isEmpty()) {
+                System.err.println("Error in uploads.properties file.");
+                return null;
+            }
+            return uploadsPath;
+        } catch (IOException e) {
+            System.err.println("Error reading uploads.properties file: " + e.getMessage());
+            return null;
+        }
     }
 
     private void handleLogout(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
