@@ -62,30 +62,16 @@ public class AlbumServlet extends HttpServlet{
             response.sendRedirect(request.getContextPath() + "/");
             return;
         }
-
-        // Get user
-        User user = (User) session.getAttribute("user");
-
-        // Get album ID from request
-        String albumIdParam = request.getParameter("albumId");
-        if (albumIdParam == null || albumIdParam.isEmpty()) {
-            response.sendRedirect(request.getContextPath() + "/home");
-            return;
-        }
-
-        int albumId;
-        try {
-            albumId = Integer.parseInt(albumIdParam);
-        } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/home");
-            return;
-        }
-
-        // Creazione del WebContext e setting variabili qui
+        // WebContext
         ServletContext servletContext = getServletContext();
         WebContext webContext = new WebContext(request, response, servletContext, request.getLocale());
-
-        // rendering album page, ora passiamo anche il webContext
+        // Get album ID from request
+        int albumId = getAlbumId(request, response, webContext);
+        if (albumId == -1) {
+            response.sendRedirect(request.getContextPath() + "/home");
+            return;
+        }
+        // Render page
         renderAlbumPage(request, response, webContext, albumId);
     }
 
@@ -104,54 +90,65 @@ public class AlbumServlet extends HttpServlet{
             response.sendRedirect(request.getContextPath() + "/");
             return;
         }
-        // Get user
-        User user = (User) session.getAttribute("user");
-        String username = user.getUsername();
         // WebContext
         ServletContext servletContext = getServletContext();
         WebContext webContext = new WebContext(request, response, servletContext, request.getLocale());
-        webContext.setVariable("user", user);
-        //logout
+        // Logout
         String action = request.getParameter("action");
-        if("logout".equals(action))
+        if ("logout".equals(action))
             handleLogout(request, response);
         else
             response.sendRedirect(request.getContextPath() + "/album");
+    }
+
+    private int getAlbumId(HttpServletRequest request, HttpServletResponse response, WebContext webContext) throws ServletException, IOException {
+        String albumIdParam = request.getParameter("albumId");
+        int albumId = -1;
+        if (albumIdParam == null || albumIdParam.isEmpty()) {
+            return -1;
+        }
+        try {
+            albumId = Integer.parseInt(albumIdParam);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+        try {
+            AlbumDAO albumDAO = new AlbumDAO();
+            boolean exists = albumDAO.doesAlbumExist(albumId);
+            if (exists)
+                return albumId;
+            else
+                return -1;
+        } catch (SQLException e) {
+            showErrorPage("Database error. Please reload page.", request, response, webContext, albumId);
+        }
+        return albumId;
     }
 
 
     private void renderAlbumPage(HttpServletRequest request, HttpServletResponse response, WebContext webContext, int albumId) throws ServletException, IOException {
         try {
             handleLoadAlbumData(webContext, albumId);
+            handleLoadAlbumImages(webContext, albumId);
         } catch (SQLException e) {
+            webContext.setVariable("album", null);
+            webContext.setVariable("images", null);
             webContext.setVariable("albumErrorMessage", "Database error. Please reload page.");
             e.printStackTrace();
         }
-
         templateEngine.process("album.html", webContext, response.getWriter());
     }
-
 
     private void handleLoadAlbumData(WebContext webContext, int albumId) throws SQLException {
         AlbumDAO albumDAO = new AlbumDAO();
         Album album = albumDAO.getAlbumById(albumId);
-
-        if (album == null) {
-            webContext.setVariable("albumErrorMessage", "Album not found.");
-            return;
-        }
-
-        //  Album's owner?
-        // if (!albumDAO.isAlbumOwnedByUser(albumId, username)) {
-        //     webContext.setVariable("albumErrorMessage", "You don't own this album.");
-        //     return;
-        // }
-
         webContext.setVariable("album", album);
-        webContext.setVariable("albumTitle", album.getAlbumTitle());
-        //todo: da inserire nella album page
-        webContext.setVariable("albumDate", album.getAlbumDate());
+    }
 
+    private void handleLoadAlbumImages(WebContext webContext, int albumId) throws SQLException {
+        AlbumDAO albumDAO = new AlbumDAO();
+        ArrayList<Image> images = albumDAO.getImagesByAlbumId(albumId);
+        webContext.setVariable("images", images);
     }
 
     private void handleLogout(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -159,6 +156,11 @@ public class AlbumServlet extends HttpServlet{
         if (session != null)
             session.invalidate();
         response.sendRedirect(request.getContextPath() + "/");
+    }
+
+    private void showErrorPage(String errorMessage, HttpServletRequest request, HttpServletResponse response, WebContext webContext, int albumId) throws ServletException, IOException {
+        webContext.setVariable("albumErrorMessage", errorMessage);
+        renderAlbumPage(request, response, webContext, albumId);
     }
 
 }
