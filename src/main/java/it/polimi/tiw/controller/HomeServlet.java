@@ -76,6 +76,8 @@ public class HomeServlet extends HttpServlet {
         ServletContext servletContext = getServletContext();
         WebContext webContext = new WebContext(request, response, servletContext, request.getLocale());
         webContext.setVariable("user", user);
+        // Show success messages
+        showSuccessMessage(session, webContext);
         // Render page
         renderHomePage(request, response, webContext, username);
     }
@@ -184,7 +186,8 @@ public class HomeServlet extends HttpServlet {
             AlbumDAO albumDAO = new AlbumDAO();
             boolean success = albumDAO.createAlbum(album);
             if (success) {
-                request.setAttribute("createAlbumSuccessMessage", "Album created successfully.");
+                HttpSession session = request.getSession();
+                session.setAttribute("createAlbumSuccessMessage", "Album created successfully.");
                 response.sendRedirect(request.getContextPath() + "/home");
             } else {
                 showErrorPage("createAlbum", "Database error. Please reload page.", request, response, webContext, username);
@@ -215,7 +218,8 @@ public class HomeServlet extends HttpServlet {
         boolean imageSaved = saveImageIntoDisk(request, response, webContext, username, imageFile, imageId, imageExtension);
         if (!imageSaved)
             return;
-        request.setAttribute("addImageSuccessMessage", "Image added successfully.");
+        HttpSession session = request.getSession();
+        session.setAttribute("addImageSuccessMessage", "Image added successfully.");
         response.sendRedirect(request.getContextPath() + "/home");
     }
 
@@ -426,6 +430,19 @@ public class HomeServlet extends HttpServlet {
         webContext.setVariable("activePanel", activePanel);
         // Page Rendering
         renderHomePage(request, response, webContext, username);
+    }
+
+    private void showSuccessMessage(HttpSession session, WebContext webContext) {
+        if (session == null)
+            return;
+        String[] successMessages = {"createAlbumSuccessMessage", "addImageSuccessMessage"};
+        for (String successMessage : successMessages) {
+            Object message = session.getAttribute(successMessage);
+            if (message != null) {
+                webContext.setVariable(successMessage, message);
+                session.removeAttribute(successMessage);
+            }
+        }
     }
 
 }
