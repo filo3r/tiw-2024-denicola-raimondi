@@ -42,11 +42,13 @@
   <!-- Album container -->
   <div class="album-container">
     <th:block th:if="${myAlbums != null and !#lists.isEmpty(myAlbums)}" th:each="album : ${myAlbums}">
-      <div class="album">
-        <img th:src="@{/img/folder.png}" alt="Folder Image">
-        <p th:text="${album.albumTitle}">Album Title</p>
-        <p th:text="${album.albumCreator}">Album Creator</p>
-      </div>
+      <a th:href="@{/album(albumId=${album.albumId})}">
+        <div class="album">
+          <img th:src="@{/img/folder.png}" alt="Folder Image">
+          <p th:text="${album.albumTitle}">Album Title</p>
+          <p th:text="${album.albumCreator}">Album Creator</p>
+        </div>
+      </a>
     </th:block>
     <div th:if="${myAlbums == null or #lists.isEmpty(myAlbums)}">
       <p>There are no albums to display.</p>
@@ -61,11 +63,13 @@
   <!-- Album container -->
   <div class="album-container">
     <th:block th:if="${otherAlbums != null and !#lists.isEmpty(otherAlbums)}" th:each="album : ${otherAlbums}">
-      <div class="album">
-        <img th:src="@{/img/folder.png}" alt="Folder Image">
-        <p th:text="${album.albumTitle}">Album Title</p>
-        <p th:text="${album.albumCreator}">Album Creator</p>
-      </div>
+      <a th:href="@{/album(albumId=${album.albumId})}">
+        <div class="album">
+          <img th:src="@{/img/folder.png}" alt="Folder Image">
+          <p th:text="${album.albumTitle}">Album Title</p>
+          <p th:text="${album.albumCreator}">Album Creator</p>
+        </div>
+      </a>
     </th:block>
     <div th:if="${otherAlbums == null or #lists.isEmpty(otherAlbums)}">
       <p>There are no albums to display.</p>
