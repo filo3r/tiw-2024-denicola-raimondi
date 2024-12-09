@@ -176,8 +176,7 @@ public class HomeServlet extends HttpServlet {
     private void handleCreateAlbum(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
         String albumTitle = request.getParameter("albumTitle");
         if (!StringUtil.isValidTitle(albumTitle)) {
-            request.setAttribute("createAlbumErrorMessage", "Invalid album title.");
-            renderHomePage(request, response, webContext, username);
+            showErrorPage("createAlbum", "Invalid album title.", request, response, webContext, username);
             return;
         }
         Album album = new Album(username, albumTitle);
@@ -188,12 +187,10 @@ public class HomeServlet extends HttpServlet {
                 request.setAttribute("createAlbumSuccessMessage", "Album created successfully.");
                 response.sendRedirect(request.getContextPath() + "/home");
             } else {
-                request.setAttribute("createAlbumErrorMessage", "Database error. Please reload page.");
-                renderHomePage(request, response, webContext, username);
+                showErrorPage("createAlbum", "Database error. Please reload page.", request, response, webContext, username);
             }
         } catch (SQLException e) {
-            request.setAttribute("createAlbumErrorMessage", "Database error. Please reload page.");
-            renderHomePage(request, response, webContext, username);
+            showErrorPage("createAlbum", "Database error. Please reload page.", request, response, webContext, username);
             e.printStackTrace();
         }
     }
@@ -227,13 +224,11 @@ public class HomeServlet extends HttpServlet {
         String imageText = request.getParameter("imageText");
         ArrayList<String> imageStringParameters = new ArrayList<>();
         if (!StringUtil.isValidTitle(imageTitle)) {
-            request.setAttribute("addImageErrorMessage", "Invalid image title.");
-            renderHomePage(request, response, webContext, username);
+            showErrorPage("addImage", "Invalid image title.", request, response, webContext, username);
             return null;
         }
         if (!StringUtil.isValidText(imageText)) {
-            request.setAttribute("addImageErrorMessage", "Invalid image description.");
-            renderHomePage(request, response, webContext, username);
+            showErrorPage("addImage", "Invalid image description.", request, response, webContext, username);
             return null;
         }
         imageStringParameters.add(imageTitle);
@@ -251,8 +246,7 @@ public class HomeServlet extends HttpServlet {
                     int albumIdInt = Integer.parseInt(albumIdStr);
                     selectedAlbums.add(albumIdInt);
                 } catch (NumberFormatException e) {
-                    webContext.setVariable("addImageErrorMessage", "Invalid albums selected.");
-                    renderHomePage(request, response, webContext, username);
+                    showErrorPage("addImage", "Invalid albums selected.", request, response, webContext, username);
                     return null;
                 }
             }
@@ -272,14 +266,12 @@ public class HomeServlet extends HttpServlet {
             ArrayList<Integer> userAlbumsIds = albumDAO.getMyAlbumIds(username);
             for (Integer albumId : selectedAlbums) {
                 if (!userAlbumsIds.contains(albumId)) {
-                    webContext.setVariable("addImageErrorMessage", "Invalid album selection.");
-                    renderHomePage(request, response, webContext, username);
+                    showErrorPage("addImage", "Invalid albums selected.", request, response, webContext, username);
                     return null;
                 }
             }
         } catch (SQLException e) {
-            webContext.setVariable("addImageErrorMessage", "Database error. Please reload page.");
-            renderHomePage(request, response, webContext, username);
+            showErrorPage("addImage", "Database error. Please reload page.", request, response, webContext, username);
             e.printStackTrace();
             return null;
         }
@@ -290,20 +282,17 @@ public class HomeServlet extends HttpServlet {
     private Part getImageFile(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
         Part imageFile = request.getPart("imageFile");
         if (imageFile == null || imageFile.getSize() <= 0) {
-            request.setAttribute("imageFileErrorMessage", "Image not uploaded or empty.");
-            renderHomePage(request, response, webContext, username);
+            showErrorPage("addImage", "Image not uploaded or empty.", request, response, webContext, username);
             return null;
         }
         if (imageFile.getSize() > 1024 * 1024 * 100) {
-            request.setAttribute("imageFileErrorMessage", "Image is too large. Maximum allowed size is 100 MB.");
-            renderHomePage(request, response, webContext, username);
+            showErrorPage("addImage", "Image is too large. Maximum allowed size is 100 MB.", request, response, webContext, username);
             return null;
         }
         String mimeType = imageFile.getContentType();
         List<String> allowedMimeTypes = Arrays.asList("image/jpg", "image/jpeg", "image/png", "image/webp");
         if (mimeType == null || !allowedMimeTypes.contains(mimeType)) {
-            request.setAttribute("imageFileErrorMessage", "Invalid image type. Only JPG, JPEG, PNG or WEBP images are allowed.");
-            renderHomePage(request, response, webContext, username);
+            showErrorPage("addImage", "Invalid image type. Only JPG, JPEG, PNG or WEBP images are allowed.", request, response, webContext, username);
             return null;
         }
         return imageFile;
@@ -312,14 +301,12 @@ public class HomeServlet extends HttpServlet {
     private String getImageExtension(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username, Part imageFile) throws ServletException, IOException {
         String imageName = imageFile.getSubmittedFileName();
         if (imageName == null && !imageName.contains(".")) {
-            request.setAttribute("imageFileErrorMessage", "Image not uploaded or empty.");
-            renderHomePage(request, response, webContext, username);
+            showErrorPage("addImage", "Image not uploaded or empty.", request, response, webContext, username);
             return null;
         }
         String imageExtension = "." + imageName.substring(imageName.lastIndexOf(".") + 1).toLowerCase();
         if (!imageExtension.equals(".jpg") && !imageExtension.equals(".jpeg") && !imageExtension.equals(".png") && !imageExtension.equals(".webp")) {
-            request.setAttribute("imageFileErrorMessage", "Invalid image type. Only JPG, JPEG, PNG or WEBP images are allowed.");
-            renderHomePage(request, response, webContext, username);
+            showErrorPage("addImage", "Invalid image type. Only JPG, JPEG, PNG or WEBP images are allowed.", request, response, webContext, username);
             return null;
         }
         return imageExtension;
@@ -331,26 +318,22 @@ public class HomeServlet extends HttpServlet {
             ImageDAO imageDAO = new ImageDAO();
             int imageId = imageDAO.addImage(image);
             if (imageId == -1) {
-                webContext.setVariable("addImageErrorMessage", "Database error. Please reload page.");
-                renderHomePage(request, response, webContext, username);
+                showErrorPage("addImage", "Database error. Please reload page.", request, response, webContext, username);
                 return -1;
             }
             boolean updatedPath = imageDAO.updateImagePath(imageId, "/uploads/" + imageId + imageExtension);
             if (!updatedPath) {
-                webContext.setVariable("addImageErrorMessage", "Database error. Please reload page.");
-                renderHomePage(request, response, webContext, username);
+                showErrorPage("addImage", "Database error. Please reload page.", request, response, webContext, username);
                 return -1;
             }
             boolean imageIntoAlbums = imageDAO.addImageToAlbums(imageId, selectedAlbums);
             if (!imageIntoAlbums) {
-                webContext.setVariable("addImageErrorMessage", "Database error. Please reload page.");
-                renderHomePage(request, response, webContext, username);
+                showErrorPage("addImage", "Database error. Please reload page.", request, response, webContext, username);
                 return -1;
             }
             return imageId;
         } catch (SQLException e) {
-            webContext.setVariable("addImageErrorMessage", "Database error. There may have been errors adding the image. Please reload page.");
-            renderHomePage(request, response, webContext, username);
+            showErrorPage("addImage", "Database error. There may have been errors adding the image. Please reload page.", request, response, webContext, username);
             return -1;
         }
     }
@@ -359,8 +342,7 @@ public class HomeServlet extends HttpServlet {
         // Destination directory to save images
         String uploadsPathString = getUploadsPath();
         if (uploadsPathString == null) {
-            webContext.setVariable("addImageErrorMessage", "Server error. Please reload page.");
-            renderHomePage(request, response, webContext, username);
+            showErrorPage("addImage", "Server error. Please reload page.", request, response, webContext, username);
             return false;
         }
         // Create Path object from the loaded uploads path
@@ -374,8 +356,7 @@ public class HomeServlet extends HttpServlet {
             Files.copy(inputStream, imagePath, StandardCopyOption.REPLACE_EXISTING);
             // Verify that the file has been created
             if (!Files.exists(imagePath)) {
-                webContext.setVariable("addImageErrorMessage", "Error saving image to server. Please reload page.");
-                renderHomePage(request, response, webContext, username);
+                showErrorPage("addImage", "Error saving image to server. Please reload page.", request, response, webContext, username);
                 return false;
             }
         } catch (IOException save) {
@@ -385,8 +366,7 @@ public class HomeServlet extends HttpServlet {
             } catch (IOException delete) {
                 delete.printStackTrace();
             }
-            webContext.setVariable("addImageErrorMessage", "Error saving image to server. Please reload page.");
-            renderHomePage(request, response, webContext, username);
+            showErrorPage("addImage", "Error saving image to server. Please reload page.", request, response, webContext, username);
             save.printStackTrace();
             return false;
         }
@@ -418,6 +398,34 @@ public class HomeServlet extends HttpServlet {
         if (session != null)
             session.invalidate();
         response.sendRedirect(request.getContextPath() + "/");
+    }
+
+    private void showErrorPage(String activePanel, String errorMessage, HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
+        // Set error message
+        switch (activePanel) {
+            case "myAlbums":
+                webContext.setVariable("myAlbumsErrorMessage", errorMessage);
+                break;
+            case "otherAlbums":
+                webContext.setVariable("otherAlbumsErrorMessage", errorMessage);
+                break;
+            case "createAlbum":
+                webContext.setVariable("createAlbumErrorMessage", errorMessage);
+                break;
+            case "addImage":
+                webContext.setVariable("addImageErrorMessage", errorMessage);
+                break;
+            case "profile":
+                webContext.setVariable("profileErrorMessage", errorMessage);
+                break;
+            default:
+                webContext.setVariable("myAlbumsErrorMessage", errorMessage);
+                break;
+        }
+        // Set active panel
+        webContext.setVariable("activePanel", activePanel);
+        // Page Rendering
+        renderHomePage(request, response, webContext, username);
     }
 
 }
