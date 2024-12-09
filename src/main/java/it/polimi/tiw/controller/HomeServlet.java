@@ -117,6 +117,15 @@ public class HomeServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/home");
     }
 
+    /**
+     * Renders the home page by loading user albums and profile data.
+     * @param request     the HTTP request object.
+     * @param response    the HTTP response object.
+     * @param webContext  the Thymeleaf WebContext for rendering templates.
+     * @param username    the username of the logged-in user.
+     * @throws ServletException if an error occurs during processing.
+     * @throws IOException      if an I/O error occurs during processing.
+     */
     private void renderHomePage(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
         try {
             handleLoadAlbums(webContext, username);
@@ -140,8 +149,12 @@ public class HomeServlet extends HttpServlet {
     }
 
     /**
-     * Loads the user's albums and renders the home page.
-     * @param username       the username of the logged-in user.
+     * Loads the albums associated with the user for display.
+     * @param webContext the Thymeleaf WebContext for rendering templates.
+     * @param username   the username of the logged-in user.
+     * @throws SQLException    if an error occurs while accessing the database.
+     * @throws ServletException if an error occurs during processing.
+     * @throws IOException      if an I/O error occurs during processing.
      */
     private void handleLoadAlbums(WebContext webContext, String username) throws SQLException, ServletException, IOException {
         AlbumDAO albumDAO = new AlbumDAO();
@@ -151,6 +164,15 @@ public class HomeServlet extends HttpServlet {
         webContext.setVariable("otherAlbums", otherAlbums);
     }
 
+    /**
+     * Loads the profile statistics for the user.
+     * @param request    the HTTP request object.
+     * @param webContext the Thymeleaf WebContext for rendering templates.
+     * @param username   the username of the logged-in user.
+     * @throws SQLException    if an error occurs while accessing the database.
+     * @throws ServletException if an error occurs during processing.
+     * @throws IOException      if an I/O error occurs during processing.
+     */
     private void handleLoadProfile(HttpServletRequest request, WebContext webContext, String username) throws SQLException, ServletException, IOException {
         AlbumDAO albumDAO = new AlbumDAO();
         ImageDAO imageDAO = new ImageDAO();
@@ -198,7 +220,16 @@ public class HomeServlet extends HttpServlet {
         }
     }
 
-
+    /**
+     * Handles the process of adding a new image to the user's albums.
+     * Validates input data, saves the image to disk, updates the database, and provides user feedback.
+     * @param request    the HTTP request object.
+     * @param response   the HTTP response object.
+     * @param webContext the Thymeleaf WebContext for rendering templates.
+     * @param username   the username of the logged-in user.
+     * @throws ServletException if a servlet-specific error occurs.
+     * @throws IOException      if an I/O error occurs.
+     */
     private void handleAddImage(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
         ArrayList<String> imageStringParameters = getImageStringParameters(request, response, webContext, username);
         if (imageStringParameters == null || imageStringParameters.isEmpty())
@@ -223,6 +254,16 @@ public class HomeServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/home");
     }
 
+    /**
+     * Retrieves and validates the image title and description from the request.
+     * @param request    the HTTP request object.
+     * @param response   the HTTP response object.
+     * @param webContext the Thymeleaf WebContext for rendering templates.
+     * @param username   the username of the logged-in user.
+     * @return           an ArrayList containing the image title and description if valid; otherwise, null.
+     * @throws ServletException if a servlet-specific error occurs.
+     * @throws IOException      if an I/O error occurs.
+     */
     private ArrayList<String> getImageStringParameters(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
         String imageTitle = request.getParameter("imageTitle");
         String imageText = request.getParameter("imageText");
@@ -240,6 +281,17 @@ public class HomeServlet extends HttpServlet {
         return imageStringParameters;
     }
 
+    /**
+     * Retrieves and validates the selected album IDs from the request.
+     * Ensures the albums belong to the user and adds the user's personal album if it doesn't exist.
+     * @param request    the HTTP request object.
+     * @param response   the HTTP response object.
+     * @param webContext the Thymeleaf WebContext for rendering templates.
+     * @param username   the username of the logged-in user.
+     * @return           an ArrayList of validated album IDs; otherwise, null.
+     * @throws ServletException if a servlet-specific error occurs.
+     * @throws IOException      if an I/O error occurs.
+     */
     private ArrayList<Integer> getSelectedAlbums(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
         String[] selectedAlbumsStr = request.getParameterValues("albumSelect");
         ArrayList<Integer> selectedAlbums = new ArrayList<>();
@@ -283,6 +335,17 @@ public class HomeServlet extends HttpServlet {
         return new ArrayList<>(selectedAlbums.stream().distinct().collect(Collectors.toList()));
     }
 
+    /**
+     * Retrieves and validates the uploaded image file from the request.
+     * Checks for file size and allowed MIME types.
+     * @param request    the HTTP request object.
+     * @param response   the HTTP response object.
+     * @param webContext the Thymeleaf WebContext for rendering templates.
+     * @param username   the username of the logged-in user.
+     * @return           the uploaded image Part if valid; otherwise, null.
+     * @throws ServletException if a servlet-specific error occurs.
+     * @throws IOException      if an I/O error occurs.
+     */
     private Part getImageFile(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
         Part imageFile = request.getPart("imageFile");
         if (imageFile == null || imageFile.getSize() <= 0) {
@@ -302,6 +365,17 @@ public class HomeServlet extends HttpServlet {
         return imageFile;
     }
 
+    /**
+     * Retrieves and validates the image file extension from the uploaded file.
+     * @param request    the HTTP request object.
+     * @param response   the HTTP response object.
+     * @param webContext the Thymeleaf WebContext for rendering templates.
+     * @param username   the username of the logged-in user.
+     * @param imageFile  the uploaded image Part.
+     * @return           the image file extension if valid; otherwise, null.
+     * @throws ServletException if a servlet-specific error occurs.
+     * @throws IOException      if an I/O error occurs.
+     */
     private String getImageExtension(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username, Part imageFile) throws ServletException, IOException {
         String imageName = imageFile.getSubmittedFileName();
         if (imageName == null && !imageName.contains(".")) {
@@ -316,6 +390,19 @@ public class HomeServlet extends HttpServlet {
         return imageExtension;
     }
 
+    /**
+     * Inserts the image data into the database and associates it with selected albums.
+     * @param request               the HTTP request object.
+     * @param response              the HTTP response object.
+     * @param webContext            the Thymeleaf WebContext for rendering templates.
+     * @param username              the username of the logged-in user.
+     * @param imageStringParameters the list containing image title and description.
+     * @param selectedAlbums        the list of selected album IDs.
+     * @param imageExtension        the file extension of the image.
+     * @return                      the image ID if successful; otherwise, -1.
+     * @throws ServletException if a servlet-specific error occurs.
+     * @throws IOException      if an I/O error occurs.
+     */
     private int insertImageIntoDatabase(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username, ArrayList<String> imageStringParameters, ArrayList<Integer> selectedAlbums, String imageExtension) throws ServletException, IOException {
         try {
             Image image = new Image(username, imageStringParameters.get(0), imageStringParameters.get(1));
@@ -342,6 +429,19 @@ public class HomeServlet extends HttpServlet {
         }
     }
 
+    /**
+     * Saves the uploaded image file to the server's disk storage.
+     * @param request        the HTTP request object.
+     * @param response       the HTTP response object.
+     * @param webContext     the Thymeleaf WebContext for rendering templates.
+     * @param username       the username of the logged-in user.
+     * @param imageFile      the uploaded image Part.
+     * @param imageId        the ID of the image in the database.
+     * @param imageExtension the file extension of the image.
+     * @return               true if the image is saved successfully; otherwise, false.
+     * @throws ServletException if a servlet-specific error occurs.
+     * @throws IOException      if an I/O error occurs.
+     */
     private boolean saveImageIntoDisk(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username, Part imageFile, int imageId, String imageExtension) throws ServletException, IOException {
         // Destination directory to save images
         String uploadsPathString = getUploadsPath();
@@ -377,6 +477,10 @@ public class HomeServlet extends HttpServlet {
         return true;
     }
 
+    /**
+     * Retrieves the uploads directory path from the configuration properties.
+     * @return the uploads directory path as a String; otherwise, null if an error occurs.
+     */
     private String getUploadsPath() {
         try (InputStream input = getClass().getClassLoader().getResourceAsStream("/properties/uploads.properties")) {
             if (input == null) {
@@ -397,6 +501,13 @@ public class HomeServlet extends HttpServlet {
         }
     }
 
+    /**
+     * Handles the user logout process by invalidating the session and redirecting to the login page.
+     * @param request  the HTTP request object.
+     * @param response the HTTP response object.
+     * @throws ServletException if a servlet-specific error occurs.
+     * @throws IOException      if an I/O error occurs.
+     */
     private void handleLogout(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession(false);
         if (session != null)
@@ -404,6 +515,17 @@ public class HomeServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/");
     }
 
+    /**
+     * Displays an error message on the specified active panel and renders the home page.
+     * @param activePanel  the panel to activate in the UI.
+     * @param errorMessage the error message to display.
+     * @param request      the HTTP request object.
+     * @param response     the HTTP response object.
+     * @param webContext   the Thymeleaf WebContext for rendering templates.
+     * @param username     the username of the logged-in user.
+     * @throws ServletException if a servlet-specific error occurs.
+     * @throws IOException      if an I/O error occurs.
+     */
     private void showErrorPage(String activePanel, String errorMessage, HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
         // Set error message
         switch (activePanel) {
@@ -432,6 +554,11 @@ public class HomeServlet extends HttpServlet {
         renderHomePage(request, response, webContext, username);
     }
 
+    /**
+     * Retrieves and displays any success messages stored in the session.
+     * @param session    the HTTP session object.
+     * @param webContext the Thymeleaf WebContext for rendering templates.
+     */
     private void showSuccessMessage(HttpSession session, WebContext webContext) {
         if (session == null)
             return;
