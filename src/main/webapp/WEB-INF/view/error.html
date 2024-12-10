@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Error</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<h1>Error</h1>
+<p>Status Code: <span th:text="${statusCode}"></span></p>
+<p>An issue has occurred. Please return to the home page or try again later.</p>
+<p>You will be redirected to the home page in <span th:text="${redirectTimeoutSeconds}"></span> seconds.
+  <a th:href="@{/home}">Click here</a> if you don't want to wait.</p>
+</body>
+</html>
