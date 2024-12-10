@@ -58,6 +58,11 @@ public class IndexServlet extends HttpServlet {
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Check if the user is already logged in
+        if (request.getSession(false) != null && request.getSession().getAttribute("user") != null) {
+            response.sendRedirect(request.getContextPath() + "/home");
+            return;
+        }
         String activePanel = request.getParameter("panel");
         WebContext webContext = new WebContext(request, response, request.getServletContext(), request.getLocale());
         if (activePanel != null) {
