@@ -4,6 +4,8 @@ import java.util.regex.Pattern;
 
 /**
  * Utility class providing methods for string validation and manipulation.
+ * This class includes validation methods for emails, usernames, passwords,
+ * titles, and generic texts, ensuring they meet specific format and length requirements.
  */
 public class StringUtil {
 
@@ -41,6 +43,28 @@ public class StringUtil {
      * Compiled pattern for password validation based on the PASSWORD_REGEX.
      */
     private static final Pattern PASSWORD_PATTERN = Pattern.compile(PASSWORD_REGEX);
+
+    /**
+     * Regular expression pattern for validating album titles.
+     * Titles can contain any character except '<' and '>' and cannot start with '@'.
+     */
+    private static final String TITLE_REGEX = "^(?!@)[^<>]*$";
+
+    /**
+     * Compiled pattern for title validation based on the TITLE_REGEX.
+     */
+    private static final Pattern TITLE_PATTERN = Pattern.compile(TITLE_REGEX);
+
+    /**
+     * Regular expression pattern for validating texts.
+     * Texts can contain any character except '<' and '>'.
+     */
+    private static final String TEXT_REGEX = "^[^<>]*$";
+
+    /**
+     * Compiled pattern for text validation based on the TEXT_REGEX.
+     */
+    private static final Pattern TEXT_PATTERN = Pattern.compile(TEXT_REGEX);
 
     /**
      * Checks if a string is null or empty.
@@ -106,22 +130,24 @@ public class StringUtil {
 
     /**
      * Validates if the provided album title is valid.
-     * An album title is considered valid if it is not null and does not start with the '@' character.
+     * An album title is considered valid if it is not null, does not start with the '@' character,
+     * and does not contain the characters '<' or '>'.
      * @param title the album title to validate
      * @return true if the album title is valid, false otherwise
      */
     public static boolean isValidTitle(String title) {
-        return (!isNullOrEmpty(title) && !title.startsWith("@") && isValidLength(title, 1, 64));
+        return (!isNullOrEmpty(title) && TITLE_PATTERN.matcher(title).matches() && isValidLength(title, 1, 64));
     }
 
     /**
      * Validates if the provided text is valid.
-     * A text is considered valid if it is not null and its length is within the acceptable range.
+     * A text is considered valid if it is not null, does not contain the characters '<' or '>',
+     * and its length is within the acceptable range.
      * @param text the text to validate
      * @return true if the text is valid, false otherwise
      */
     public static boolean isValidText(String text) {
-        return (!isNullOrEmpty(text) && isValidLength(text, 1, 512));
+        return (!isNullOrEmpty(text) && TEXT_PATTERN.matcher(text).matches() && isValidLength(text, 1, 512));
     }
 
 }
