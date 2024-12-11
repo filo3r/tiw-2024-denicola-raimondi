@@ -95,6 +95,8 @@ public class ImageServlet extends HttpServlet {
         int imageId = -1;
         int albumId = -1;
         ArrayList<Integer> imageAndAlbumIds = new ArrayList<>();
+        imageAndAlbumIds.add(imageId);
+        imageAndAlbumIds.add(albumId);
         if (albumIdParam == null || albumIdParam.isEmpty()) {
             response.sendRedirect(request.getContextPath() + "/home");
             return null;

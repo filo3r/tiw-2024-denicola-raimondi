@@ -54,7 +54,7 @@
                 <th:block th:each="i : ${#numbers.sequence(0,4)}">
                     <div class="image-cell">
                         <th:block th:if="${i < images.size()}">
-                            <a th:href="@{/image(imageId=${images[i].imageId}, albumId=${album.albumId})}">
+                            <a th:href="@{/image(albumId=${album.albumId}, imageId=${images[i].imageId})}">
                                 <img th:src="@{${images[i].imagePath}}"
                                      th:alt="${images[i].imageTitle}"
                                      class="image-item">
