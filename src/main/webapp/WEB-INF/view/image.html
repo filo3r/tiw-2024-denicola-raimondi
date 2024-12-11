@@ -1,42 +1,70 @@
 <!DOCTYPE html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Immagine</title>
-    <link rel="stylesheet" href="/css/image.css">
+    <title>Image</title>
+    <link rel="stylesheet" th:href="@{/css/image.css}">
 </head>
 <body>
-<div class="container">
-    <!-- Sezione immagine -->
-    <div class="image-section">
-        <img th:src="@{${image.imagePath}}" th:alt="${image.imageTitle}" class="image-full">
-        <h1 class="image-title" th:text="${image.imageTitle}">Titolo</h1>
-        <p class="image-description" th:text="${image.imageText}">Descrizione</p>
-        <p class="image-date" th:text="'Caricato il: ' + ${#dates.format(image.imageDate, 'dd/MM/yyyy HH:mm')}"></p>
-    </div>
 
-    <!-- Sezione commenti -->
-    <div class="comments-section">
-        <h2>Commenti</h2>
-        <ul class="comments-list">
-            <li th:each="comment : ${comments}" th:text="${comment}">Commento</li>
-        </ul>
-    </div>
+<!-- Navbar -->
+<header class="navbar">
+    <nav class="navbar-content">
+        <!-- Album page -->
+        <form th:action="@{/image}" method="post" class="nav-button">
+            <button type="submit" name="action" value="returnToAlbum">Album</button>
+        </form>
+        <!-- Home page -->
+        <form th:action="@{/image}" method="post" class="nav-button">
+            <button type="submit" name="action" value="returnToHome">Home</button>
+        </form>
+        <!-- Image Title -->
+        <div class="navbar-title" th:text="${image.imageTitle}">Image Title</div>
+        <!-- Logout -->
+        <form th:action="@{/image}" method="post" class="nav-button">
+            <button type="submit" name="action" value="logout">Logout</button>
+        </form>
+    </nav>
+</header>
 
-    <!-- Form per aggiungere un commento -->
-    <form action="/addComment" method="post" class="comment-form">
-        <label for="new-comment">Aggiungi un commento:</label>
-        <textarea id="new-comment" name="comment" rows="4" required></textarea>
-        <input type="hidden" th:name="imageId" th:value="${image.imageId}">
-        <button type="submit" class="submit-button">Invia</button>
-    </form>
+<!-- Success and Error messages -->
+<div class="error-message" th:if="${imageErrorMessage != null}" th:text="${imageErrorMessage}"></div>
+<div class="success-message" th:if="${addCommentSuccessMessage != null}" th:text="${addCommentSuccessMessage}"></div>
 
-    <!-- Bottone per cancellare l'immagine -->
-    <form action="/deleteImage" method="post" th:if="${isOwner}" class="delete-form">
-        <input type="hidden" th:name="imageId" th:value="${image.imageId}">
-        <button type="submit" class="delete-button">Cancella Immagine</button>
-    </form>
+<!-- Image container -->
+<div class="image-container">
+    <th:block th:if="${image != null}">
+        <img th:src="@{${image.imagePath}}" alt="Image">
+        <p>Title: <span th:text="${image.imageTitle}"></span></p>
+        <p>Description: <span th:text="${image.imageText}"></span></p>
+        <p>Uploader: <span th:text="${image.imageUploader}"></span></p>
+        <p>Date: <span th:text="${image.imageDate}"></span></p>
+        <th:block th:if="${imageBelongToUser}">
+            <form th:action="@{/image}" method="post">
+                <button type="submit" name="action" value="deleteImage">Delete</button>
+            </form>
+        </th:block>
+    </th:block>
 </div>
+
+<!-- Comments container -->
+<div class="comment-container">
+    <form th:action="@{/image}" method="post">
+        <label for="commentText">Write a comment:</label>
+        <textarea rows="5" cols="50" id="commentText" name="commentText" required minlength="1" maxlength="512" th:text="${param.commentText}"></textarea>
+        <button type="submit" name="action" value="addComment">Send</button>
+    </form>
+    <div class="comments-list">
+        <th:block th:if="${comments != null and !#lists.isEmpty(comments)}">
+            <ul>
+                <li th:each="comment : ${comments}">
+                    <span th:text="${comment.commentAuthor}"></span>: <span th:text="${comment.commentText}"></span>
+                </li>
+            </ul>
+        </th:block>
+    </div>
+</div>
+
 </body>
 </html>

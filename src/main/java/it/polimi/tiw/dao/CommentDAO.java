@@ -42,7 +42,7 @@ public class CommentDAO {
     }
 
     public ArrayList<Comment> getCommentsByImageId(int imageId) throws SQLException {
-        String query = "SELECT * FROM Comment WHERE image_id = ?";
+        String query = "SELECT * FROM Comment WHERE image_id = ? ORDER BY comment_id DESC";
         ArrayList<Comment> comments = new ArrayList<>();
         Connection connection = null;
         PreparedStatement statement = null;
