@@ -154,4 +154,125 @@ public class ImageDAO {
         }
     }
 
+    public boolean doesImageExist(int imageId) throws SQLException {
+        String query = "SELECT COUNT(*) AS count FROM Image WHERE image_id = ?";
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet result = null;
+        try {
+            connection = databaseConnectionPool.getConnection();
+            statement = connection.prepareStatement(query);
+            statement.setInt(1, imageId);
+            result = statement.executeQuery();
+            if (result.next())
+                return result.getInt("count") > 0;
+            return false;
+        } finally {
+            if (result != null)
+                result.close();
+            if (statement != null)
+                statement.close();
+            if (connection != null)
+                databaseConnectionPool.releaseConnection(connection);
+        }
+    }
+
+    public boolean doesImageBelongToAlbum(int imageId, int albumId) throws SQLException {
+        String query = "SELECT COUNT(*) AS count FROM AlbumContainsImage WHERE album_id = ? AND image_id = ?";
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet result = null;
+        try {
+            connection = databaseConnectionPool.getConnection();
+            statement = connection.prepareStatement(query);
+            statement.setInt(1, albumId);
+            statement.setInt(2, imageId);
+            result = statement.executeQuery();
+            if (result.next())
+                return result.getInt("count") > 0;
+            return false;
+        } finally {
+            if (result != null)
+                result.close();
+            if (statement != null)
+                statement.close();
+            if (connection != null)
+                databaseConnectionPool.releaseConnection(connection);
+        }
+    }
+
+    public Image getImageById(int imageId) throws SQLException {
+        String query = "SELECT * FROM Image WHERE image_id = ?";
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet result = null;
+        try {
+            connection = databaseConnectionPool.getConnection();
+            statement = connection.prepareStatement(query);
+            statement.setInt(1, imageId);
+            result = statement.executeQuery();
+            if (result.next()) {
+                Image image = new Image(result.getString("image_uploader"),
+                        result.getString("image_title"),
+                        result.getString("image_text")
+                );
+                image.setImageId(result.getInt("image_id"));
+                image.setImageDate(result.getTimestamp("image_date"));
+                image.setImagePath(result.getString("image_path"));
+                return image;
+            } else {
+                return null;
+            }
+        } finally {
+            if (result != null)
+                result.close();
+            if (statement != null)
+                statement.close();
+            if (connection != null)
+                databaseConnectionPool.releaseConnection(connection);
+        }
+    }
+
+    public boolean doesImageBelongToUser(int imageId, String username) throws SQLException {
+        String query = "SELECT COUNT(*) AS count FROM Image WHERE image_id = ? AND image_uploader = ?";
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet result = null;
+        try {
+            connection = databaseConnectionPool.getConnection();
+            statement = connection.prepareStatement(query);
+            statement.setInt(1, imageId);
+            statement.setString(2, username);
+            result = statement.executeQuery();
+            if (result.next())
+                return result.getInt("count") > 0;
+            return false;
+        } finally {
+            if (result != null)
+                result.close();
+            if (statement != null)
+                statement.close();
+            if (connection != null)
+                databaseConnectionPool.releaseConnection(connection);
+        }
+    }
+
+    public boolean deleteImageById(int imageId) throws SQLException {
+        String query = "DELETE FROM Image WHERE image_id = ?";
+        Connection connection = null;
+        PreparedStatement statement = null;
+        try {
+            connection = databaseConnectionPool.getConnection();
+            statement = connection.prepareStatement(query);
+            statement.setInt(1, imageId);
+            int rowsDeleted = statement.executeUpdate();
+            return rowsDeleted > 0;
+        } finally {
+            if (statement != null)
+                statement.close();
+            if (connection != null)
+                databaseConnectionPool.releaseConnection(connection);
+        }
+    }
+
 }

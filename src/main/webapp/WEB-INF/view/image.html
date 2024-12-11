@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Immagine</title>
+    <link rel="stylesheet" href="/css/image.css">
+</head>
+<body>
+<div class="container">
+    <!-- Sezione immagine -->
+    <div class="image-section">
+        <img th:src="@{${image.imagePath}}" th:alt="${image.imageTitle}" class="image-full">
+        <h1 class="image-title" th:text="${image.imageTitle}">Titolo</h1>
+        <p class="image-description" th:text="${image.imageText}">Descrizione</p>
+        <p class="image-date" th:text="'Caricato il: ' + ${#dates.format(image.imageDate, 'dd/MM/yyyy HH:mm')}"></p>
+    </div>
+
+    <!-- Sezione commenti -->
+    <div class="comments-section">
+        <h2>Commenti</h2>
+        <ul class="comments-list">
+            <li th:each="comment : ${comments}" th:text="${comment}">Commento</li>
+        </ul>
+    </div>
+
+    <!-- Form per aggiungere un commento -->
+    <form action="/addComment" method="post" class="comment-form">
+        <label for="new-comment">Aggiungi un commento:</label>
+        <textarea id="new-comment" name="comment" rows="4" required></textarea>
+        <input type="hidden" th:name="imageId" th:value="${image.imageId}">
+        <button type="submit" class="submit-button">Invia</button>
+    </form>
+
+    <!-- Bottone per cancellare l'immagine -->
+    <form action="/deleteImage" method="post" th:if="${isOwner}" class="delete-form">
+        <input type="hidden" th:name="imageId" th:value="${image.imageId}">
+        <button type="submit" class="delete-button">Cancella Immagine</button>
+    </form>
+</div>
+</body>
+</html>

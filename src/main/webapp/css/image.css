@@ -1,0 +1,117 @@
+/* Impostazioni di base */
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+.container {
+    max-width: 800px;
+    margin: 20px auto;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Sezione immagine */
+.image-section {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.image-full {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.image-title {
+    font-size: 1.8rem;
+    margin: 10px 0;
+}
+
+.image-description {
+    font-size: 1rem;
+    color: #555;
+}
+
+/* Sezione commenti */
+.comments-section {
+    margin-bottom: 20px;
+}
+
+.comments-section h2 {
+    font-size: 1.5rem;
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+
+.comments-list {
+    list-style: none;
+    padding: 0;
+}
+
+.comments-list li {
+    background: #f9f9f9;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+/* Form per i commenti */
+.comment-form {
+    margin-bottom: 20px;
+}
+
+.comment-form label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.comment-form textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    resize: none;
+}
+
+.submit-button {
+    background: #007BFF;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.submit-button:hover {
+    background: #0056b3;
+}
+
+/* Bottone cancella immagine */
+.delete-form {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.delete-button {
+    background: #FF4D4D;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.delete-button:hover {
+    background: #cc0000;
+}
