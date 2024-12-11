@@ -64,47 +64,81 @@ body {
     text-decoration: none;
     padding: 10px 20px;
     border-radius: 9px;
-    margin: 15px; /* Spazio tra i bottoni */
+    margin: 15px;                           /* Spazio tra i bottoni */
     transition: background-color 0.3s;
     box-shadow: 0 4px 8px #9e9e9e;
-    width: 80px;  /* Larghezza fissa */
-    height: 40px;  /* Altezza fissa */
+    width: 80px;                            /* Larghezza fissa */
+    height: 40px;                           /* Altezza fissa */
 
-    display: flex; /* Aggiunto per permettere il centrare del contenuto */
-    justify-content: center; /* Centra il contenuto orizzontalmente */
-    align-items: center; /* Centra il contenuto verticalmente */
+    display: flex;                          /* Aggiunto per permettere il centrare del contenuto */
+    justify-content: center;                /* Centra il contenuto orizzontalmente */
+    align-items: center;                    /* Centra il contenuto verticalmente */
 
-    box-sizing: border-box; /* Assicura che padding e border siano inclusi nelle dimensioni */
+    box-sizing: border-box;                 /* Assicura che padding e border siano inclusi nelle dimensioni */
 }
 
 .navigation .nav-button:hover {
     background-color: #0056b3; /* Colore più scuro al passaggio del mouse */
 }
 
-/* Table Styles */
-.album-table {
-    width: 100%;
-    margin-top: 0.5%;
-    border-collapse: separate;
-    border-spacing: 15px;
+/* Images Layout*/
+/* Album Container */
+.album-container {
+    width: 80%;                /* Limita la larghezza per centrarlo meglio nella pagina */
+    margin: 20px auto;         /* Centra l'album-container orizzontalmente */
+    display: flex;
+    flex-direction: column;
+    align-items: center;       /* Centra i contenuti (error message, images-container) */
 }
-.album-table td {
-    width: 18%;
-    text-align: center;
+
+/* Images Container */
+.images-container {
+    width: 100%;               /* Occupa tutta la larghezza disponibile dell'album-container */
+    display: flex;
+    flex-direction: column;    /* Gli elementi interni (messaggio o .images-row) sono disposti verticalmente */
+    align-items: center;       /* Centra orizzontalmente la .images-row */
 }
-.album-table .image-item {
+
+/* Images Row: griglia di 5 colonne */
+.images-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr); /* 5 colonne uguali */
+    gap: 15px;               /* Spaziatura tra le immagini */
+    margin-top: 20px;
+    text-align: center;      /* Centra il testo (i titoli) nelle celle */
+    width: 100%;             /* Occupa tutta la larghezza disponibile nel container */
+    max-width: 1000px;       /* Se vuoi limitare la larghezza massima, ad esempio 1000px */
+}
+
+/* Cella immagine */
+.image-cell {
     width: 100%;
-    height: 190px;
-    object-fit: cover;
+    position: relative;
+}
+
+/* Immagini */
+.image-item {
+    max-width: 100%;
+    max-height: 100%;
     border-radius: 15px;
     box-shadow: 0 4px 8px #9e9e9e;
     transition: opacity 0.2s ease;
+    display: block;
 }
-.album-table .image-item:hover {
+
+.image-item:hover {
     opacity: 0.75;
 }
-.album-table .image-title {
+
+/* Titolo immagine */
+.image-title {
     margin-top: 10px;
     font-size: 14px;
     color: #333;
+}
+
+/* Cella vuota */
+.empty-cell {
+    width: 100%;
+    height: 190px; /* Stessa altezza delle immagini per mantenere l’allineamento */
 }

@@ -27,6 +27,7 @@
 
 
 <!-- ****************************************** DA SISTEMARE ****************************************** -->
+<!-- next e previous buttons -->
 <div class="navigation">
     <!-- Previous page link -->
     <a th:if="${hasPrevious}"
@@ -39,21 +40,41 @@
        class="nav-button">Next</a>
 </div>
 
-<table class="album-table">
-    <tr>
-        <td th:each="i : ${#numbers.sequence(0, 4)}" class="album-cell">
-            <th:block th:if="${i < images.size()}">
-                <img th:src="@{/image(imageId=${images[i].imageId})}"
-                     th:alt="${images[i].imageTitle}"
-                     class="image-item">
-                <div class="image-title" th:text="${images[i].imageTitle}">Image Title</div>
-            </th:block>
-            <th:block th:unless="${i < images.size()}">
-                <!-- Empty cell for when there are fewer than 5 images -->
-                <div class="empty-cell"></div>
-            </th:block>
-        </td>
-    </tr>
-</table>
+
+<!--  nuovo album.html body -->
+<div class="album-container">
+    <div class="error-message" th:if="${albumErrorMessage != null}" th:text="${albumErrorMessage}"></div>
+
+    <!-- Images container -->
+    <div class="images-container">
+        <!-- Se ci sono immagini -->
+        <th:block th:if="${images != null and !#lists.isEmpty(images)}">
+            <div class="images-row">
+                <!-- Itera su i da 0 a 4 per mostrare fino a 5 immagini o celle vuote -->
+                <th:block th:each="i : ${#numbers.sequence(0,4)}">
+                    <div class="image-cell">
+                        <th:block th:if="${i < images.size()}">
+                            <a th:href="@{/image(imageId=${images[i].imageId}, albumId=${album.albumId})}">
+                                <img th:src="@{${images[i].imagePath}}"
+                                     th:alt="${images[i].imageTitle}"
+                                     class="image-item">
+                                <div class="image-title" th:text="${images[i].imageTitle}">Image Title</div>
+                            </a>
+                        </th:block>
+                        <th:block th:unless="${i < images.size()}">
+                            <div class="empty-cell"></div>
+                        </th:block>
+                    </div>
+                </th:block>
+            </div>
+        </th:block>
+
+        <!-- Se non ci sono immagini -->
+        <div th:if="${images == null or #lists.isEmpty(images)}">
+            <p>There are no images to display.</p>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
