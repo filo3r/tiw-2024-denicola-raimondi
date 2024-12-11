@@ -275,4 +275,27 @@ public class ImageDAO {
         }
     }
 
+    public String getImagePathById(int imageId) throws SQLException {
+        String query = "SELECT image_path FROM Image WHERE image_id = ?";
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet result = null;
+        try {
+            connection = databaseConnectionPool.getConnection();
+            statement = connection.prepareStatement(query);
+            statement.setInt(1, imageId);
+            result = statement.executeQuery();
+            if (result.next())
+                return result.getString("image_path");
+            return null;
+        } finally {
+            if (result != null)
+                result.close();
+            if (statement != null)
+                statement.close();
+            if (connection != null)
+                databaseConnectionPool.releaseConnection(connection);
+        }
+    }
+
 }

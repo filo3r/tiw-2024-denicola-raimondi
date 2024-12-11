@@ -18,8 +18,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Properties;
 
 public class ImageServlet extends HttpServlet {
 
@@ -83,6 +88,10 @@ public class ImageServlet extends HttpServlet {
             handleAddComment(request, response, webContext, username, imageAndAlbumIds);
         else if ("deleteImage".equals(action))
             handleDeleteImage(request, response, webContext, username, imageAndAlbumIds);
+        else if ("returnToHome".equals(action))
+            response.sendRedirect(request.getContextPath() + "/home");
+        else if ("returnToAlbum".equals(action))
+            response.sendRedirect(request.getContextPath() + "/album?albumId=" + imageAndAlbumIds.get(1));
         else if ("logout".equals(action))
             handleLogout(request, response);
         else
@@ -220,8 +229,12 @@ public class ImageServlet extends HttpServlet {
             boolean imageBelongToUser = imageDAO.doesImageBelongToUser(imageAndAlbumIds.get(0), username);
             if (!imageBelongToUser)
                 return;
-            boolean success = imageDAO.deleteImageById(imageAndAlbumIds.get(0));
-            if (success) {
+            String imageExtension = getImageExtension(request, response, webContext, username, imageAndAlbumIds);
+            if (imageExtension == null)
+                return;
+            boolean successDatabase = imageDAO.deleteImageById(imageAndAlbumIds.get(0));
+            if (successDatabase) {
+                deleteImageFromDisk(request, response, webContext, username, imageAndAlbumIds, imageExtension);
                 HttpSession session = request.getSession();
                 session.setAttribute("deleteImageSuccessMessage", "Image deleted successfully.");
                 response.sendRedirect(request.getContextPath() + "/album?albumId=" + imageAndAlbumIds.get(1));
@@ -231,6 +244,72 @@ public class ImageServlet extends HttpServlet {
         } catch (SQLException e) {
             showErrorPage("Database error. Please reload page.", request, response, webContext, username, imageAndAlbumIds.get(0));
             e.printStackTrace();
+        }
+    }
+
+    private String getImageExtension(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username, ArrayList<Integer> imageAndAlbumIds) throws ServletException, IOException {
+        try {
+            ImageDAO imageDAO = new ImageDAO();
+            String imagePath = imageDAO.getImagePathById(imageAndAlbumIds.get(0));
+            if (imagePath == null || !imagePath.contains(".")) {
+                showErrorPage("Database error. Please reload page.", request, response, webContext, username, imageAndAlbumIds.get(0));
+                return null;
+            }
+            return "." + imagePath.substring(imagePath.lastIndexOf(".") + 1);
+        } catch (SQLException e) {
+            showErrorPage("Database error. Please reload page.", request, response, webContext, username, imageAndAlbumIds.get(0));
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private boolean deleteImageFromDisk(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username, ArrayList<Integer> imageAndAlbumIds, String imageExtension) throws ServletException, IOException {
+        // Folder where to look for the image to delete
+        String uploadsPathString = getUploadsPath();
+        if (uploadsPathString == null)
+            return false;
+        // Create Path object from the loaded uploads path
+        Path uploadsPath = Paths.get(uploadsPathString);
+        // Full path of the image to delete
+        Path imagePath = uploadsPath.resolve(imageAndAlbumIds.get(0) + imageExtension);
+        try {
+            // Attempt to delete the file
+            if (Files.exists(imagePath)) {
+                Files.delete(imagePath);
+                // Verify the file has been deleted
+                if (Files.exists(imagePath))
+                    return false;
+            } else {
+                return false;
+            }
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Retrieves the uploads directory path from the configuration properties.
+     * @return the uploads directory path as a String; otherwise, null if an error occurs.
+     */
+    private String getUploadsPath() {
+        try (InputStream input = getClass().getClassLoader().getResourceAsStream("/properties/uploads.properties")) {
+            if (input == null) {
+                System.err.println("Could not find uploads.properties file.");
+                return null;
+            }
+            Properties properties = new Properties();
+            properties.load(input);
+            String uploadsPath = properties.getProperty("uploads.path");
+            if (uploadsPath == null || uploadsPath.isEmpty()) {
+                System.err.println("Error in uploads.properties file.");
+                return null;
+            }
+            return uploadsPath;
+        } catch (IOException e) {
+            System.err.println("Error reading uploads.properties file: " + e.getMessage());
+            return null;
         }
     }
 
