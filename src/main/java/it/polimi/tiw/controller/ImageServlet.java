@@ -51,8 +51,11 @@ public class ImageServlet extends HttpServlet {
         WebContext webContext = new WebContext(request, response, servletContext, request.getLocale());
         // Get image ID and album ID from request
         ArrayList<Integer> imageAndAlbumIds = getImageAndAlbumIds(request, response, webContext);
-        if (imageAndAlbumIds == null || imageAndAlbumIds.isEmpty())
+        if (imageAndAlbumIds == null || imageAndAlbumIds.isEmpty() || imageAndAlbumIds.contains(-1))
             return;
+        // Set image ID and album ID
+        webContext.setVariable("imageId", imageAndAlbumIds.get(0));
+        webContext.setVariable("albumId", imageAndAlbumIds.get(1));
         // Get user
         User user = (User) session.getAttribute("user");
         String username = user.getUsername();
@@ -76,8 +79,11 @@ public class ImageServlet extends HttpServlet {
         WebContext webContext = new WebContext(request, response, servletContext, request.getLocale());
         // Get image ID and album ID from request
         ArrayList<Integer> imageAndAlbumIds = getImageAndAlbumIds(request, response, webContext);
-        if (imageAndAlbumIds == null || imageAndAlbumIds.isEmpty())
+        if (imageAndAlbumIds == null || imageAndAlbumIds.isEmpty() || imageAndAlbumIds.contains(-1))
             return;
+        // Set image ID and album ID
+        webContext.setVariable("imageId", imageAndAlbumIds.get(0));
+        webContext.setVariable("albumId", imageAndAlbumIds.get(1));
         // Get user
         User user = (User) session.getAttribute("user");
         String username = user.getUsername();
@@ -120,7 +126,7 @@ public class ImageServlet extends HttpServlet {
             AlbumDAO albumDAO = new AlbumDAO();
             boolean albumExists = albumDAO.doesAlbumExist(albumId);
             if (albumExists) {
-                imageAndAlbumIds.add(1, albumId);
+                imageAndAlbumIds.set(1, albumId);
             } else {
                 response.sendRedirect(request.getContextPath() + "/home");
                 return null;
@@ -143,7 +149,7 @@ public class ImageServlet extends HttpServlet {
             }
             boolean imageBelongToAlbum = imageDAO.doesImageBelongToAlbum(imageId, albumId);
             if (imageBelongToAlbum) {
-                imageAndAlbumIds.add(0, imageId);
+                imageAndAlbumIds.set(0, imageId);
             } else {
                 response.sendRedirect(request.getContextPath() + "/album?albumId=" + albumId);
                 return null;
@@ -210,7 +216,7 @@ public class ImageServlet extends HttpServlet {
             boolean success = commentDAO.addComment(comment);
             if (success) {
                 HttpSession session = request.getSession();
-                session.setAttribute("addCommentSuccessMessage", comment);
+                session.setAttribute("addCommentSuccessMessage", "Comment added successfully.");
                 response.sendRedirect(request.getContextPath() + "/image?albumId=" + imageAndAlbumIds.get(1) + "&imageId=" + imageAndAlbumIds.get(0));
             } else {
                 showErrorPage("Database error. Please reload page.", request, response, webContext, username, imageAndAlbumIds.get(0));

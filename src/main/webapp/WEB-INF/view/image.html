@@ -12,17 +12,17 @@
 <header class="navbar">
     <nav class="navbar-content">
         <!-- Album page -->
-        <form th:action="@{/image}" method="post" class="nav-button">
+        <form th:action="@{/image(albumId=${albumId}, imageId=${imageId})}" method="post" class="nav-button">
             <button type="submit" name="action" value="returnToAlbum">Album</button>
         </form>
         <!-- Home page -->
-        <form th:action="@{/image}" method="post" class="nav-button">
+        <form th:action="@{/image(albumId=${albumId}, imageId=${imageId})}" method="post" class="nav-button">
             <button type="submit" name="action" value="returnToHome">Home</button>
         </form>
         <!-- Image Title -->
         <div class="navbar-title" th:text="${image.imageTitle}">Image Title</div>
         <!-- Logout -->
-        <form th:action="@{/image}" method="post" class="nav-button">
+        <form th:action="@{/image(albumId=${albumId}, imageId=${imageId})}" method="post" class="nav-button">
             <button type="submit" name="action" value="logout">Logout</button>
         </form>
     </nav>
@@ -41,7 +41,7 @@
         <p>Uploader: <span th:text="${image.imageUploader}"></span></p>
         <p>Date: <span th:text="${image.imageDate}"></span></p>
         <th:block th:if="${imageBelongToUser}">
-            <form th:action="@{/image}" method="post">
+            <form th:action="@{/image(albumId=${albumId}, imageId=${imageId})}" method="post">
                 <button type="submit" name="action" value="deleteImage">Delete</button>
             </form>
         </th:block>
@@ -50,7 +50,7 @@
 
 <!-- Comments container -->
 <div class="comment-container">
-    <form th:action="@{/image}" method="post">
+    <form th:action="@{/image(albumId=${albumId}, imageId=${imageId})}" method="post">
         <label for="commentText">Write a comment:</label>
         <textarea rows="5" cols="50" id="commentText" name="commentText" required minlength="1" maxlength="512" th:text="${param.commentText}"></textarea>
         <button type="submit" name="action" value="addComment">Send</button>
