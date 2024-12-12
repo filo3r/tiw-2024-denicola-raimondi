@@ -16,35 +16,32 @@
         <div class="navbar-title" th:text="${album.albumTitle}">Album Title</div>
 
         <!-- Logout form -->
-        <form th:action="@{/album}" method="post" class="nav-button">
+        <form th:action="@{/album}" method="post">
             <button type="submit" name="action" value="logout">Logout</button>
         </form>
     </nav>
 </header>
 
-
-
-
-
-<!-- ****************************************** DA SISTEMARE ****************************************** -->
-<!-- next e previous buttons -->
+<!-- Navigation section -->
 <div class="navigation">
-    <!-- Previous page link -->
-    <a th:if="${hasPrevious}"
-       th:href="@{/album(albumId=${album.albumId}, page=${currentPage - 1})}"
-       class="nav-button">Previous</a>
+    <!-- Previous page link - only show if there are previous pages -->
+    <div class="nav-placeholder previous">
+        <a th:if="${hasPrevious}"
+           th:href="@{/album(albumId=${album.albumId}, page=${currentPage - 1})}"
+           class="nav-button">Previous</a>
+    </div>
 
-    <!-- Next page link -->
-    <a th:if="${hasNext}"
-       th:href="@{/album(albumId=${album.albumId}, page=${currentPage + 1})}"
-       class="nav-button">Next</a>
+    <!-- Next page link - only show if there are more pages -->
+    <div class="nav-placeholder next">
+        <a th:if="${hasNext}"
+           th:href="@{/album(albumId=${album.albumId}, page=${currentPage + 1})}"
+           class="nav-button">Next</a>
+    </div>
 </div>
-
 
 <!--  nuovo album.html body -->
 <div class="album-container">
     <div class="error-message" th:if="${albumErrorMessage != null}" th:text="${albumErrorMessage}"></div>
-
     <!-- Images container -->
     <div class="images-container">
         <!-- Se ci sono immagini -->
@@ -58,8 +55,8 @@
                                 <img th:src="@{${images[i].imagePath}}"
                                      th:alt="${images[i].imageTitle}"
                                      class="image-item">
-                                <div class="image-title" th:text="${images[i].imageTitle}">Image Title</div>
                             </a>
+                            <div class="image-title" th:text="${images[i].imageTitle}">Image Title</div>
                         </th:block>
                         <th:block th:unless="${i < images.size()}">
                             <div class="empty-cell"></div>
@@ -68,7 +65,6 @@
                 </th:block>
             </div>
         </th:block>
-
         <!-- Se non ci sono immagini -->
         <div th:if="${images == null or #lists.isEmpty(images)}">
             <p>There are no images to display.</p>

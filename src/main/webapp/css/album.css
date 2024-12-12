@@ -30,15 +30,38 @@ body {
     margin: 0 auto; /* Center navbar content */
 }
 
-.navbar .nav-button {
+.navbar button {
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 1em;
+    margin-right: auto;
+    background-color: #123456;
+    width: 80px;
+    height: 40px;
+    border: none;          /* Rimuove il bordo */
+    outline: none;         /* Rimuove l'outline */
+    -webkit-appearance: none; /* Rimuove stile default in WebKit */
+    appearance: none;      /* Rimuove stile default su altri browser */
+    border-radius: 15pc;
+    transition: background-color 0.3s ease, border-radius 0.3s ease;
+}
+
+button:hover{
+    background-color: #0056b3;
+    border-radius: 15pc;
+}
+
+.navbar .nav-button{
     color: #ffffff;
     text-decoration: none;
     margin-right: auto; /* Spinge il titolo al centro */
     font-size: 1em;
     padding: 10px 15px;
+    border-radius: 15pc;
+    transition: background-color 0.3s ease, border-radius 0.3s ease;
 }
 
-.nav-button:hover {
+.nav-button:hover{
     background-color: #0056b3; /* Effetto hover */
     border-radius: 15pc;
 }
@@ -50,12 +73,27 @@ body {
     flex-grow: 1;
 }
 
-/* Navigation style: buttons "next" and "previous" */
+/*Navigations buttons "Previous" and "Next"*/
 .navigation {
     display: flex;
-    justify-content: space-between; /* Allinea i bottoni ai lati opposti del contenitore */
+    justify-content: space-between; /* Continua ad allineare i bottoni ai lati opposti del contenitore */
     width: 100%;
     margin-top: 15px;
+}
+
+.nav-placeholder {
+    flex: 1;  /* Ogni placeholder occupa spazio equamente nel contenitore */
+    display: flex;
+}
+
+.nav-placeholder.previous {
+    justify-content: flex-start; /* Allinea il contenuto a sinistra */
+    padding-left: 30px; /* Margine dal lato sinistro */
+}
+
+.nav-placeholder.next {
+    justify-content: flex-end; /* Allinea il contenuto a destra */
+    padding-right: 30px; /* Margine dal lato destro */
 }
 
 .navigation .nav-button {
@@ -64,21 +102,19 @@ body {
     text-decoration: none;
     padding: 10px 20px;
     border-radius: 9px;
-    margin: 15px;                           /* Spazio tra i bottoni */
+    margin: 15px;
     transition: background-color 0.3s;
     box-shadow: 0 4px 8px #9e9e9e;
-    width: 80px;                            /* Larghezza fissa */
-    height: 40px;                           /* Altezza fissa */
-
-    display: flex;                          /* Aggiunto per permettere il centrare del contenuto */
-    justify-content: center;                /* Centra il contenuto orizzontalmente */
-    align-items: center;                    /* Centra il contenuto verticalmente */
-
-    box-sizing: border-box;                 /* Assicura che padding e border siano inclusi nelle dimensioni */
+    width: 80px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
 }
 
 .navigation .nav-button:hover {
-    background-color: #0056b3; /* Colore più scuro al passaggio del mouse */
+    background-color: #0056b3;
 }
 
 /* Images Layout*/

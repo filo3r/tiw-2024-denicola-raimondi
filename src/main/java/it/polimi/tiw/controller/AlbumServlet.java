@@ -1,10 +1,8 @@
 package it.polimi.tiw.controller;
 
 import it.polimi.tiw.dao.AlbumDAO;
-import it.polimi.tiw.dao.ImageDAO;
 import it.polimi.tiw.model.Album;
 import it.polimi.tiw.model.Image;
-import it.polimi.tiw.model.User;
 import it.polimi.tiw.util.ViewEngine;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.WebContext;
@@ -101,6 +99,18 @@ public class AlbumServlet extends HttpServlet{
             response.sendRedirect(request.getContextPath() + "/album");
     }
 
+    /**
+     * Retrieves and validates the album ID from the request.
+     * Ensures the album ID is present, correctly formatted, and exists in the database.
+     * Displays an error page if validation fails or a database error occurs.
+     *
+     * @param request  the HTTP request object.
+     * @param response the HTTP response object.
+     * @param webContext the WebContext object for setting template variables.
+     * @return the valid album ID, or -1 if the ID is invalid or the album does not exist.
+     * @throws ServletException if an error occurs during processing.
+     * @throws IOException      if an I/O error occurs during processing.
+     */
     private int getAlbumId(HttpServletRequest request, HttpServletResponse response, WebContext webContext) throws ServletException, IOException {
         String albumIdParam = request.getParameter("albumId");
         int albumId = -1;
@@ -125,11 +135,21 @@ public class AlbumServlet extends HttpServlet{
         return albumId;
     }
 
-
+    /**
+     * Renders the album page by loading album details and images.
+     * Handles any database errors by setting error variables in the web context.
+     *
+     * @param request  the HTTP request object.
+     * @param response the HTTP response object.
+     * @param webContext the WebContext object for managing template variables.
+     * @param albumId  the ID of the album to load and display.
+     * @throws ServletException if an error occurs during processing.
+     * @throws IOException      if an I/O error occurs during processing.
+     */
     private void renderAlbumPage(HttpServletRequest request, HttpServletResponse response, WebContext webContext, int albumId) throws ServletException, IOException {
         try {
             handleLoadAlbumData(webContext, albumId);
-            handleLoadAlbumImages(webContext, albumId);
+            handleLoadAlbumImages(request, webContext, albumId);
         } catch (SQLException e) {
             webContext.setVariable("album", null);
             webContext.setVariable("images", null);
@@ -139,18 +159,67 @@ public class AlbumServlet extends HttpServlet{
         templateEngine.process("album.html", webContext, response.getWriter());
     }
 
+    /**
+     * Loads album details for the specified album ID and sets them in the web context.
+     *
+     * @param webContext the WebContext object for managing template variables.
+     * @param albumId    the ID of the album to load.
+     * @throws SQLException if a database access error occurs while retrieving the album data.
+     */
     private void handleLoadAlbumData(WebContext webContext, int albumId) throws SQLException {
         AlbumDAO albumDAO = new AlbumDAO();
         Album album = albumDAO.getAlbumById(albumId);
         webContext.setVariable("album", album);
     }
 
-    private void handleLoadAlbumImages(WebContext webContext, int albumId) throws SQLException {
+    /**
+     * Loads and paginates the images for the specified album.
+     * Retrieves all images associated with the album ID, calculates the current page,
+     * and sets the paginated images along with pagination details in the web context.
+     *
+     * @param request    the HTTP request object, used to retrieve the "page" parameter.
+     * @param webContext the WebContext object for managing template variables.
+     * @param albumId    the ID of the album whose images are to be loaded.
+     * @throws SQLException if a database access error occurs while retrieving the images.
+     */
+    private void handleLoadAlbumImages(HttpServletRequest request, WebContext webContext, int albumId) throws SQLException {
+        // Gestisci la pagina corrente
+        int page = 0;
+        String pageParam = request.getParameter("page");
+        if (pageParam != null) {
+            try {
+                page = Integer.parseInt(pageParam);
+            } catch (NumberFormatException e) {
+                page = 0;
+            }
+        }
+
+        // Carica tutte le immagini dell'album
         AlbumDAO albumDAO = new AlbumDAO();
         ArrayList<Image> images = albumDAO.getImagesByAlbumId(albumId);
-        webContext.setVariable("images", images);
+
+        // Calcola la paginazione
+        int pageSize = 5;
+        int startIndex = page * pageSize;
+        int endIndex = Math.min(startIndex + pageSize, images.size());
+
+        // Prepara le immagini per la pagina corrente
+        List<Image> currentPageImages = images.subList(startIndex, endIndex);
+
+        // Aggiungi variabili al contesto web
+        webContext.setVariable("images", currentPageImages);
+        webContext.setVariable("currentPage", page);
+        webContext.setVariable("hasPrevious", page > 0);
+        webContext.setVariable("hasNext", endIndex < images.size());
     }
 
+    /**
+     * Handles the user logout process by invalidating the session and redirecting to the login page.
+     * @param request  the HTTP request object.
+     * @param response the HTTP response object.
+     * @throws ServletException if a servlet-specific error occurs.
+     * @throws IOException      if an I/O error occurs.
+     */
     private void handleLogout(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession(false);
         if (session != null)
@@ -158,6 +227,19 @@ public class AlbumServlet extends HttpServlet{
         response.sendRedirect(request.getContextPath() + "/");
     }
 
+    /**
+     * Displays an error page for the specified album.
+     * Sets the provided error message in the web context and renders the album page
+     * with the error information.
+     *
+     * @param errorMessage the error message to display on the error page.
+     * @param request      the HTTP request object.
+     * @param response     the HTTP response object.
+     * @param webContext   the WebContext object for managing template variables.
+     * @param albumId      the ID of the album associated with the error.
+     * @throws ServletException if an error occurs during processing.
+     * @throws IOException      if an I/O error occurs during processing.
+     */
     private void showErrorPage(String errorMessage, HttpServletRequest request, HttpServletResponse response, WebContext webContext, int albumId) throws ServletException, IOException {
         webContext.setVariable("albumErrorMessage", errorMessage);
         renderAlbumPage(request, response, webContext, albumId);
