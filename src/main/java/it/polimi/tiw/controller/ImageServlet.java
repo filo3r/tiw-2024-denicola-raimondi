@@ -161,6 +161,7 @@ public class ImageServlet extends HttpServlet {
             handleLoadImageData(webContext, imageId);
             handleLoadComments(webContext, imageId);
             handleLoadDeleteOption(webContext, username, imageId);
+            templateEngine.process("image.html", webContext, response.getWriter());
         } catch (SQLException e) {
             renderImagePageException(request, response, webContext);
             e.printStackTrace();
