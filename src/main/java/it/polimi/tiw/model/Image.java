@@ -1,6 +1,9 @@
 package it.polimi.tiw.model;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Timestamp;
+import java.util.Properties;
 
 /**
  * Represents an image with associated metadata such as uploader, title, date, and text description.
@@ -48,7 +51,27 @@ public class Image {
         this.imageTitle = imageTitle;
         this.imageDate = new Timestamp(System.currentTimeMillis());
         this.imageText = imageText;
-        this.imagePath = "/uploads/0.png";
+        this.imagePath = getUploadsPath() + "/0.png";
+    }
+
+    private String getUploadsPath() {
+        try (InputStream input = getClass().getClassLoader().getResourceAsStream("/properties/uploads.properties")) {
+            if (input == null) {
+                System.err.println("Could not find uploads.properties file.");
+                return null;
+            }
+            Properties properties = new Properties();
+            properties.load(input);
+            String uploadsPath = properties.getProperty("uploads.path");
+            if (uploadsPath == null || uploadsPath.isEmpty()) {
+                System.err.println("Error in uploads.properties file.");
+                return null;
+            }
+            return uploadsPath;
+        } catch (IOException e) {
+            System.err.println("Error reading uploads.properties file: " + e.getMessage());
+            return null;
+        }
     }
 
     /**
