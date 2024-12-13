@@ -236,12 +236,12 @@ public class ImageServlet extends HttpServlet {
             boolean imageBelongToUser = imageDAO.doesImageBelongToUser(imageAndAlbumIds.get(0), username);
             if (!imageBelongToUser)
                 return;
-            String imageExtension = getImageExtension(request, response, webContext, username, imageAndAlbumIds);
-            if (imageExtension == null)
+            String imagePathString = imageDAO.getImagePathById(imageAndAlbumIds.get(0));
+            if (imagePathString == null)
                 return;
             boolean successDatabase = imageDAO.deleteImageById(imageAndAlbumIds.get(0));
             if (successDatabase) {
-                deleteImageFromDisk(request, response, webContext, username, imageAndAlbumIds, imageExtension);
+                deleteImageFromDisk(imagePathString);
                 HttpSession session = request.getSession();
                 session.setAttribute("deleteImageSuccessMessage", "Image deleted successfully.");
                 response.sendRedirect(request.getContextPath() + "/album?albumId=" + imageAndAlbumIds.get(1));
@@ -254,31 +254,9 @@ public class ImageServlet extends HttpServlet {
         }
     }
 
-    private String getImageExtension(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username, ArrayList<Integer> imageAndAlbumIds) throws ServletException, IOException {
-        try {
-            ImageDAO imageDAO = new ImageDAO();
-            String imagePath = imageDAO.getImagePathById(imageAndAlbumIds.get(0));
-            if (imagePath == null || !imagePath.contains(".")) {
-                showErrorPage("Database error. Please reload page.", request, response, webContext, username, imageAndAlbumIds.get(0));
-                return null;
-            }
-            return "." + imagePath.substring(imagePath.lastIndexOf(".") + 1);
-        } catch (SQLException e) {
-            showErrorPage("Database error. Please reload page.", request, response, webContext, username, imageAndAlbumIds.get(0));
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    private boolean deleteImageFromDisk(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username, ArrayList<Integer> imageAndAlbumIds, String imageExtension) throws ServletException, IOException {
-        // Folder where to look for the image to delete
-        String uploadsPathString = getUploadsPath();
-        if (uploadsPathString == null)
-            return false;
-        // Create Path object from the loaded uploads path
-        Path uploadsPath = Paths.get(uploadsPathString);
-        // Full path of the image to delete
-        Path imagePath = uploadsPath.resolve(imageAndAlbumIds.get(0) + imageExtension);
+    private boolean deleteImageFromDisk(String imagePathString) throws ServletException, IOException {
+        // Get the image path
+        Path imagePath = Paths.get(imagePathString);
         try {
             // Attempt to delete the file
             if (Files.exists(imagePath)) {
@@ -293,30 +271,6 @@ public class ImageServlet extends HttpServlet {
         } catch (IOException e) {
             e.printStackTrace();
             return false;
-        }
-    }
-
-    /**
-     * Retrieves the uploads directory path from the configuration properties.
-     * @return the uploads directory path as a String; otherwise, null if an error occurs.
-     */
-    private String getUploadsPath() {
-        try (InputStream input = getClass().getClassLoader().getResourceAsStream("/properties/uploads.properties")) {
-            if (input == null) {
-                System.err.println("Could not find uploads.properties file.");
-                return null;
-            }
-            Properties properties = new Properties();
-            properties.load(input);
-            String uploadsPath = properties.getProperty("uploads.path");
-            if (uploadsPath == null || uploadsPath.isEmpty()) {
-                System.err.println("Error in uploads.properties file.");
-                return null;
-            }
-            return uploadsPath;
-        } catch (IOException e) {
-            System.err.println("Error reading uploads.properties file: " + e.getMessage());
-            return null;
         }
     }
 

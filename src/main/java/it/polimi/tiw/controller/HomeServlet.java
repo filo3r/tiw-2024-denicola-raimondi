@@ -412,7 +412,14 @@ public class HomeServlet extends HttpServlet {
                 showErrorPage("addImage", "Database error. Please reload page.", request, response, webContext, username);
                 return -1;
             }
-            boolean updatedPath = imageDAO.updateImagePath(imageId, "/uploads/" + imageId + imageExtension);
+            String uploadsPathString = getUploadsPath();
+            if (uploadsPathString == null) {
+                showErrorPage("addImage", "Server error. Please reload page.", request, response, webContext, username);
+                return -1;
+            }
+            Path uploadsPath = Paths.get(uploadsPathString);
+            Path imagePath = uploadsPath.resolve(imageId + imageExtension);
+            boolean updatedPath = imageDAO.updateImagePath(imageId, imagePath.toString());
             if (!updatedPath) {
                 showErrorPage("addImage", "Database error. Please reload page.", request, response, webContext, username);
                 return -1;
