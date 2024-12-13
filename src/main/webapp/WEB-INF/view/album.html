@@ -22,6 +22,10 @@
     </nav>
 </header>
 
+<!-- Success and Error Messages -->
+<div class="error-message" th:if="${albumErrorMessage != null}" th:text="${albumErrorMessage}"></div>
+<div class="success-message" th:if="${deleteImageSuccessMessage != null}" th:text="${deleteImageSuccessMessage}"></div>
+
 <!-- Navigation section -->
 <div class="navigation">
     <!-- Previous page link - only show if there are previous pages -->

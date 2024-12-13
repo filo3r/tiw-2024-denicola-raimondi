@@ -18,7 +18,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AlbumServlet extends HttpServlet{
+public class AlbumServlet extends HttpServlet {
 
     /**
      * Unique identifier for Serializable class to ensure compatibility
@@ -69,6 +69,8 @@ public class AlbumServlet extends HttpServlet{
             response.sendRedirect(request.getContextPath() + "/home");
             return;
         }
+        // Show success messages
+        showSuccessMessage(session, webContext);
         // Render page
         renderAlbumPage(request, response, webContext, albumId);
     }
@@ -91,12 +93,20 @@ public class AlbumServlet extends HttpServlet{
         // WebContext
         ServletContext servletContext = getServletContext();
         WebContext webContext = new WebContext(request, response, servletContext, request.getLocale());
-        // Logout
+        // Get album ID from request
+        int albumId = getAlbumId(request, response, webContext);
+        if (albumId == -1) {
+            response.sendRedirect(request.getContextPath() + "/home");
+            return;
+        }
+        // Return To Home or Logout
         String action = request.getParameter("action");
-        if ("logout".equals(action))
+        if ("returnToHome".equals(action))
+            response.sendRedirect(request.getContextPath() + "/home");
+        else if ("logout".equals(action))
             handleLogout(request, response);
         else
-            response.sendRedirect(request.getContextPath() + "/album");
+            response.sendRedirect(request.getContextPath() + "/album?albumId=" + albumId);
     }
 
     /**
@@ -130,9 +140,10 @@ public class AlbumServlet extends HttpServlet{
             else
                 return -1;
         } catch (SQLException e) {
-            showErrorPage("Database error. Please reload page.", request, response, webContext, albumId);
+            renderImagePageException(request, response, webContext);
+            e.printStackTrace();
+            return -1;
         }
-        return albumId;
     }
 
     /**
@@ -150,13 +161,11 @@ public class AlbumServlet extends HttpServlet{
         try {
             handleLoadAlbumData(webContext, albumId);
             handleLoadAlbumImages(request, webContext, albumId);
+            templateEngine.process("album.html", webContext, response.getWriter());
         } catch (SQLException e) {
-            webContext.setVariable("album", null);
-            webContext.setVariable("images", null);
-            webContext.setVariable("albumErrorMessage", "Database error. Please reload page.");
+            renderImagePageException(request, response, webContext);
             e.printStackTrace();
         }
-        templateEngine.process("album.html", webContext, response.getWriter());
     }
 
     /**
@@ -183,34 +192,36 @@ public class AlbumServlet extends HttpServlet{
      * @throws SQLException if a database access error occurs while retrieving the images.
      */
     private void handleLoadAlbumImages(HttpServletRequest request, WebContext webContext, int albumId) throws SQLException {
-        // Gestisci la pagina corrente
-        int page = 0;
+        // Manage current page
+        // First page is 0
         String pageParam = request.getParameter("page");
-        if (pageParam != null) {
+        int page = 0;
+        if (pageParam != null && !pageParam.isEmpty()) {
             try {
                 page = Integer.parseInt(pageParam);
             } catch (NumberFormatException e) {
                 page = 0;
             }
         }
-
-        // Carica tutte le immagini dell'album
+        // Load images to the page
         AlbumDAO albumDAO = new AlbumDAO();
-        ArrayList<Image> images = albumDAO.getImagesByAlbumId(albumId);
-
-        // Calcola la paginazione
         int pageSize = 5;
         int startIndex = page * pageSize;
-        int endIndex = Math.min(startIndex + pageSize, images.size());
-
-        // Prepara le immagini per la pagina corrente
-        List<Image> currentPageImages = images.subList(startIndex, endIndex);
-
-        // Aggiungi variabili al contesto web
-        webContext.setVariable("images", currentPageImages);
+        int totalImages = albumDAO.getImagesCountByAlbumId(albumId);
+        int endIndex = Math.min(startIndex + pageSize, totalImages);
+        ArrayList<Image> images = albumDAO.getImagesByAlbumIdWithPagination(albumId, pageSize, startIndex);
+        // WebContext
+        webContext.setVariable("images", images);
         webContext.setVariable("currentPage", page);
         webContext.setVariable("hasPrevious", page > 0);
-        webContext.setVariable("hasNext", endIndex < images.size());
+        webContext.setVariable("hasNext", endIndex < totalImages);
+    }
+
+    private void renderImagePageException(HttpServletRequest request, HttpServletResponse response, WebContext webContext) throws ServletException, IOException {
+        webContext.setVariable("album", null);
+        webContext.setVariable("images", null);
+        webContext.setVariable("albumErrorMessage", "Database error. Please reload page.");
+        templateEngine.process("image.html", webContext, response.getWriter());
     }
 
     /**
@@ -227,22 +238,17 @@ public class AlbumServlet extends HttpServlet{
         response.sendRedirect(request.getContextPath() + "/");
     }
 
-    /**
-     * Displays an error page for the specified album.
-     * Sets the provided error message in the web context and renders the album page
-     * with the error information.
-     *
-     * @param errorMessage the error message to display on the error page.
-     * @param request      the HTTP request object.
-     * @param response     the HTTP response object.
-     * @param webContext   the WebContext object for managing template variables.
-     * @param albumId      the ID of the album associated with the error.
-     * @throws ServletException if an error occurs during processing.
-     * @throws IOException      if an I/O error occurs during processing.
-     */
-    private void showErrorPage(String errorMessage, HttpServletRequest request, HttpServletResponse response, WebContext webContext, int albumId) throws ServletException, IOException {
-        webContext.setVariable("albumErrorMessage", errorMessage);
-        renderAlbumPage(request, response, webContext, albumId);
+    private void showSuccessMessage(HttpSession session, WebContext webContext) {
+        if (session == null)
+            return;
+        String[] successMessages = {"deleteImageSuccessMessage"};
+        for (String successMessage : successMessages) {
+            Object message = session.getAttribute(successMessage);
+            if (message != null) {
+                webContext.setVariable(successMessage, message);
+                session.removeAttribute(successMessage);
+            }
+        }
     }
 
 }

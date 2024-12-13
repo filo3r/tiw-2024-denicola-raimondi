@@ -345,4 +345,64 @@ public class AlbumDAO {
         }
     }
 
+    public int getImagesCountByAlbumId(int albumId) throws SQLException {
+        String query = "SELECT COUNT(*) AS image_count FROM AlbumContainsImage WHERE album_id = ?";
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet result = null;
+        try {
+            connection = databaseConnectionPool.getConnection();
+            statement = connection.prepareStatement(query);
+            statement.setInt(1, albumId);
+            result = statement.executeQuery();
+            if (result.next())
+                return result.getInt("image_count");
+            return 0;
+        } finally {
+            if (result != null)
+                result.close();
+            if (statement != null)
+                statement.close();
+            if (connection != null)
+                databaseConnectionPool.releaseConnection(connection);
+        }
+    }
+
+    public ArrayList<Image> getImagesByAlbumIdWithPagination(int albumId, int pageSize, int startIndex) throws SQLException {
+        String query = "SELECT i.* FROM AlbumContainsImage aci JOIN Image i ON aci.image_id = i.image_id WHERE aci.album_id = ? ORDER BY i.image_date DESC LIMIT ? OFFSET ?";
+        ArrayList<Image> images = new ArrayList<>();
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet result = null;
+        try {
+            connection = databaseConnectionPool.getConnection();
+            statement = connection.prepareStatement(query);
+            statement.setInt(1, albumId);
+            statement.setInt(2, pageSize);
+            statement.setInt(3, startIndex);
+            result = statement.executeQuery();
+            while (result.next()) {
+                int imageId = result.getInt("image_id");
+                String imageUploader = result.getString("image_uploader");
+                String imageTitle = result.getString("image_title");
+                Timestamp imageDate = result.getTimestamp("image_date");
+                String imageText = result.getString("image_text");
+                String imagePath = result.getString("image_path");
+                Image image = new Image(imageUploader, imageTitle, imageText);
+                image.setImageId(imageId);
+                image.setImageDate(imageDate);
+                image.setImagePath(imagePath);
+                images.add(image);
+            }
+            return images;
+        } finally {
+            if (result != null)
+                result.close();
+            if (statement != null)
+                statement.close();
+            if (connection != null)
+                databaseConnectionPool.releaseConnection(connection);
+        }
+    }
+
 }
