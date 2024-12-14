@@ -106,7 +106,7 @@ public class AlbumServlet extends HttpServlet {
         else if ("logout".equals(action))
             handleLogout(request, response);
         else
-            response.sendRedirect(request.getContextPath() + "/album?albumId=" + albumId);
+            response.sendRedirect(request.getContextPath() + "/album?albumId=" + albumId + "&page=0");
     }
 
     /**
@@ -192,23 +192,35 @@ public class AlbumServlet extends HttpServlet {
      * @throws SQLException if a database access error occurs while retrieving the images.
      */
     private void handleLoadAlbumImages(HttpServletRequest request, WebContext webContext, int albumId) throws SQLException {
-        // Manage current page
-        // First page is 0
-        String pageParam = request.getParameter("page");
+        // Default information
         int page = 0;
+        int pageSize = 5;
+        // Get album info
+        AlbumDAO albumDAO = new AlbumDAO();
+        int totalImages = albumDAO.getImagesCountByAlbumId(albumId);
+        // Calculate the maximum page index
+        int maxPage = 0;
+        if (totalImages > 0)
+            maxPage = (int) Math.ceil((double) totalImages / pageSize) - 1;
+        else
+            maxPage = 0;
+        // Manage current page with parameter (first page is 0)
+        String pageParam = request.getParameter("page");
         if (pageParam != null && !pageParam.isEmpty()) {
             try {
                 page = Integer.parseInt(pageParam);
             } catch (NumberFormatException e) {
                 page = 0;
             }
+            if (page < 0 || page > maxPage)
+                page = 0;
+        } else {
+            page = 0;
         }
-        // Load images to the page
-        AlbumDAO albumDAO = new AlbumDAO();
-        int pageSize = 5;
+        // Calculate indexes
         int startIndex = page * pageSize;
-        int totalImages = albumDAO.getImagesCountByAlbumId(albumId);
         int endIndex = Math.min(startIndex + pageSize, totalImages);
+        // Load images to the page
         ArrayList<Image> images = albumDAO.getImagesByAlbumIdWithPagination(albumId, pageSize, startIndex);
         // WebContext
         webContext.setVariable("images", images);
