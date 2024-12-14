@@ -35,7 +35,7 @@
 <!-- Image container -->
 <div class="image-container">
     <th:block th:if="${image != null}">
-        <img th:src="@{${image.imagePath}}" alt="Image">
+        <img th:src="@{/uploads(imageId=${imageId})}" alt="Image">
         <p>Title: <span th:text="${image.imageTitle}"></span></p>
         <p>Description: <span th:text="${image.imageText}"></span></p>
         <p>Uploader: <span th:text="${image.imageUploader}"></span></p>

@@ -80,6 +80,15 @@
     </servlet-mapping>
 
     <servlet>
+        <servlet-name>UploadsServlet</servlet-name>
+        <servlet-class>it.polimi.tiw.controller.UploadsServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>UploadsServlet</servlet-name>
+        <url-pattern>/uploads</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
         <servlet-name>ErrorServlet</servlet-name>
         <servlet-class>it.polimi.tiw.controller.ErrorServlet</servlet-class>
     </servlet>
@@ -130,7 +139,7 @@
         <location>/error</location>
     </error-page>
     <error-page>
-        <exception-type>java.lang.Exception</exception-type>
+        <exception-type>java.lang.Throwable</exception-type>
         <location>/error</location>
     </error-page>
 
