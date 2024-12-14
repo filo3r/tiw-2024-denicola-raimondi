@@ -69,6 +69,7 @@ public class AlbumServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/home");
             return;
         }
+        webContext.setVariable("albumId", albumId);
         // Show success messages
         showSuccessMessage(session, webContext);
         // Render page
@@ -99,6 +100,7 @@ public class AlbumServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/home");
             return;
         }
+        webContext.setVariable("albumId", albumId);
         // Return To Home or Logout
         String action = request.getParameter("action");
         if ("returnToHome".equals(action))
