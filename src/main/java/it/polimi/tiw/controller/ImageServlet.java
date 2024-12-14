@@ -95,7 +95,7 @@ public class ImageServlet extends HttpServlet {
         else if ("returnToHome".equals(action))
             response.sendRedirect(request.getContextPath() + "/home");
         else if ("returnToAlbum".equals(action))
-            response.sendRedirect(request.getContextPath() + "/album?albumId=" + imageAndAlbumIds.get(1));
+            response.sendRedirect(request.getContextPath() + "/album?albumId=" + imageAndAlbumIds.get(1) + "&page=0");
         else if ("logout".equals(action))
             handleLogout(request, response);
         else
@@ -130,26 +130,26 @@ public class ImageServlet extends HttpServlet {
                 return null;
             }
             if (imageIdParam == null || imageIdParam.isEmpty()) {
-                response.sendRedirect(request.getContextPath() + "/album?albumId=" + albumId);
+                response.sendRedirect(request.getContextPath() + "/album?albumId=" + albumId + "&page=0");
                 return null;
             }
             try {
                 imageId = Integer.parseInt(imageIdParam);
             } catch (NumberFormatException e) {
-                response.sendRedirect(request.getContextPath() + "/album?albumId=" + albumId);
+                response.sendRedirect(request.getContextPath() + "/album?albumId=" + albumId + "&page=0");
                 return null;
             }
             ImageDAO imageDAO = new ImageDAO();
             boolean imageExists = imageDAO.doesImageExist(imageId);
             if (!imageExists) {
-                response.sendRedirect(request.getContextPath() + "/album?albumId=" + albumId);
+                response.sendRedirect(request.getContextPath() + "/album?albumId=" + albumId + "&page=0");
                 return null;
             }
             boolean imageBelongToAlbum = imageDAO.doesImageBelongToAlbum(imageId, albumId);
             if (imageBelongToAlbum) {
                 imageAndAlbumIds.set(0, imageId);
             } else {
-                response.sendRedirect(request.getContextPath() + "/album?albumId=" + albumId);
+                response.sendRedirect(request.getContextPath() + "/album?albumId=" + albumId + "&page=0");
                 return null;
             }
         } catch (SQLException e) {
@@ -242,7 +242,7 @@ public class ImageServlet extends HttpServlet {
                 deleteImageFromDisk(imagePathString);
                 HttpSession session = request.getSession();
                 session.setAttribute("deleteImageSuccessMessage", "Image deleted successfully.");
-                response.sendRedirect(request.getContextPath() + "/album?albumId=" + imageAndAlbumIds.get(1));
+                response.sendRedirect(request.getContextPath() + "/album?albumId=" + imageAndAlbumIds.get(1) + "&page=0");
             } else {
                 showErrorPage("Database error. Please reload page.", request, response, webContext, username, imageAndAlbumIds.get(0));
             }
