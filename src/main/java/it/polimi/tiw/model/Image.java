@@ -54,6 +54,10 @@ public class Image {
         this.imagePath = getUploadsPath() + "/0.png";
     }
 
+    /**
+     * Retrieves the uploads directory path from the configuration properties.
+     * @return the uploads directory path as a String; otherwise, null if an error occurs.
+     */
     private String getUploadsPath() {
         try (InputStream input = getClass().getClassLoader().getResourceAsStream("/properties/uploads.properties")) {
             if (input == null) {

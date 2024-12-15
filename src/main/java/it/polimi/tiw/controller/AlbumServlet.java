@@ -16,8 +16,14 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.List;
 
+/**
+ * Servlet responsible for handling requests related to albums.
+ * This class manages user session validation, retrieves album details and images,
+ * and renders the appropriate Thymeleaf templates for displaying album pages.
+ * It also handles actions such as logout and redirects users based on their actions or
+ * errors encountered during processing.
+ */
 public class AlbumServlet extends HttpServlet {
 
     /**
@@ -115,9 +121,8 @@ public class AlbumServlet extends HttpServlet {
      * Retrieves and validates the album ID from the request.
      * Ensures the album ID is present, correctly formatted, and exists in the database.
      * Displays an error page if validation fails or a database error occurs.
-     *
-     * @param request  the HTTP request object.
-     * @param response the HTTP response object.
+     * @param request    the HTTP request object.
+     * @param response   the HTTP response object.
      * @param webContext the WebContext object for setting template variables.
      * @return the valid album ID, or -1 if the ID is invalid or the album does not exist.
      * @throws ServletException if an error occurs during processing.
@@ -151,11 +156,10 @@ public class AlbumServlet extends HttpServlet {
     /**
      * Renders the album page by loading album details and images.
      * Handles any database errors by setting error variables in the web context.
-     *
-     * @param request  the HTTP request object.
-     * @param response the HTTP response object.
+     * @param request    the HTTP request object.
+     * @param response   the HTTP response object.
      * @param webContext the WebContext object for managing template variables.
-     * @param albumId  the ID of the album to load and display.
+     * @param albumId    the ID of the album to load and display.
      * @throws ServletException if an error occurs during processing.
      * @throws IOException      if an I/O error occurs during processing.
      */
@@ -172,7 +176,6 @@ public class AlbumServlet extends HttpServlet {
 
     /**
      * Loads album details for the specified album ID and sets them in the web context.
-     *
      * @param webContext the WebContext object for managing template variables.
      * @param albumId    the ID of the album to load.
      * @throws SQLException if a database access error occurs while retrieving the album data.
@@ -187,7 +190,6 @@ public class AlbumServlet extends HttpServlet {
      * Loads and paginates the images for the specified album.
      * Retrieves all images associated with the album ID, calculates the current page,
      * and sets the paginated images along with pagination details in the web context.
-     *
      * @param request    the HTTP request object, used to retrieve the "page" parameter.
      * @param webContext the WebContext object for managing template variables.
      * @param albumId    the ID of the album whose images are to be loaded.
@@ -231,6 +233,14 @@ public class AlbumServlet extends HttpServlet {
         webContext.setVariable("hasNext", endIndex < totalImages);
     }
 
+    /**
+     * Renders an error page in case of database exceptions during image loading.
+     * @param request    the HTTP request object.
+     * @param response   the HTTP response object.
+     * @param webContext the WebContext object for managing template variables.
+     * @throws ServletException if an error occurs during processing.
+     * @throws IOException      if an I/O error occurs during processing.
+     */
     private void renderImagePageException(HttpServletRequest request, HttpServletResponse response, WebContext webContext) throws ServletException, IOException {
         webContext.setVariable("album", null);
         webContext.setVariable("images", null);
@@ -252,6 +262,11 @@ public class AlbumServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/");
     }
 
+    /**
+     * Shows success messages stored in the session, if any, and removes them after displaying.
+     * @param session    the current HTTP session.
+     * @param webContext the WebContext object for managing template variables.
+     */
     private void showSuccessMessage(HttpSession session, WebContext webContext) {
         if (session == null)
             return;

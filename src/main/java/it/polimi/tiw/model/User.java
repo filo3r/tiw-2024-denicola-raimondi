@@ -22,7 +22,7 @@ public class User {
     private String password;
 
     /**
-     * Constructs a new User without parameters
+     * Constructs a new User without parameters.
      */
     public User() {}
 

@@ -9,19 +9,19 @@ import java.util.ArrayList;
 
 /**
  * Data Access Object for performing operations on the Album entity.
- * This class provides methods to retrieve albums created by the user, albums created by others,
- * and to create a new album.
+ * This class provides methods to retrieve, create, and manage albums
+ * and their related images in the database.
  */
 public class AlbumDAO {
 
     /**
-     * Connection pool to manage database connections efficiently
+     * Connection pool to manage database connections efficiently.
      */
     private final DatabaseConnectionPool databaseConnectionPool;
 
     /**
      * Initializes the AlbumDAO by obtaining an instance of the DatabaseConnectionPool.
-     * @throws SQLException if there is a database access error
+     * @throws SQLException if there is a database access error.
      */
     public AlbumDAO() throws SQLException {
         this.databaseConnectionPool = DatabaseConnectionPool.getInstance();
@@ -29,9 +29,9 @@ public class AlbumDAO {
 
     /**
      * Retrieves the list of albums created by a specific user, ordered by the most recent.
-     * @param username the username of the album creator
-     * @return a list of albums created by the user
-     * @throws SQLException if a database access error occurs
+     * @param username the username of the album creator.
+     * @return a list of albums created by the user.
+     * @throws SQLException if a database access error occurs.
      */
     public ArrayList<Album> getMyAlbums(String username) throws SQLException {
         String query = "SELECT * FROM Album WHERE album_creator = ? ORDER BY album_date DESC";
@@ -67,9 +67,9 @@ public class AlbumDAO {
 
     /**
      * Retrieves the list of albums created by other users, ordered by the most recent.
-     * @param username the username of the user to exclude from the results
-     * @return a list of albums created by other users
-     * @throws SQLException if a database access error occurs
+     * @param username the username of the user to exclude from the results.
+     * @return a list of albums created by other users.
+     * @throws SQLException if a database access error occurs.
      */
     public ArrayList<Album> getOtherAlbums(String username) throws SQLException {
         String query = "SELECT * FROM Album WHERE album_creator != ? ORDER BY album_date DESC";
@@ -105,9 +105,9 @@ public class AlbumDAO {
 
     /**
      * Creates a new album in the database.
-     * @param album the Album object containing the details of the album to be created
-     * @return true if the album was created successfully, false otherwise
-     * @throws SQLException if a database access error occurs
+     * @param album the Album object containing the details of the album to be created.
+     * @return true if the album was created successfully, false otherwise.
+     * @throws SQLException if a database access error occurs.
      */
     public boolean createAlbum(Album album) throws SQLException {
         String query = "INSERT INTO Album (album_creator, album_title, album_date) VALUES (?, ?, ?)";
@@ -131,9 +131,9 @@ public class AlbumDAO {
 
     /**
      * Retrieves the number of albums created by a specific user.
-     * @param username the username of the album creator
-     * @return the count of albums created by the user
-     * @throws SQLException if a database access error occurs
+     * @param username the username of the album creator.
+     * @return the count of albums created by the user.
+     * @throws SQLException if a database access error occurs.
      */
     public int getAlbumsCountByUser(String username) throws SQLException {
         String query = "SELECT COUNT(*) AS albums_count FROM Album WHERE album_creator = ?";
@@ -161,9 +161,9 @@ public class AlbumDAO {
 
     /**
      * Retrieves the ID of the personal album of a specific user, identified by a specific naming convention.
-     * @param username the username of the album creator
-     * @return the ID of the user's personal album, or -1 if not found
-     * @throws SQLException if a database access error occurs
+     * @param username the username of the album creator.
+     * @return the ID of the user's personal album, or -1 if not found.
+     * @throws SQLException if a database access error occurs.
      */
     public int getUserPersonalAlbumId(String username) throws SQLException {
         String query = "SELECT album_id FROM Album WHERE album_creator = ? AND album_title = ? ORDER BY album_date ASC";
@@ -192,10 +192,10 @@ public class AlbumDAO {
 
     /**
      * Checks if a specific album is owned by a given user.
-     * @param albumId the ID of the album
-     * @param username the username of the potential album owner
-     * @return true if the album is owned by the user, false otherwise
-     * @throws SQLException if a database access error occurs
+     * @param albumId  the ID of the album.
+     * @param username the username of the potential album owner.
+     * @return true if the album is owned by the user, false otherwise.
+     * @throws SQLException if a database access error occurs.
      */
     public boolean isAlbumOwnedByUser(int albumId, String username) throws SQLException {
         String query = "SELECT COUNT(*) AS count FROM Album WHERE album_id = ? AND album_creator = ?";
@@ -223,9 +223,9 @@ public class AlbumDAO {
 
     /**
      * Retrieves the list of album IDs created by a specific user.
-     * @param username the username of the album creator
-     * @return a list of album IDs created by the user
-     * @throws SQLException if a database access error occurs
+     * @param username the username of the album creator.
+     * @return a list of album IDs created by the user.
+     * @throws SQLException if a database access error occurs.
      */
     public ArrayList<Integer> getMyAlbumIds(String username) throws SQLException {
         String query = "SELECT album_id FROM Album WHERE album_creator = ?";
@@ -253,9 +253,9 @@ public class AlbumDAO {
 
     /**
      * Retrieves an album by its ID.
-     * @param albumId the ID of the album to retrieve
-     * @return the Album object corresponding to the given ID, or null if no album is found
-     * @throws SQLException if a database access error occurs
+     * @param albumId the ID of the album to retrieve.
+     * @return the Album object corresponding to the given ID, or null if no album is found.
+     * @throws SQLException if a database access error occurs.
      */
     public Album getAlbumById(int albumId) throws SQLException {
         String query = "SELECT * FROM Album WHERE album_id = ?";
@@ -287,6 +287,12 @@ public class AlbumDAO {
         }
     }
 
+    /**
+     * Checks whether an album with a given ID exists in the database.
+     * @param albumId the ID of the album.
+     * @return true if the album exists, false otherwise.
+     * @throws SQLException if a database access error occurs.
+     */
     public boolean doesAlbumExist(int albumId) throws SQLException {
         String query = "SELECT COUNT(*) AS count FROM Album WHERE album_id = ?";
         Connection connection = null;
@@ -310,6 +316,12 @@ public class AlbumDAO {
         }
     }
 
+    /**
+     * Retrieves the images associated with a specific album ID.
+     * @param albumId the ID of the album.
+     * @return a list of Image objects associated with the album.
+     * @throws SQLException if a database access error occurs.
+     */
     public ArrayList<Image> getImagesByAlbumId(int albumId) throws SQLException {
         String query = "SELECT i.* FROM AlbumContainsImage aci JOIN Image i ON aci.image_id = i.image_id WHERE aci.album_id = ? ORDER BY i.image_date DESC";
         ArrayList<Image> images = new ArrayList<>();
@@ -345,6 +357,12 @@ public class AlbumDAO {
         }
     }
 
+    /**
+     * Retrieves the number of images associated with a specific album ID.
+     * @param albumId the ID of the album.
+     * @return the count of images in the album.
+     * @throws SQLException if a database access error occurs.
+     */
     public int getImagesCountByAlbumId(int albumId) throws SQLException {
         String query = "SELECT COUNT(*) AS image_count FROM AlbumContainsImage WHERE album_id = ?";
         Connection connection = null;
@@ -368,6 +386,14 @@ public class AlbumDAO {
         }
     }
 
+    /**
+     * Retrieves the images associated with a specific album ID with pagination.
+     * @param albumId   the ID of the album.
+     * @param pageSize  the number of images to retrieve per page.
+     * @param startIndex the starting index for pagination.
+     * @return a list of Image objects associated with the album.
+     * @throws SQLException if a database access error occurs.
+     */
     public ArrayList<Image> getImagesByAlbumIdWithPagination(int albumId, int pageSize, int startIndex) throws SQLException {
         String query = "SELECT i.* FROM AlbumContainsImage aci JOIN Image i ON aci.image_id = i.image_id WHERE aci.album_id = ? ORDER BY i.image_date DESC LIMIT ? OFFSET ?";
         ArrayList<Image> images = new ArrayList<>();

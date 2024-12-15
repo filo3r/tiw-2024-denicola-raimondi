@@ -191,9 +191,10 @@ public class HomeServlet extends HttpServlet {
 
     /**
      * Handles album creation for the logged-in user.
-     * @param request  the HTTP request object.
-     * @param response the HTTP response object.
-     * @param username the username of the logged-in user.
+     * @param request    the HTTP request object.
+     * @param response   the HTTP response object.
+     * @param webContext the Thymeleaf WebContext for rendering templates.
+     * @param username   the username of the logged-in user.
      * @throws ServletException if an error occurs during processing.
      * @throws IOException      if an I/O error occurs during processing.
      */

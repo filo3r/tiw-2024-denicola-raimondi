@@ -154,6 +154,12 @@ public class ImageDAO {
         }
     }
 
+    /**
+     * Checks whether an image with a given ID exists in the database.
+     * @param imageId the ID of the image.
+     * @return true if the image exists, false otherwise.
+     * @throws SQLException if a database access error occurs.
+     */
     public boolean doesImageExist(int imageId) throws SQLException {
         String query = "SELECT COUNT(*) AS count FROM Image WHERE image_id = ?";
         Connection connection = null;
@@ -177,6 +183,13 @@ public class ImageDAO {
         }
     }
 
+    /**
+     * Checks whether a specific image belongs to a given album.
+     * @param imageId the ID of the image.
+     * @param albumId the ID of the album.
+     * @return true if the image belongs to the album, false otherwise.
+     * @throws SQLException if a database access error occurs.
+     */
     public boolean doesImageBelongToAlbum(int imageId, int albumId) throws SQLException {
         String query = "SELECT COUNT(*) AS count FROM AlbumContainsImage WHERE album_id = ? AND image_id = ?";
         Connection connection = null;
@@ -201,6 +214,12 @@ public class ImageDAO {
         }
     }
 
+    /**
+     * Retrieves an image by its ID.
+     * @param imageId the ID of the image to retrieve.
+     * @return the Image object corresponding to the given ID, or null if no image is found.
+     * @throws SQLException if a database access error occurs.
+     */
     public Image getImageById(int imageId) throws SQLException {
         String query = "SELECT * FROM Image WHERE image_id = ?";
         Connection connection = null;
@@ -233,6 +252,13 @@ public class ImageDAO {
         }
     }
 
+    /**
+     * Checks whether a specific image belongs to a given user.
+     * @param imageId  the ID of the image.
+     * @param username the username of the user.
+     * @return true if the image belongs to the user, false otherwise.
+     * @throws SQLException if a database access error occurs.
+     */
     public boolean doesImageBelongToUser(int imageId, String username) throws SQLException {
         String query = "SELECT COUNT(*) AS count FROM Image WHERE image_id = ? AND image_uploader = ?";
         Connection connection = null;
@@ -257,6 +283,12 @@ public class ImageDAO {
         }
     }
 
+    /**
+     * Deletes an image from the database by its ID.
+     * @param imageId the ID of the image to delete.
+     * @return true if the image was successfully deleted, false otherwise.
+     * @throws SQLException if a database access error occurs.
+     */
     public boolean deleteImageById(int imageId) throws SQLException {
         String query = "DELETE FROM Image WHERE image_id = ?";
         Connection connection = null;
@@ -275,6 +307,12 @@ public class ImageDAO {
         }
     }
 
+    /**
+     * Retrieves the file path of an image by its ID.
+     * @param imageId the ID of the image.
+     * @return the file path of the image, or null if no path is found.
+     * @throws SQLException if a database access error occurs.
+     */
     public String getImagePathById(int imageId) throws SQLException {
         String query = "SELECT image_path FROM Image WHERE image_id = ?";
         Connection connection = null;

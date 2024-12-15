@@ -9,14 +9,31 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
+/**
+ * Data Access Object for performing operations on the Comment entity.
+ * This class provides methods to retrieve and manage comments in the database.
+ */
 public class CommentDAO {
 
+    /**
+     * Connection pool to manage database connections efficiently.
+     */
     private final DatabaseConnectionPool databaseConnectionPool;
 
+    /**
+     * Initializes the CommentDAO by obtaining an instance of the DatabaseConnectionPool.
+     * @throws SQLException if there is a database access error.
+     */
     public CommentDAO() throws SQLException {
         this.databaseConnectionPool = DatabaseConnectionPool.getInstance();
     }
 
+    /**
+     * Retrieves the count of comments made by a specific user.
+     * @param username the username of the comment author.
+     * @return the count of comments made by the user.
+     * @throws SQLException if a database access error occurs.
+     */
     public int getCommentsCountByUser(String username) throws SQLException {
         String query = "SELECT COUNT(*) AS comments_count FROM Comment WHERE comment_author = ?";
         Connection connection = null;
@@ -41,6 +58,12 @@ public class CommentDAO {
         }
     }
 
+    /**
+     * Retrieves the comments associated with a specific image ID.
+     * @param imageId the ID of the image.
+     * @return a list of comments associated with the image.
+     * @throws SQLException if a database access error occurs.
+     */
     public ArrayList<Comment> getCommentsByImageId(int imageId) throws SQLException {
         String query = "SELECT * FROM Comment WHERE image_id = ? ORDER BY comment_id DESC";
         ArrayList<Comment> comments = new ArrayList<>();
@@ -72,6 +95,12 @@ public class CommentDAO {
         }
     }
 
+    /**
+     * Adds a new comment to the database.
+     * @param comment the Comment object containing the details of the comment to be added.
+     * @return true if the comment was added successfully, false otherwise.
+     * @throws SQLException if a database access error occurs.
+     */
     public boolean addComment(Comment comment) throws SQLException {
         String query = "INSERT INTO Comment (image_id, comment_author, comment_text) VALUES (?, ?, ?)";
         Connection connection = null;
