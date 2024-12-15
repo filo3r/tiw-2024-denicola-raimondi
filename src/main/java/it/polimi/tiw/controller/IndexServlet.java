@@ -81,6 +81,12 @@ public class IndexServlet extends HttpServlet {
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Check if the user is already logged in
+        if (request.getSession(false) != null && request.getSession().getAttribute("user") != null) {
+            response.sendRedirect(request.getContextPath() + "/home");
+            return;
+        }
+        // Sign Up or Sign In
         String action = request.getParameter("action");
         if ("signUp".equals(action))
             handleSignUp(request, response);
