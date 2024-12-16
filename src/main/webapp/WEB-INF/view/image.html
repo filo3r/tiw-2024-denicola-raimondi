@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image</title>
-    <link rel="stylesheet" th:href="@{/css/image.css}">
+    <link rel="stylesheet" th:href="@{/css/style2.css}">
 </head>
 <body>
 
 <!-- Navbar -->
-<header class="navbar">
+<header class="imagepage-navbar">
     <nav class="navbar-content">
         <!-- Album page -->
         <form th:action="@{/image(albumId=${albumId}, imageId=${imageId})}" method="post" class="nav-button">
@@ -22,7 +22,7 @@
         <!-- Image Title -->
         <div class="navbar-title" th:text="${image.imageTitle}">Image Title</div>
         <!-- Logout -->
-        <form th:action="@{/image(albumId=${albumId}, imageId=${imageId})}" method="post" class="nav-button">
+        <form th:action="@{/image(albumId=${albumId}, imageId=${imageId})}" method="post" class="nav-button logout-button">
             <button type="submit" name="action" value="logout">Logout</button>
         </form>
     </nav>

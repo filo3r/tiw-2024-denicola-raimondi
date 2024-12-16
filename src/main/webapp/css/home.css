@@ -3,16 +3,23 @@ body {
     font-family: Arial, sans-serif;
 }
 
+nav{
+    box-shadow: 0 4px 8px #9e9e9e;
+    border-radius: 20px;
+}
+
 nav ul {
     list-style-type: none;
-    background-color: #333;
+    background-color: #123456;
     padding: 0;
     margin: 0;
     display: flex;
+    border-radius: 20px;
 }
 
 nav li {
     flex: 1;
+    border-radius: 20px;
 }
 
 nav li label {
@@ -22,10 +29,14 @@ nav li label {
     padding: 14px 0;
     cursor: pointer;
     user-select: none; /* Prevents text selection on click */
+    border-radius: 20px;
+    transition: background-color 0.3s ease, border-radius 0.3s ease;
 }
 
 nav li label:hover {
-    background-color: #111;
+    background-color: #0056b3;
+    border-radius: 20px;
+    transition: background-color 0.3s ease, border-radius 0.3s ease-out;
 }
 
 input[name="panel"] {
@@ -63,6 +74,8 @@ input[name="panel"] {
     padding-top: 100%; /* Maintains a 1:1 aspect ratio */
     overflow: hidden;
     text-align: center;
+    border-radius: 17px;
+    box-shadow: 0 4px 8px #9e9e9e;
 }
 
 /* Album image */
@@ -74,6 +87,12 @@ input[name="panel"] {
     height: 100%;
     object-fit: cover;
     display: block;
+    border-radius: 17px;
+    transition: opacity 0.3s ease-in, opacity 0.3s ease-out;
+}
+
+.album img:hover {
+    opacity: 0.75;
 }
 
 /* Album title and creator */
@@ -83,6 +102,7 @@ input[name="panel"] {
     background: rgba(255, 255, 255, 0.8);
     display: inline-block;
     padding: 2px 5px;
+    border-radius: 10px;
 }
 
 /* --- Styles for the forms --- */
@@ -109,15 +129,20 @@ form textarea {
 }
 
 button[type="submit"] {
-    background-color: #333;
+    background-color: #007BFF;
+    width: 80px;
+    height: 40px;
     color: white;
     padding: 10px 20px;
     border: none;
     cursor: pointer;
+    box-shadow: 0 4px 8px #9e9e9e;
+    border-radius: 9px;
+    transition: background-color 0.3s;
 }
 
 button[type="submit"]:hover {
-    background-color: #111;
+    background-color: #0056b3;
 }
 
 /* Styles for the albumsCheckbox */
