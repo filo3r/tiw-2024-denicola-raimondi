@@ -91,12 +91,12 @@
 
 <!-- Add Image Page -->
 <div class="content" id="addImageContent">
-  <h2>Add Photo</h2>
+  <h2>Add Image</h2>
   <form th:action="@{/home}" method="post" enctype="multipart/form-data">
     <label for="imageTitle">Image Title:</label>
     <input type="text" id="imageTitle" name="imageTitle" required th:value="${param.imageTitle}" minlength="1" maxlength="64">
     <label for="imageText">Image Description:</label>
-    <input type="text" id="imageText" name="imageText" required th:value="${param.imageText}" minlength="1" maxlength="512">
+    <textarea rows="5" cols="50" id="imageText" name="imageText" required th:value="${param.imageText}" minlength="1" maxlength="512"></textarea>
     <label for="imageFile">Select Image:</label>
     <input type="file" id="imageFile" name="imageFile" accept=".jpg,.jpeg,.png,.webp" required th:value="${param.imageFile}">
     <label>Choose Albums:</label>
