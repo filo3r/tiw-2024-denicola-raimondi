@@ -31,7 +31,7 @@ nav li label {
     text-align: center;
     padding: 14px 0;
     cursor: pointer;
-    user-select: none; /* Prevents text selection on click */
+    user-select: none;
     border-radius: 20px;
     transition: background-color 0.3s ease, border-radius 0.3s ease;
 }
@@ -74,7 +74,7 @@ input[name="panel"] {
 .album {
     position: relative;
     width: 100%;
-    padding-top: 100%; /* Maintains a 1:1 aspect ratio */
+    padding-top: 100%;
     overflow: hidden;
     text-align: center;
     border-radius: 17px;
@@ -147,6 +147,7 @@ button[type="submit"] {
 
 button[type="submit"]:hover {
     background-color: #0056b3;
+    border-radius: 9px;         /****** !!! ******/
 }
 
 /* Styles for the albumsCheckbox */
@@ -172,14 +173,14 @@ button[type="submit"]:hover {
 
 /* Stili per la barra di navigazione */
 .albumpage-navbar {
-    background-color: #123456; /* Colore di sfondo */
-    color: #ffffff; /* Colore del testo */
+    background-color: #123456;
+    color: #ffffff;
     font-family: Arial, sans-serif;
     height: 57px;
     width: 100%;
     display: flex;
     padding: 0 20px;
-    box-sizing: border-box; /* Include padding in width calculation */
+    box-sizing: border-box;
     border-radius: 20px;
 }
 
@@ -187,29 +188,30 @@ button[type="submit"]:hover {
     display: flex;
     align-items: center;
     width: 100%;
-    margin: 0 auto; /* Center navbar content */
+    margin: 0 auto;
 }
 
 /*logout button*/
 .albumpage-navbar button {
     color: #ffffff;
-    text-decoration: none;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 1em;
     margin-right: auto;
     background-color: #123456;
     width: 80px;
     height: 40px;
-    border: none;          /* Rimuove il bordo */
-    outline: none;         /* Rimuove l'outline */
-    -webkit-appearance: none; /* Rimuove stile default in WebKit */
-    appearance: none;      /* Rimuove stile default su altri browser */
+    border: none;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
     border-radius: 15pc;
     transition: background-color 0.3s ease, border-radius 0.3s ease;
     box-shadow: 0 0 0;
 }
 
-button:hover{
+.albumpage-navbar button:hover{
     background-color: #0056b3;
     border-radius: 15pc;
 }
@@ -224,24 +226,24 @@ button:hover{
 /*Navigations buttons "Previous" and "Next"*/
 .navigation {
     display: flex;
-    justify-content: space-between; /* Continua ad allineare i bottoni ai lati opposti del contenitore */
+    justify-content: space-between;
     width: 100%;
     margin-top: 15px;
 }
 
 .nav-placeholder {
-    flex: 1;  /* Ogni placeholder occupa spazio equamente nel contenitore */
+    flex: 1;
     display: flex;
 }
 
 .nav-placeholder.previous {
-    justify-content: flex-start; /* Allinea il contenuto a sinistra */
-    padding-left: 30px; /* Margine dal lato sinistro */
+    justify-content: flex-start;
+    padding-left: 30px;
 }
 
 .nav-placeholder.next {
-    justify-content: flex-end; /* Allinea il contenuto a destra */
-    padding-right: 30px; /* Margine dal lato destro */
+    justify-content: flex-end;
+    padding-right: 30px;
 }
 
 .navigation .nav-button {
@@ -270,9 +272,9 @@ button:hover{
 .images-container {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 5px; /* Diminuito lo spazio tra le immagini */
-    justify-content: center; /* Centra orizzontalmente la riga di immagini */
-    margin-top: 25px; /* Sposta la riga di immagini leggermente più in basso */
+    gap: 5px;
+    justify-content: center;
+    margin-top: 25px;
     margin-left: 10px;
 }
 
@@ -311,45 +313,43 @@ button:hover{
 /* Cella vuota */
 .empty-cell {
     width: 100%;
-    height: 190px; /* Stessa altezza delle immagini per mantenere l’allineamento */
+    height: 190px;
 }
 
 /* ---------------------------------- Image Page Style---------------------------------- */
 
 
 .imagepage-navbar {
-    background-color: #123456; /* Colore di sfondo */
-    color: #ffffff; /* Colore del testo */
+    background-color: #123456;
+    color: #ffffff;
     font-family: Arial, sans-serif;
-    height: 60px;
+    height: 57px;
     width: 100%;
     display: flex;
-    align-items: center;
     padding: 0 20px;
-    box-sizing: border-box; /* Include padding in width calculation */
-    justify-content: center;
+    box-sizing: border-box;
     border-radius: 20px;
 }
 
 .imagepage-navbar .navbar-content {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     width: 100%;
     margin: 0 auto;
 }
 
 .imagepage-navbar .navbar-title {
-    position: absolute;
-    left: 47%; /* Sposta il titolo al 50% della navbar */
     font-size: 1.5em;
     text-align: center;
     font-weight: bold;
-    flex: 0 1 auto;
+    flex-grow: 1;
+    margin: 0;
+    margin-right: 40px;
 }
 
 .imagepage-navbar .nav-button.logout-button {
     margin-left: auto;
+    margin-right: 1px;
     box-shadow: 0 0 0;
 }
 
