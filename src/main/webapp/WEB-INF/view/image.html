@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image</title>
-    <link rel="stylesheet" th:href="@{/css/style2.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
 
@@ -36,10 +36,10 @@
 <div class="image-container">
     <th:block th:if="${image != null}">
         <img th:src="@{/uploads(imageId=${imageId})}" alt="Image">
-        <p>Title: <span th:text="${image.imageTitle}"></span></p>
-        <p>Description: <span th:text="${image.imageText}"></span></p>
-        <p>Uploader: <span th:text="${image.imageUploader}"></span></p>
-        <p>Date: <span th:text="${image.imageDate}"></span></p>
+        <p><strong>Title: </strong><span th:text="${image.imageTitle}"></span></p>
+        <p><strong>Description: </strong><span th:text="${image.imageText}"></span></p>
+        <p><strong>Uploader: </strong><span th:text="${image.imageUploader}"></span></p>
+        <p><strong>Date: </strong><span th:text="${image.imageDate}"></span></p>
         <th:block th:if="${imageBelongToUser}">
             <form th:action="@{/image(albumId=${albumId}, imageId=${imageId})}" method="post">
                 <button type="submit" name="action" value="deleteImage">Delete</button>

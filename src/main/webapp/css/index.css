@@ -51,13 +51,13 @@ input {
 
 button, .button {
     color: #fff;
-    background: #ff4b2b;
+    background: #007BFF;
     font-size: 12px;
     font-weight: bold;
     padding: 12px 45px;
     margin-top: 20px;
     border-radius: 20px;
-    border: 1px solid #ff4b2b;
+    border: 1px solid #007BFF;
     outline: none;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -163,11 +163,11 @@ button:active, .button:active {
 .overlay {
     position: relative;
     color: #fff;
-    background: #ff416c;
+    background: #0056b3;
     left: -100%; /* Start offscreen to the left */
     height: 100%;
     width: 200%; /* Twice the width to cover both panels */
-    background: linear-gradient(to right, #ff4b28, #ff228c);
+    background: linear-gradient(to right, #007BFF, #0056b3);
     transform: translateX(0);
     transition: transform 0.6s ease-in-out;
 }
@@ -212,4 +212,26 @@ button:active, .button:active {
 /* Slightly offset the overlay right section when Sign Up is selected */
 #signUpPanel:checked ~ .overlay-container .overlay-right {
     transform: translateX(20%);
+}
+
+.error-message, .success-message {
+    border-radius: 10px;
+    margin: 10px auto;
+    max-width: 90%;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.error-message {
+    color: #d32f2f;
+    background-color: #ffeeee;
+    padding: 10px;
+}
+
+.success-message {
+    color: #388e3c;
+    background-color: #eeffee;
+    padding: 10px;
 }

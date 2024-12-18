@@ -4,9 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Home</title>
-  <link rel="stylesheet" th:href="@{/css/style2.css}">
+  <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
+<h1>Image Gallery</h1>
 <nav class="home-page-navbar">
   <ul>
     <li>
@@ -28,7 +29,6 @@
 </nav>
 
 <!-- Hidden radio inputs -->
-<!-- Modifica gli input radio per attivare il pannello corretto -->
 <input type="radio" name="panel" id="myAlbumsPanel" th:checked="${activePanel == 'myAlbums' || activePanel == null}" hidden>
 <input type="radio" name="panel" id="otherAlbumsPanel" th:checked="${activePanel == 'otherAlbums'}" hidden>
 <input type="radio" name="panel" id="createAlbumPanel" th:checked="${activePanel == 'createAlbum'}" hidden>
@@ -44,7 +44,6 @@
     <th:block th:if="${myAlbums != null and !#lists.isEmpty(myAlbums)}" th:each="album : ${myAlbums}">
       <a th:href="@{/album(albumId=${album.albumId}, page=0)}">
         <div class="album">
-          <img th:src="@{/img/folder.png}" alt="Folder Image">
           <p th:text="${album.albumTitle}">Album Title</p>
           <p th:text="${album.albumCreator}">Album Creator</p>
         </div>
@@ -65,7 +64,6 @@
     <th:block th:if="${otherAlbums != null and !#lists.isEmpty(otherAlbums)}" th:each="album : ${otherAlbums}">
       <a th:href="@{/album(albumId=${album.albumId}, page=0)}">
         <div class="album">
-          <img th:src="@{/img/folder.png}" alt="Folder Image">
           <p th:text="${album.albumTitle}">Album Title</p>
           <p th:text="${album.albumCreator}">Album Creator</p>
         </div>
@@ -98,7 +96,9 @@
     <label for="imageText">Image Description:</label>
     <textarea rows="5" cols="50" id="imageText" name="imageText" required th:value="${param.imageText}" minlength="1" maxlength="512"></textarea>
     <label for="imageFile">Select Image:</label>
-    <input type="file" id="imageFile" name="imageFile" accept=".jpg,.jpeg,.png,.webp" required th:value="${param.imageFile}">
+    <div class="file-upload-container">
+      <input type="file" id="imageFile" name="imageFile" accept=".jpg,.jpeg,.png,.webp" required th:value="${param.imageFile}">
+    </div>
     <label>Choose Albums:</label>
     <div class="albumsCheckbox">
       <!-- User's Personal Album (Always Selected and Disabled) -->
@@ -130,25 +130,27 @@
 <!-- Profile page -->
 <div class="content" id="profileContent">
   <h2>Profile</h2>
-  <th:block th:if="${user != null}">
-    <p><strong>Email:</strong> <span th:text="${user.email}">user@email.com</span></p>
-    <p><strong>Username:</strong> <span th:text="${user.username}">username</span></p>
-    <p><strong>Number of Albums:</strong>
-      <span th:text="${userStats.numAlbums != null ? userStats.numAlbums : 'Error'}">0</span>
-    </p>
-    <p><strong>Number of Images:</strong>
-      <span th:text="${userStats.numImages != null ? userStats.numImages : 'Error'}">0</span>
-    </p>
-    <p><strong>Number of Comments:</strong>
-      <span th:text="${userStats.numComments != null ? userStats.numComments : 'Error'}">0</span>
-    </p>
-    <form th:action="@{/home}" method="post">
-      <button type="submit" name="action" value="logout">Logout</button>
-    </form>
-  </th:block>
-  <th:block th:if="${user == null}">
-    <p>User information is not available.</p>
-  </th:block>
+  <div class="profile-container">
+    <th:block th:if="${user != null}">
+      <p><strong>Email:</strong> <span th:text="${user.email}">user@email.com</span></p>
+      <p><strong>Username:</strong> <span th:text="${user.username}">username</span></p>
+      <p><strong>Number of Albums:</strong>
+        <span th:text="${userStats.numAlbums != null ? userStats.numAlbums : 'Error'}">0</span>
+      </p>
+      <p><strong>Number of Images:</strong>
+        <span th:text="${userStats.numImages != null ? userStats.numImages : 'Error'}">0</span>
+      </p>
+      <p><strong>Number of Comments:</strong>
+        <span th:text="${userStats.numComments != null ? userStats.numComments : 'Error'}">0</span>
+      </p>
+      <form th:action="@{/home}" method="post">
+        <button type="submit" name="action" value="logout">Logout</button>
+      </form>
+    </th:block>
+    <th:block th:if="${user == null}">
+      <p>User information is not available.</p>
+    </th:block>
+  </div>
   <div class="error-message" th:if="${profileErrorMessage != null}" th:text="${profileErrorMessage}"></div>
 </div>
 </body>

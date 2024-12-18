@@ -65,8 +65,8 @@ public class ViewEngine {
         templateResolver.setSuffix(".html");
         // Set character encoding to UTF-8 to support international characters
         templateResolver.setCharacterEncoding("UTF-8");
-        // Enable caching to improve performance
-        templateResolver.setCacheable(false); // ALLA FINE DELLO SVILUPPO IMPOSTARE SU true
+        // Deactivate caching
+        templateResolver.setCacheable(false);
         return templateResolver;
     }
 
