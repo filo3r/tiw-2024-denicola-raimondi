@@ -35,6 +35,10 @@
         <servlet-name>default</servlet-name>
         <url-pattern>*.webp</url-pattern>
     </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>default</servlet-name>
+        <url-pattern>*.js</url-pattern>
+    </servlet-mapping>
 
     <!-- Declaration and mapping of Servlet -->
     <servlet>
