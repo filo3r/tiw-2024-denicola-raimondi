@@ -441,6 +441,7 @@ button[type="submit"]:hover {
     padding: 1rem;
     box-shadow: 0 2px 6px #a6a6a6;
     border-radius: 20px;
+    text-align: center;
 }
 
 .image-container img {
@@ -480,5 +481,10 @@ button[type="submit"]:hover {
     color: green;
     background-color: #eeffee;
     padding: 1rem;
+    text-align: center;
+}
+
+/* ---------------------------------- Error Page Style---------------------------------- */
+.error-page-container {
     text-align: center;
 }

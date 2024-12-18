@@ -161,7 +161,7 @@ public class IndexServlet extends HttpServlet {
                 request.getSession().setAttribute("user", user);
                 response.sendRedirect(request.getContextPath() + "/home");
             } else {
-                showErrorPage(request, response, "Unknown error. Please try again.", "signInErrorMessage", "signIn");
+                showErrorPage(request, response, "Wrong credentials. Please try again.", "signInErrorMessage", "signIn");
                 return;
             }
         } catch (SQLException e) {
