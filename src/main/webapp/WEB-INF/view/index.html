@@ -1,38 +1,38 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign In / Sign Up</title>
-  <link rel="stylesheet" th:href="@{/css/index.css}">
+  <link rel="stylesheet" href="css/index.css">
 </head>
 <body>
 <div class="container">
   <!-- Radio buttons hidden -->
-  <input type="radio" name="panel" id="signInPanel" th:checked="${activePanel == 'signIn' || activePanel == null}" hidden>
-  <input type="radio" name="panel" id="signUpPanel" th:checked="${activePanel == 'signUp'}" hidden>
+  <input type="radio" name="panel" id="signInPanel" checked hidden>
+  <input type="radio" name="panel" id="signUpPanel" hidden>
 
   <!-- Sign Up Form -->
   <div class="sign-up">
-    <form th:action="@{/}" method="post">
+    <form id="signUpForm">
       <h1>Sign Up</h1>
-      <input type="email" name="email" placeholder="Email" required th:value="${param.email}" minlength="6" maxlength="64">
-      <input type="text" name="username" placeholder="Username" required th:value="${param.username}" minlength="1" maxlength="32">
-      <input type="password" name="password1" placeholder="Password" required minlength="8" maxlength="128">
-      <input type="password" name="password2" placeholder="Confirm Password" required minlength="8" maxlength="128">
-      <button type="submit" name="action" value="signUp">Sign Up</button>
-      <div class="error-message" th:if="${signUpErrorMessage != null}" th:text="${signUpErrorMessage}"></div>
+      <input type="email" id="signUpEmail" name="email" placeholder="Email" required minlength="6" maxlength="64">
+      <input type="text" id="signUpUsername" name="username" placeholder="Username" required minlength="1" maxlength="32">
+      <input type="password" id="signUpPassword1" name="password1" placeholder="Password" required minlength="8" maxlength="128">
+      <input type="password" id="signUpPassword2" name="password2" placeholder="Confirm Password" required minlength="8" maxlength="128">
+      <button type="button" id="signUpButton">Sign Up</button>
+      <div class="error-message hidden" id="signUpError"></div>
     </form>
   </div>
 
   <!-- Sign In Form -->
   <div class="sign-in">
-    <form th:action="@{/}" method="post">
+    <form id="signInForm">
       <h1>Sign In</h1>
-      <input type="email" name="email" placeholder="Email" required th:value="${param.email}" minlength="6" maxlength="64">
-      <input type="password" name="password" placeholder="Password" required minlength="8" maxlength="128">
-      <button type="submit" name="action" value="signIn">Sign In</button>
-      <div class="error-message" th:if="${signInErrorMessage != null}" th:text="${signInErrorMessage}"></div>
+      <input type="email" id="signInEmail" name="email" placeholder="Email" required minlength="6" maxlength="64">
+      <input type="password" id="signInPassword" name="password" placeholder="Password" required minlength="8" maxlength="128">
+      <button type="button" id="signInButton">Sign In</button>
+      <div class="error-message hidden" id="signInError"></div>
     </form>
   </div>
 
@@ -54,5 +54,6 @@
     </div>
   </div>
 </div>
+<script type="module" src="javascript/index.js"></script>
 </body>
 </html>
