@@ -8,7 +8,8 @@ import StringUtil from './StringUtil.js';
  * Displays appropriate error messages for invalid input or server errors.
  * Redirects the user upon successful sign-up if the server provides a redirect URL.
  */
-async function signUp() {
+async function signUp(event) {
+    event.preventDefault();
     const email = document.getElementById("signUpEmail").value.trim();
     const username = document.getElementById("signUpUsername").value.trim();
     const password1 = document.getElementById("signUpPassword1").value;
@@ -68,7 +69,8 @@ async function signUp() {
  * Displays appropriate error messages for invalid input or server errors.
  * Redirects the user upon successful sign-in if the server provides a redirect URL.
  */
-async function signIn() {
+async function signIn(event) {
+    event.preventDefault();
     const email = document.getElementById("signInEmail").value.trim();
     const password = document.getElementById("signInPassword").value;
     const errorDiv = document.getElementById("signInError");
@@ -107,6 +109,6 @@ async function signIn() {
     }
 }
 
-// Event listeners
-document.getElementById("signUpButton").addEventListener("click", signUp);
-document.getElementById("signInButton").addEventListener("click", signIn);
+// Event listeners for form submissions
+document.getElementById("signUpForm").addEventListener("submit", signUp);
+document.getElementById("signInForm").addEventListener("submit", signIn);
