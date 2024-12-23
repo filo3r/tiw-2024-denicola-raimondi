@@ -44,7 +44,7 @@ async function signUp(event) {
     }
     // Send data to server
     try {
-        const response = await fetch("./index", {
+        const response = await fetch("./", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({ action: "signUp", email: email, username: username, password1: password1, password2: password2 }),
@@ -92,7 +92,7 @@ async function signIn(event) {
     }
     // Send data to server
     try {
-        const response = await fetch("./index", {
+        const response = await fetch("./", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({ action: "signIn", email: email, password: password }),
@@ -128,7 +128,7 @@ document.getElementById("signInForm").addEventListener("submit", signIn);
  * @throws {Error} - If there is a problem with the server or network.
  */
 async function checkUsernameAvailability(username) {
-    const response = await fetch("./index", {
+    const response = await fetch("./", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "checkUsernameAvailability", username: username }),
