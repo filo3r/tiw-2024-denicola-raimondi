@@ -7,6 +7,7 @@ import StringUtil from './StringUtil.js';
  * If validation passes, sends sign-up data to the server via a POST request.
  * Displays appropriate error messages for invalid input or server errors.
  * Redirects the user upon successful sign-up if the server provides a redirect URL.
+ * @param {Event} event - The event triggered by form submission.
  */
 async function signUp(event) {
     event.preventDefault();
@@ -68,6 +69,7 @@ async function signUp(event) {
  * If validation passes, sends sign-in data to the server via a POST request.
  * Displays appropriate error messages for invalid input or server errors.
  * Redirects the user upon successful sign-in if the server provides a redirect URL.
+ * @param {Event} event - The event triggered by form submission.
  */
 async function signIn(event) {
     event.preventDefault();
@@ -109,6 +111,59 @@ async function signIn(event) {
     }
 }
 
-// Event listeners for form submissions
+/**
+ * Attaches the sign-up handler to the sign-up form submission event.
+ */
 document.getElementById("signUpForm").addEventListener("submit", signUp);
+
+/**
+ * Attaches the sign-in handler to the sign-in form submission event.
+ */
 document.getElementById("signInForm").addEventListener("submit", signIn);
+
+/**
+ * Checks the availability of a username via an AJAX POST request to the server.
+ * @param {string} username - The username to check.
+ * @returns {Promise<boolean>} - True if the username is available, false otherwise.
+ * @throws {Error} - If there is a problem with the server or network.
+ */
+async function checkUsernameAvailability(username) {
+    const response = await fetch("./index", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "checkUsernameAvailability", username: username }),
+    });
+    if (!response.ok) {
+        throw new Error("Server error.");
+    }
+    const result = await response.json();
+    return result.isUsernameTaken;
+}
+
+/**
+ * Handles real-time username availability check when the username field loses focus.
+ */
+document.getElementById("signUpUsername").addEventListener("blur", async (event) => {
+    const username = event.target.value.trim();
+    const errorDiv = document.getElementById("signUpError");
+    const successDiv = document.getElementById("signUpSuccess");
+    errorDiv.textContent = "";
+    successDiv.textContent = "";
+    errorDiv.classList.add("hidden");
+    successDiv.classList.add("hidden");
+    if (username) {
+        try {
+            const isUsernameTaken = await checkUsernameAvailability(username);
+            if (isUsernameTaken) {
+                errorDiv.textContent = "Username is already taken.";
+                errorDiv.classList.remove("hidden");
+            } else {
+                successDiv.textContent = "Username available.";
+                successDiv.classList.remove("hidden");
+            }
+        } catch (error) {
+            errorDiv.textContent = "Server error.";
+            errorDiv.classList.remove("hidden");
+        }
+    }
+});

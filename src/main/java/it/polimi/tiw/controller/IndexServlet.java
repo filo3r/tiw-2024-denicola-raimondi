@@ -82,10 +82,12 @@ public class IndexServlet extends HttpServlet {
                 handleSignUp(jsonRequest, request, response);
             else if ("signIn".equals(action))
                 handleSignIn(jsonRequest, request, response);
+            else if ("checkUsernameAvailability".equals(action))
+                handleCheckUsernameAvailability(jsonRequest, response);
             else
                 response.sendRedirect(request.getContextPath() + "/");
         } catch (JsonSyntaxException e) {
-            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Internal server error.", response);
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Server error.", response);
             e.printStackTrace();
         }
     }
@@ -118,8 +120,7 @@ public class IndexServlet extends HttpServlet {
             }
             if (successSignUp && successCreateAlbum) {
                 request.getSession().setAttribute("user", user);
-                response.setStatus(HttpServletResponse.SC_OK);
-                response.getWriter().write(gson.toJson(successResponse(request.getContextPath() + "/home")));
+                sendSuccessResponse(HttpServletResponse.SC_OK, request.getContextPath() + "/home", response);
             } else if (successSignUp && !successCreateAlbum) {
                 userDAO.deleteUser(username);
                 sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", response);
@@ -156,8 +157,7 @@ public class IndexServlet extends HttpServlet {
                 user.setPassword(null);
                 user.setUsername(userDAO.getUsernameByEmail(user.getEmail()));
                 request.getSession().setAttribute("user", user);
-                response.setStatus(HttpServletResponse.SC_OK);
-                response.getWriter().write(gson.toJson(successResponse(request.getContextPath() + "/home")));
+                sendSuccessResponse(HttpServletResponse.SC_OK, request.getContextPath() + "/home", response);
             } else {
                 sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Wrong credentials. Please try again.", response);
                 return;
@@ -239,25 +239,25 @@ public class IndexServlet extends HttpServlet {
     }
 
     /**
-     * Creates an error response object with the specified message.
-     * @param message the error message to include in the response
-     * @return a JsonObject containing the error message
+     *
      */
-    private JsonObject errorResponse(String message) {
-        JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("message", message);
-        return jsonObject;
-    }
-
-    /**
-     * Creates a success response object with the specified redirect URL.
-     * @param redirect the URL to redirect the user to
-     * @return a JsonObject containing the redirect URL
-     */
-    private JsonObject successResponse(String redirect) {
-        JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("redirect", redirect);
-        return jsonObject;
+    private void handleCheckUsernameAvailability(JsonObject jsonRequest, HttpServletResponse response) throws ServletException, IOException {
+        String username = jsonRequest.get("username").getAsString();
+        try {
+            UserDAO userDAO = new UserDAO();
+            if (username == null || username.isEmpty()) {
+                sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Username is required.", response);
+                return;
+            }
+            boolean isUsernameTaken = userDAO.isUsernameTaken(username);
+            JsonObject jsonResponse = new JsonObject();
+            jsonResponse.addProperty("isUsernameTaken", isUsernameTaken);
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.getWriter().write(gson.toJson(jsonResponse));
+        } catch (SQLException e) {
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", response);
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -268,8 +268,24 @@ public class IndexServlet extends HttpServlet {
      * @throws IOException if an I/O error occurs during response writing
      */
     private void sendErrorResponse(int status, String message, HttpServletResponse response) throws IOException {
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("message", message);
         response.setStatus(status);
-        response.getWriter().write(gson.toJson(errorResponse(message)));
+        response.getWriter().write(gson.toJson(jsonObject));
+    }
+
+    /**
+     * Sends a success response to the client with the specified status code and redirect URL.
+     * @param status   the HTTP status code to set in the response
+     * @param redirect the URL to redirect the user to
+     * @param response the HttpServletResponse to send the response to
+     * @throws IOException if an I/O error occurs during response writing
+     */
+    private void sendSuccessResponse(int status, String redirect, HttpServletResponse response) throws IOException {
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("redirect", redirect);
+        response.setStatus(status);
+        response.getWriter().write(gson.toJson(jsonObject));
     }
 
 }
