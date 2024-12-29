@@ -1,11 +1,15 @@
 package it.polimi.tiw.dao;
 
 import it.polimi.tiw.model.Album;
+import it.polimi.tiw.model.Comment;
 import it.polimi.tiw.model.Image;
 import it.polimi.tiw.util.DatabaseConnectionPool;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Data Access Object for performing operations on the Album entity.
@@ -421,6 +425,75 @@ public class AlbumDAO {
                 images.add(image);
             }
             return images;
+        } finally {
+            if (result != null)
+                result.close();
+            if (statement != null)
+                statement.close();
+            if (connection != null)
+                databaseConnectionPool.releaseConnection(connection);
+        }
+    }
+
+    /**
+     * Retrieves the images and their associated comments for a specific album ID.
+     * The images are ordered by descending date, and the comments are ordered by descending ID.
+     * @param albumId the ID of the album.
+     * @return a map where the key is an Image object and the value is a list of associated Comment objects.
+     * @throws SQLException if a database access error occurs.
+     */
+    public Map<Image, List<Comment>> getImagesWithCommentsByAlbumId(int albumId) throws SQLException {
+        String query = """
+        SELECT 
+            i.image_id, i.image_uploader, i.image_title, i.image_date, i.image_text, i.image_path,
+            c.comment_id, c.comment_author, c.comment_text
+        FROM 
+            AlbumContainsImage aci
+        JOIN 
+            Image i ON aci.image_id = i.image_id
+        LEFT JOIN 
+            Comment c ON i.image_id = c.image_id
+        WHERE 
+            aci.album_id = ?
+        ORDER BY 
+            i.image_date DESC, c.comment_id DESC
+        """;
+        Map<Image, List<Comment>> imagesWithComments = new LinkedHashMap<>();
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet result = null;
+        try {
+            connection = databaseConnectionPool.getConnection();
+            statement = connection.prepareStatement(query);
+            statement.setInt(1, albumId);
+            result = statement.executeQuery();
+            while (result.next()) {
+                // Extract image data
+                int imageId = result.getInt("image_id");
+                String imageUploader = result.getString("image_uploader");
+                String imageTitle = result.getString("image_title");
+                Timestamp imageDate = result.getTimestamp("image_date");
+                String imageText = result.getString("image_text");
+                String imagePath = result.getString("image_path");
+                Image image = new Image(imageUploader, imageTitle, imageText);
+                image.setImageId(imageId);
+                image.setImageDate(imageDate);
+                image.setImagePath(imagePath);
+                // Check if the image is already in the map
+                if (!imagesWithComments.containsKey(image)) {
+                    imagesWithComments.put(image, new ArrayList<>());
+                }
+                // Extract comment data if present
+                int commentId = result.getInt("comment_id");
+                if (!result.wasNull()) { // Check if the comment_id is not null
+                    String commentAuthor = result.getString("comment_author");
+                    String commentText = result.getString("comment_text");
+                    Comment comment = new Comment(imageId, commentAuthor, commentText);
+                    comment.setCommentId(commentId);
+                    imagesWithComments.get(image).add(comment);
+                }
+            }
+            return imagesWithComments;
         } finally {
             if (result != null)
                 result.close();

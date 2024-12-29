@@ -1,25 +1,22 @@
 package it.polimi.tiw.controller;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import it.polimi.tiw.dao.AlbumDAO;
 import it.polimi.tiw.dao.CommentDAO;
 import it.polimi.tiw.dao.ImageDAO;
 import it.polimi.tiw.model.Album;
 import it.polimi.tiw.model.Image;
 import it.polimi.tiw.model.User;
+import it.polimi.tiw.util.MimeDetector;
 import it.polimi.tiw.util.StringUtil;
-import it.polimi.tiw.util.ViewEngine;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.WebContext;
 
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -31,35 +28,24 @@ import java.util.stream.Collectors;
 public class HomeServlet extends HttpServlet {
 
     /**
-     * Unique identifier for Serializable class to ensure compatibility
+     * Unique identifier for the Serializable class to ensure compatibility
      * during the deserialization process. Changing this value can cause
      * deserialization issues if there are any modifications to the class structure.
      */
     private static final long serialVersionUID = 1L;
 
     /**
-     * Template engine for rendering HTML templates
+     * Gson instance for parsing and serializing JSON data.
      */
-    private TemplateEngine templateEngine;
-
-    /**
-     * Initializes the servlet and retrieves the TemplateEngine instance
-     * from the ServletContext.
-     * @throws ServletException if an error occurs during initialization.
-     */
-    @Override
-    public void init() throws ServletException {
-        ServletContext servletContext = getServletContext();
-        this.templateEngine = ViewEngine.getTemplateEngine(servletContext);
-    }
+    private final Gson gson = new Gson();
 
     /**
      * Handles GET requests to the servlet.
      * Verifies user authentication and loads user albums for display on the home page.
      * @param request  the HTTP request object.
      * @param response the HTTP response object.
-     * @throws ServletException if an error occurs during processing.
-     * @throws IOException      if an I/O error occurs during processing.
+     * @throws ServletException if an error occurs during request processing.
+     * @throws IOException      if an I/O error occurs during request processing.
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -69,26 +55,38 @@ public class HomeServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/");
             return;
         }
-        // Get user
-        User user = (User) session.getAttribute("user");
-        String username = user.getUsername();
-        // WebContext
-        ServletContext servletContext = getServletContext();
-        WebContext webContext = new WebContext(request, response, servletContext, request.getLocale());
-        webContext.setVariable("user", user);
-        // Show success messages
-        showSuccessMessage(session, webContext);
-        // Render page
-        renderHomePage(request, response, webContext, username);
+        // Check the request type (HTML or JSON)
+        String acceptHeader = request.getHeader("Accept");
+        if (acceptHeader != null && acceptHeader.contains("application/json")) {
+            // Set JSON
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            // Get user
+            User user = (User) session.getAttribute("user");
+            String username = user.getUsername();
+            // Render Home Page
+            try {
+                Map<String, Object> homeData = renderHomePage(request, user);
+                String json = gson.toJson(homeData);
+                response.setStatus(HttpServletResponse.SC_OK);
+                response.getWriter().write(json);
+            } catch (SQLException e) {
+                e.printStackTrace();
+                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload the page.", response);
+            }
+        } else {
+            // Render the SPA page
+            request.getRequestDispatcher("/WEB-INF/view/spa.html").forward(request, response);
+        }
     }
 
     /**
      * Handles POST requests to the servlet.
-     * Verifies user authentication and processes actions such as album creation and adding images.
+     * Processes actions such as album creation, adding images, and logging out.
      * @param request  the HTTP request object.
      * @param response the HTTP response object.
-     * @throws ServletException if an error occurs during processing.
-     * @throws IOException      if an I/O error occurs during processing.
+     * @throws ServletException if an error occurs during request processing.
+     * @throws IOException      if an I/O error occurs during request processing.
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -98,110 +96,110 @@ public class HomeServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/");
             return;
         }
+        // Set JSON
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
         // Get user
         User user = (User) session.getAttribute("user");
         String username = user.getUsername();
-        // WebContext
-        ServletContext servletContext = getServletContext();
-        WebContext webContext = new WebContext(request, response, servletContext, request.getLocale());
-        webContext.setVariable("user", user);
         // Create Album or Add Photo or Logout
-        String action = request.getParameter("action");
-        if ("createAlbum".equals(action))
-            handleCreateAlbum(request, response, webContext, username);
-        else if ("addImage".equals(action))
-            handleAddImage(request, response, webContext, username);
-        else if ("logout".equals(action))
-            handleLogout(request, response);
-        else
-            response.sendRedirect(request.getContextPath() + "/home");
-    }
-
-    /**
-     * Renders the home page by loading user albums and profile data.
-     * @param request     the HTTP request object.
-     * @param response    the HTTP response object.
-     * @param webContext  the Thymeleaf WebContext for rendering templates.
-     * @param username    the username of the logged-in user.
-     * @throws ServletException if an error occurs during processing.
-     * @throws IOException      if an I/O error occurs during processing.
-     */
-    private void renderHomePage(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
         try {
-            handleLoadAlbums(webContext, username);
-            handleLoadProfile(request, webContext, username);
-        } catch (SQLException e) {
-            webContext.setVariable("myAlbums", null);
-            webContext.setVariable("otherAlbums", null);
-            webContext.setVariable("userStats", Map.of(
-                    "numAlbums", "Error",
-                    "numImages", "Error",
-                    "numComments", "Error"
-            ));
-            webContext.setVariable("myAlbumsErrorMessage", "Database error. Please reload page.");
-            webContext.setVariable("otherAlbumsErrorMessage", "Database error. Please reload page.");
-            webContext.setVariable("createAlbumErrorMessage", "Database error. Please reload page.");
-            webContext.setVariable("addImageErrorMessage", "Database error. Please reload page.");
-            webContext.setVariable("profileErrorMessage", "Database error. Please reload page.");
+            JsonObject jsonRequest = gson.fromJson(request.getReader(), JsonObject.class);
+            String action = jsonRequest.get("action").getAsString();
+            if ("createAlbum".equals(action))
+                handleCreateAlbum(jsonRequest, request, response, username);
+            else if ("addImage".equals(action))
+                handleAddImage(jsonRequest, request, response, username);
+            else if ("logoutHome".equals(action))
+                handleLogout(request, response);
+            else
+                response.sendRedirect(request.getContextPath() + "/home");
+        } catch (JsonSyntaxException e) {
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Server error.", response);
             e.printStackTrace();
         }
-        templateEngine.process("home.html", webContext, response.getWriter());
     }
 
     /**
-     * Loads the albums associated with the user for display.
-     * @param webContext the Thymeleaf WebContext for rendering templates.
-     * @param username   the username of the logged-in user.
-     * @throws SQLException    if an error occurs while accessing the database.
+     * Renders the home page by loading user-specific albums and profile data.
+     * @param request the HTTP request object.
+     * @param user    the authenticated user.
+     * @return a map containing data required to render the home page.
+     * @throws ServletException if an error occurs during processing.
+     * @throws IOException      if an I/O error occurs during processing.
+     * @throws SQLException     if a database access error occurs.
+     */
+    private Map<String, Object> renderHomePage(HttpServletRequest request, User user) throws ServletException, IOException, SQLException {
+        Map<String, Object> homeData = new HashMap<>();
+        // Albums
+        Map<String, Object> albumsData = handleLoadAlbums(user.getUsername());
+        homeData.putAll(albumsData);
+        // Profile
+        Map<String, Object> profileData = handleLoadProfile(user.getUsername());
+        homeData.putAll(profileData);
+        // User Info
+        homeData.put("user", user);
+        homeData.put("username", user.getUsername());
+        return homeData;
+    }
+
+    /**
+     * Loads albums for the specified user.
+     * @param username the username of the authenticated user.
+     * @return a map containing the user's albums and additional album-related data.
+     * @throws SQLException     if a database access error occurs.
      * @throws ServletException if an error occurs during processing.
      * @throws IOException      if an I/O error occurs during processing.
      */
-    private void handleLoadAlbums(WebContext webContext, String username) throws SQLException, ServletException, IOException {
+    private Map<String, Object> handleLoadAlbums(String username) throws SQLException, ServletException, IOException {
+        Map<String, Object> albumsData = new HashMap<>();
         AlbumDAO albumDAO = new AlbumDAO();
         ArrayList<Album> myAlbums = albumDAO.getMyAlbums(username);
         ArrayList<Album> otherAlbums = albumDAO.getOtherAlbums(username);
-        webContext.setVariable("myAlbums", myAlbums);
-        webContext.setVariable("otherAlbums", otherAlbums);
+        int userAlbumId = albumDAO.getUserPersonalAlbumId(username);
+        albumsData.put("myAlbums", myAlbums);
+        albumsData.put("otherAlbums", otherAlbums);
+        albumsData.put("userAlbumId", userAlbumId == -1 ? 0 : userAlbumId);
+        return albumsData;
     }
 
     /**
-     * Loads the profile statistics for the user.
-     * @param request    the HTTP request object.
-     * @param webContext the Thymeleaf WebContext for rendering templates.
-     * @param username   the username of the logged-in user.
-     * @throws SQLException    if an error occurs while accessing the database.
+     * Loads profile data, including statistics about albums, images, and comments.
+     * @param username the username of the authenticated user.
+     * @return a map containing the user's profile statistics.
+     * @throws SQLException     if a database access error occurs.
      * @throws ServletException if an error occurs during processing.
      * @throws IOException      if an I/O error occurs during processing.
      */
-    private void handleLoadProfile(HttpServletRequest request, WebContext webContext, String username) throws SQLException, ServletException, IOException {
+    private Map<String, Object> handleLoadProfile(String username) throws SQLException, ServletException, IOException {
+        Map<String, Object> profileData = new HashMap<>();
         AlbumDAO albumDAO = new AlbumDAO();
         ImageDAO imageDAO = new ImageDAO();
         CommentDAO commentDAO = new CommentDAO();
         int numAlbums = albumDAO.getAlbumsCountByUser(username);
         int numImages = imageDAO.getImagesCountByUser(username);
         int numComments = commentDAO.getCommentsCountByUser(username);
-        User user = (User) request.getSession().getAttribute("user");
-        webContext.setVariable("user", user);
-        webContext.setVariable("userStats", Map.of(
-                "numAlbums", numAlbums,
-                "numImages", numImages,
-                "numComments", numComments
-        ));
+        Map<String, Integer> userStats = new HashMap<>();
+        userStats.put("numAlbums", numAlbums);
+        userStats.put("numImages", numImages);
+        userStats.put("numComments", numComments);
+        profileData.put("userStats", userStats);
+        return profileData;
     }
 
     /**
-     * Handles album creation for the logged-in user.
-     * @param request    the HTTP request object.
-     * @param response   the HTTP response object.
-     * @param webContext the Thymeleaf WebContext for rendering templates.
-     * @param username   the username of the logged-in user.
+     * Handles the creation of a new album for the user.
+     * @param jsonRequest the JSON request containing the album details.
+     * @param request     the HTTP request object.
+     * @param response    the HTTP response object.
+     * @param username    the username of the authenticated user.
      * @throws ServletException if an error occurs during processing.
      * @throws IOException      if an I/O error occurs during processing.
      */
-    private void handleCreateAlbum(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
-        String albumTitle = request.getParameter("albumTitle");
+    private void handleCreateAlbum(JsonObject jsonRequest, HttpServletRequest request, HttpServletResponse response, String username) throws ServletException, IOException {
+        String albumTitle = jsonRequest.get("albumTitle").getAsString();
         if (!StringUtil.isValidTitle(albumTitle)) {
-            showErrorPage("createAlbum", "Invalid album title.", request, response, webContext, username);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid album title.", response);
             return;
         }
         Album album = new Album(username, albumTitle);
@@ -209,74 +207,67 @@ public class HomeServlet extends HttpServlet {
             AlbumDAO albumDAO = new AlbumDAO();
             boolean success = albumDAO.createAlbum(album);
             if (success) {
-                HttpSession session = request.getSession();
-                session.setAttribute("createAlbumSuccessMessage", "Album created successfully.");
-                response.sendRedirect(request.getContextPath() + "/home");
+                sendSuccessResponse(HttpServletResponse.SC_OK, "Album created successfully.", request.getContextPath() + "/home", response);
             } else {
-                showErrorPage("createAlbum", "Database error. Please reload page.", request, response, webContext, username);
+                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload the page.", response);
             }
         } catch (SQLException e) {
-            showErrorPage("createAlbum", "Database error. Please reload page.", request, response, webContext, username);
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload the page.", response);
             e.printStackTrace();
         }
     }
 
     /**
      * Handles the process of adding a new image to the user's albums.
-     * Validates input data, saves the image to disk, updates the database, and provides user feedback.
-     * @param request    the HTTP request object.
-     * @param response   the HTTP response object.
-     * @param webContext the Thymeleaf WebContext for rendering templates.
-     * @param username   the username of the logged-in user.
-     * @throws ServletException if a servlet-specific error occurs.
-     * @throws IOException      if an I/O error occurs.
+     * @param jsonRequest the JSON request containing the image details.
+     * @param request     the HTTP request object.
+     * @param response    the HTTP response object.
+     * @param username    the username of the authenticated user.
+     * @throws ServletException if an error occurs during processing.
+     * @throws IOException      if an I/O error occurs during processing.
      */
-    private void handleAddImage(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
-        ArrayList<String> imageStringParameters = getImageStringParameters(request, response, webContext, username);
+    private void handleAddImage(JsonObject jsonRequest, HttpServletRequest request, HttpServletResponse response, String username) throws ServletException, IOException {
+        ArrayList<String> imageStringParameters = getImageStringParameters(jsonRequest, response);
         if (imageStringParameters == null || imageStringParameters.isEmpty())
             return;
-        ArrayList<Integer> selectedAlbums = getSelectedAlbums(request, response, webContext, username);
+        ArrayList<Integer> selectedAlbums = getSelectedAlbums(jsonRequest, response, username);
         if (selectedAlbums == null || selectedAlbums.isEmpty())
             return;
-        Part imageFile = getImageFile(request, response, webContext, username);
+        byte[] imageFile = getImageFile(jsonRequest, response);
         if (imageFile == null)
             return;
-        String imageExtension = getImageExtension(request, response, webContext, username, imageFile);
+        String imageExtension = getImageExtension(imageFile, response);
         if (imageExtension == null)
             return;
-        int imageId = insertImageIntoDatabase(request, response, webContext, username, imageStringParameters, selectedAlbums, imageExtension);
+        int imageId = insertImageIntoDatabase(response, username, imageStringParameters, selectedAlbums, imageExtension);
         if (imageId == -1)
             return;
-        boolean imageSaved = saveImageIntoDisk(request, response, webContext, username, imageFile, imageId, imageExtension);
+        boolean imageSaved = saveImageIntoDisk(response, imageFile, imageId, imageExtension);
         if (!imageSaved)
             return;
-        HttpSession session = request.getSession();
-        session.setAttribute("addImageSuccessMessage", "Image added successfully.");
-        response.sendRedirect(request.getContextPath() + "/home");
+        sendSuccessResponse(HttpServletResponse.SC_OK, "Image added successfully.", request.getContextPath() + "/home", response);
     }
 
     /**
-     * Retrieves and validates the image title and description from the request.
-     * @param request    the HTTP request object.
-     * @param response   the HTTP response object.
-     * @param webContext the Thymeleaf WebContext for rendering templates.
-     * @param username   the username of the logged-in user.
-     * @return           an ArrayList containing the image title and description if valid; otherwise, null.
-     * @throws ServletException if a servlet-specific error occurs.
-     * @throws IOException      if an I/O error occurs.
+     * Validates and retrieves the image title and description from the request.
+     * @param jsonRequest the JSON request containing the image details.
+     * @param response    the HTTP response object.
+     * @return an ArrayList containing the image title and description if valid; otherwise, null.
+     * @throws ServletException if an error occurs during processing.
+     * @throws IOException      if an I/O error occurs during processing.
      */
-    private ArrayList<String> getImageStringParameters(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
-        String imageTitle = request.getParameter("imageTitle");
-        String imageText = request.getParameter("imageText");
-        ArrayList<String> imageStringParameters = new ArrayList<>();
+    private ArrayList<String> getImageStringParameters(JsonObject jsonRequest, HttpServletResponse response) throws ServletException, IOException {
+        String imageTitle = jsonRequest.get("imageTitle").getAsString();
+        String imageText = jsonRequest.get("imageText").getAsString();
         if (!StringUtil.isValidTitle(imageTitle)) {
-            showErrorPage("addImage", "Invalid image title.", request, response, webContext, username);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image title.", response);
             return null;
         }
         if (!StringUtil.isValidText(imageText)) {
-            showErrorPage("addImage", "Invalid image description.", request, response, webContext, username);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image description.", response);
             return null;
         }
+        ArrayList<String> imageStringParameters = new ArrayList<>();
         imageStringParameters.add(imageTitle);
         imageStringParameters.add(imageText);
         return imageStringParameters;
@@ -284,30 +275,30 @@ public class HomeServlet extends HttpServlet {
 
     /**
      * Retrieves and validates the selected album IDs from the request.
-     * Ensures the albums belong to the user and adds the user's personal album if it doesn't exist.
-     * @param request    the HTTP request object.
-     * @param response   the HTTP response object.
-     * @param webContext the Thymeleaf WebContext for rendering templates.
-     * @param username   the username of the logged-in user.
-     * @return           an ArrayList of validated album IDs; otherwise, null.
-     * @throws ServletException if a servlet-specific error occurs.
-     * @throws IOException      if an I/O error occurs.
+     * Ensures the albums belong to the user and includes the user's personal album if necessary.
+     * @param jsonRequest the JSON request containing the album details.
+     * @param response    the HTTP response object.
+     * @param username    the username of the authenticated user.
+     * @return an ArrayList of validated album IDs; otherwise, null.
+     * @throws ServletException if an error occurs during processing.
+     * @throws IOException      if an I/O error occurs during processing.
      */
-    private ArrayList<Integer> getSelectedAlbums(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
-        String[] selectedAlbumsStr = request.getParameterValues("albumSelect");
+    private ArrayList<Integer> getSelectedAlbums(JsonObject jsonRequest, HttpServletResponse response, String username) throws ServletException, IOException {
+        // Retrieve the array of selected albums
+        if (!jsonRequest.has("albumSelect")) {
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid albums selected.", response);
+            return null;
+        }
         ArrayList<Integer> selectedAlbums = new ArrayList<>();
-        // Parse album IDs from the request
-        if (selectedAlbumsStr != null) {
-            for (String albumIdStr : selectedAlbumsStr) {
-                try {
-                    int albumIdInt = Integer.parseInt(albumIdStr);
-                    selectedAlbums.add(albumIdInt);
-                } catch (NumberFormatException e) {
-                    showErrorPage("addImage", "Invalid albums selected.", request, response, webContext, username);
-                    return null;
-                }
+        for (var album : jsonRequest.getAsJsonArray("albumSelect")) {
+            try {
+                selectedAlbums.add(album.getAsInt());
+            } catch (NumberFormatException e) {
+                sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid albums selected.", response);
+                return null;
             }
         }
+        // Add personal album and check if albums belong to the user
         try {
             AlbumDAO albumDAO = new AlbumDAO();
             // Add @username album
@@ -323,13 +314,13 @@ public class HomeServlet extends HttpServlet {
             ArrayList<Integer> userAlbumsIds = albumDAO.getMyAlbumIds(username);
             for (Integer albumId : selectedAlbums) {
                 if (!userAlbumsIds.contains(albumId)) {
-                    showErrorPage("addImage", "Invalid albums selected.", request, response, webContext, username);
+                    sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid albums selected.", response);
                     return null;
                 }
             }
         } catch (SQLException e) {
-            showErrorPage("addImage", "Database error. Please reload page.", request, response, webContext, username);
             e.printStackTrace();
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload the page.", response);
             return null;
         }
         // Remove duplicates and return the list
@@ -337,124 +328,129 @@ public class HomeServlet extends HttpServlet {
     }
 
     /**
-     * Retrieves and validates the uploaded image file from the request.
-     * Checks for file size and allowed MIME types.
-     * @param request    the HTTP request object.
-     * @param response   the HTTP response object.
-     * @param webContext the Thymeleaf WebContext for rendering templates.
-     * @param username   the username of the logged-in user.
-     * @return           the uploaded image Part if valid; otherwise, null.
-     * @throws ServletException if a servlet-specific error occurs.
-     * @throws IOException      if an I/O error occurs.
+     * Decodes and validates the uploaded image file from the request.
+     * @param jsonRequest the JSON request containing the image file.
+     * @param response    the HTTP response object.
+     * @return the image file as a byte array if valid; otherwise, null.
+     * @throws ServletException if an error occurs during processing.
+     * @throws IOException      if an I/O error occurs during processing.
      */
-    private Part getImageFile(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
-        Part imageFile = request.getPart("imageFile");
-        if (imageFile == null || imageFile.getSize() <= 0) {
-            showErrorPage("addImage", "Image not uploaded or empty.", request, response, webContext, username);
+    private byte[] getImageFile(JsonObject jsonRequest, HttpServletResponse response) throws ServletException, IOException {
+        // Read base64 string
+        if (!jsonRequest.has("imageFile")) {
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image file.", response);
             return null;
         }
-        if (imageFile.getSize() > 1024 * 1024 * 100) {
-            showErrorPage("addImage", "Image is too large. Maximum allowed size is 100 MB.", request, response, webContext, username);
+        String base64String = jsonRequest.get("imageFile").getAsString();
+        if (base64String == null || base64String.isEmpty()) {
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image file.", response);
             return null;
         }
-        String mimeType = imageFile.getContentType();
-        List<String> allowedMimeTypes = Arrays.asList("image/jpg", "image/jpeg", "image/png", "image/webp");
-        if (mimeType == null || !allowedMimeTypes.contains(mimeType)) {
-            showErrorPage("addImage", "Invalid image type. Only JPG, JPEG, PNG or WEBP images are allowed.", request, response, webContext, username);
+        // Decode base64 string into byte array
+        byte[] imageFile = null;
+        try {
+            imageFile = Base64.getDecoder().decode(base64String);
+        } catch (IllegalArgumentException e) {
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image file.", response);
+            return null;
+        }
+        // Check imageFile
+        if (imageFile == null || imageFile.length == 0) {
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image file.", response);
+            return null;
+        }
+        // Maximum size control (100 MB)
+        if (imageFile.length > 1024L * 1024L * 100L) {
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image file.", response);
             return null;
         }
         return imageFile;
     }
 
     /**
-     * Retrieves and validates the image file extension from the uploaded file.
-     * @param request    the HTTP request object.
+     * Validates the MIME type of the uploaded image and retrieves the file extension.
+     * @param imageFile  the uploaded image as a byte array.
      * @param response   the HTTP response object.
-     * @param webContext the Thymeleaf WebContext for rendering templates.
-     * @param username   the username of the logged-in user.
-     * @param imageFile  the uploaded image Part.
-     * @return           the image file extension if valid; otherwise, null.
-     * @throws ServletException if a servlet-specific error occurs.
-     * @throws IOException      if an I/O error occurs.
+     * @return the image file extension if valid; otherwise, null.
+     * @throws ServletException if an error occurs during processing.
+     * @throws IOException      if an I/O error occurs during processing.
      */
-    private String getImageExtension(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username, Part imageFile) throws ServletException, IOException {
-        String imageName = imageFile.getSubmittedFileName();
-        if (imageName == null && !imageName.contains(".")) {
-            showErrorPage("addImage", "Image not uploaded or empty.", request, response, webContext, username);
+    private String getImageExtension(byte[] imageFile, HttpServletResponse response) throws ServletException, IOException {
+        // Detect MIME type
+        String imageMimeType = null;
+        imageMimeType = MimeDetector.detectMimeType(imageFile);
+        if (imageMimeType == null) {
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image file.", response);
             return null;
         }
-        String imageExtension = "." + imageName.substring(imageName.lastIndexOf(".") + 1).toLowerCase();
-        if (!imageExtension.equals(".jpg") && !imageExtension.equals(".jpeg") && !imageExtension.equals(".png") && !imageExtension.equals(".webp")) {
-            showErrorPage("addImage", "Invalid image type. Only JPG, JPEG, PNG or WEBP images are allowed.", request, response, webContext, username);
+        // Make sure it is one of the allowed MIMEs
+        List<String> allowedMimeTypes = Arrays.asList("image/jpg", "image/jpeg", "image/png", "image/webp");
+        if (!allowedMimeTypes.contains(imageMimeType)) {
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image file.", response);
             return null;
         }
-        return imageExtension;
+        return MimeDetector.getExtension(imageMimeType);
     }
 
     /**
      * Inserts the image data into the database and associates it with selected albums.
-     * @param request               the HTTP request object.
      * @param response              the HTTP response object.
-     * @param webContext            the Thymeleaf WebContext for rendering templates.
-     * @param username              the username of the logged-in user.
+     * @param username              the username of the authenticated user.
      * @param imageStringParameters the list containing image title and description.
      * @param selectedAlbums        the list of selected album IDs.
      * @param imageExtension        the file extension of the image.
-     * @return                      the image ID if successful; otherwise, -1.
-     * @throws ServletException if a servlet-specific error occurs.
-     * @throws IOException      if an I/O error occurs.
+     * @return the image ID if successful; otherwise, -1.
+     * @throws ServletException if an error occurs during processing.
+     * @throws IOException      if an I/O error occurs during processing.
      */
-    private int insertImageIntoDatabase(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username, ArrayList<String> imageStringParameters, ArrayList<Integer> selectedAlbums, String imageExtension) throws ServletException, IOException {
+    private int insertImageIntoDatabase(HttpServletResponse response, String username, ArrayList<String> imageStringParameters, ArrayList<Integer> selectedAlbums, String imageExtension) throws ServletException, IOException {
         try {
             Image image = new Image(username, imageStringParameters.get(0), imageStringParameters.get(1));
             ImageDAO imageDAO = new ImageDAO();
             int imageId = imageDAO.addImage(image);
             if (imageId == -1) {
-                showErrorPage("addImage", "Database error. Please reload page.", request, response, webContext, username);
+                sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Database error. Please reload the page.", response);
                 return -1;
             }
             String uploadsPathString = getUploadsPath();
             if (uploadsPathString == null) {
-                showErrorPage("addImage", "Server error. Please reload page.", request, response, webContext, username);
+                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Server error. Please reload page.", response);
                 return -1;
             }
             Path uploadsPath = Paths.get(uploadsPathString);
             Path imagePath = uploadsPath.resolve(imageId + imageExtension);
             boolean updatedPath = imageDAO.updateImagePath(imageId, imagePath.toString());
             if (!updatedPath) {
-                showErrorPage("addImage", "Database error. Please reload page.", request, response, webContext, username);
+                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload page.", response);
                 return -1;
             }
             boolean imageIntoAlbums = imageDAO.addImageToAlbums(imageId, selectedAlbums);
             if (!imageIntoAlbums) {
-                showErrorPage("addImage", "Database error. Please reload page.", request, response, webContext, username);
+                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload page.", response);
                 return -1;
             }
             return imageId;
         } catch (SQLException e) {
-            showErrorPage("addImage", "Database error. There may have been errors adding the image. Please reload page.", request, response, webContext, username);
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. There may have been errors adding the image. Please reload page.", response);
             return -1;
         }
     }
 
     /**
      * Saves the uploaded image file to the server's disk storage.
-     * @param request        the HTTP request object.
-     * @param response       the HTTP response object.
-     * @param webContext     the Thymeleaf WebContext for rendering templates.
-     * @param username       the username of the logged-in user.
-     * @param imageFile      the uploaded image Part.
-     * @param imageId        the ID of the image in the database.
+     * @param response      the HTTP response object.
+     * @param imageFile     the uploaded image as a byte array.
+     * @param imageId       the ID of the image in the database.
      * @param imageExtension the file extension of the image.
-     * @return               true if the image is saved successfully; otherwise, false.
-     * @throws ServletException if a servlet-specific error occurs.
-     * @throws IOException      if an I/O error occurs.
+     * @return true if the image is saved successfully; otherwise, false.
+     * @throws ServletException if an error occurs during processing.
+     * @throws IOException      if an I/O error occurs during processing.
      */
-    private boolean saveImageIntoDisk(HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username, Part imageFile, int imageId, String imageExtension) throws ServletException, IOException {
+    private boolean saveImageIntoDisk(HttpServletResponse response, byte[] imageFile, int imageId, String imageExtension) throws ServletException, IOException {
         // Destination directory to save images
         String uploadsPathString = getUploadsPath();
         if (uploadsPathString == null) {
-            showErrorPage("addImage", "Server error. Please reload page.", request, response, webContext, username);
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Server error. Please reload page.", response);
             return false;
         }
         // Create Path object from the loaded uploads path
@@ -464,11 +460,11 @@ public class HomeServlet extends HttpServlet {
         // Full path of the file to save
         Path imagePath = uploadsPath.resolve(imageId + imageExtension);
         // Save the file contents to the destination
-        try (InputStream inputStream = imageFile.getInputStream()) {
-            Files.copy(inputStream, imagePath, StandardCopyOption.REPLACE_EXISTING);
+        try {
+            Files.write(imagePath, imageFile, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
             // Verify that the file has been created
             if (!Files.exists(imagePath)) {
-                showErrorPage("addImage", "Error saving image to server. Please reload page.", request, response, webContext, username);
+                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error saving image to server. Please reload page.", response);
                 return false;
             }
         } catch (IOException save) {
@@ -478,7 +474,7 @@ public class HomeServlet extends HttpServlet {
             } catch (IOException delete) {
                 delete.printStackTrace();
             }
-            showErrorPage("addImage", "Error saving image to server. Please reload page.", request, response, webContext, username);
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error saving image to server. Please reload page.", response);
             save.printStackTrace();
             return false;
         }
@@ -513,71 +509,44 @@ public class HomeServlet extends HttpServlet {
      * Handles the user logout process by invalidating the session and redirecting to the login page.
      * @param request  the HTTP request object.
      * @param response the HTTP response object.
-     * @throws ServletException if a servlet-specific error occurs.
-     * @throws IOException      if an I/O error occurs.
+     * @throws ServletException if an error occurs during processing.
+     * @throws IOException      if an I/O error occurs during processing.
      */
     private void handleLogout(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession(false);
         if (session != null)
             session.invalidate();
-        response.sendRedirect(request.getContextPath() + "/");
+        sendSuccessResponse(HttpServletResponse.SC_OK, "Logout successful.", request.getContextPath() + "/", response);
     }
 
     /**
-     * Displays an error message on the specified active panel and renders the home page.
-     * @param activePanel  the panel to activate in the UI.
-     * @param errorMessage the error message to display.
-     * @param request      the HTTP request object.
-     * @param response     the HTTP response object.
-     * @param webContext   the Thymeleaf WebContext for rendering templates.
-     * @param username     the username of the logged-in user.
-     * @throws ServletException if a servlet-specific error occurs.
-     * @throws IOException      if an I/O error occurs.
+     * Sends an error response with the specified status and message.
+     * @param status   the HTTP status code.
+     * @param message  the error message.
+     * @param response the HTTP response object.
+     * @throws IOException if an I/O error occurs during response writing.
      */
-    private void showErrorPage(String activePanel, String errorMessage, HttpServletRequest request, HttpServletResponse response, WebContext webContext, String username) throws ServletException, IOException {
-        // Set error message
-        switch (activePanel) {
-            case "myAlbums":
-                webContext.setVariable("myAlbumsErrorMessage", errorMessage);
-                break;
-            case "otherAlbums":
-                webContext.setVariable("otherAlbumsErrorMessage", errorMessage);
-                break;
-            case "createAlbum":
-                webContext.setVariable("createAlbumErrorMessage", errorMessage);
-                break;
-            case "addImage":
-                webContext.setVariable("addImageErrorMessage", errorMessage);
-                break;
-            case "profile":
-                webContext.setVariable("profileErrorMessage", errorMessage);
-                break;
-            default:
-                webContext.setVariable("myAlbumsErrorMessage", errorMessage);
-                break;
-        }
-        // Set active panel
-        webContext.setVariable("activePanel", activePanel);
-        // Page Rendering
-        renderHomePage(request, response, webContext, username);
+    private void sendErrorResponse(int status, String message, HttpServletResponse response) throws IOException {
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("message", message);
+        response.setStatus(status);
+        response.getWriter().write(gson.toJson(jsonObject));
     }
 
     /**
-     * Retrieves and displays any success messages stored in the session.
-     * @param session    the HTTP session object.
-     * @param webContext the Thymeleaf WebContext for rendering templates.
+     * Sends a success response with the specified status, message, and redirect URL.
+     * @param status    the HTTP status code.
+     * @param message   the success message.
+     * @param redirect  the redirect URL.
+     * @param response  the HTTP response object.
+     * @throws IOException if an I/O error occurs during response writing.
      */
-    private void showSuccessMessage(HttpSession session, WebContext webContext) {
-        if (session == null)
-            return;
-        String[] successMessages = {"createAlbumSuccessMessage", "addImageSuccessMessage"};
-        for (String successMessage : successMessages) {
-            Object message = session.getAttribute(successMessage);
-            if (message != null) {
-                webContext.setVariable(successMessage, message);
-                session.removeAttribute(successMessage);
-            }
-        }
+    private void sendSuccessResponse(int status, String message, String redirect, HttpServletResponse response) throws IOException {
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("message", message);
+        jsonObject.addProperty("redirect", redirect);
+        response.setStatus(status);
+        response.getWriter().write(gson.toJson(jsonObject));
     }
 
 }

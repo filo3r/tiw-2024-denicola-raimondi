@@ -1,13 +1,12 @@
 package it.polimi.tiw.controller;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import it.polimi.tiw.dao.AlbumDAO;
 import it.polimi.tiw.model.Album;
+import it.polimi.tiw.model.Comment;
 import it.polimi.tiw.model.Image;
-import it.polimi.tiw.util.ViewEngine;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.WebContext;
 
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -15,7 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * Servlet responsible for handling requests related to albums.
@@ -33,22 +32,7 @@ public class AlbumServlet extends HttpServlet {
      */
     private static final long serialVersionUID = 1L;
 
-    /**
-     * Template engine for rendering HTML templates
-     */
-    private TemplateEngine templateEngine;
-
-    /**
-     * Initializes the servlet and retrieves the TemplateEngine instance
-     * from the ServletContext.
-     * @throws ServletException if an error occurs during initialization.
-     */
-    @Override
-    public void init() throws ServletException {
-        ServletContext servletContext = getServletContext();
-        this.templateEngine = ViewEngine.getTemplateEngine(servletContext);
-    }
-
+    private final Gson gson = new Gson();
 
     /**
      * Handles GET requests to the album page.
@@ -66,20 +50,35 @@ public class AlbumServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/");
             return;
         }
-        // WebContext
-        ServletContext servletContext = getServletContext();
-        WebContext webContext = new WebContext(request, response, servletContext, request.getLocale());
+        // Set JSON
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
         // Get album ID from request
-        int albumId = getAlbumId(request, response, webContext);
-        if (albumId == -1) {
-            response.sendRedirect(request.getContextPath() + "/home");
-            return;
+        int albumId = -1;
+        try {
+            albumId = getAlbumId(request);
+            if (albumId == -1) {
+                sendErrorRedirect(HttpServletResponse.SC_BAD_REQUEST, "Invalid album id.", request.getContextPath() + "/home", response);
+                return;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            sendErrorRedirect(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", request.getContextPath() + "/home", response);
         }
-        webContext.setVariable("albumId", albumId);
-        // Show success messages
-        showSuccessMessage(session, webContext);
-        // Render page
-        renderAlbumPage(request, response, webContext, albumId);
+        // Render Album Page
+        try {
+            Map<String, Object> albumData = renderAlbumPage(request, albumId);
+            if (albumData == null || albumData.isEmpty()) {
+                sendErrorRedirect(HttpServletResponse.SC_BAD_REQUEST, "Invalid album id.", request.getContextPath() + "/home", response);
+                return;
+            }
+            String json = gson.toJson(albumData);
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.getWriter().write(json);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload the page.", response);
+        }
     }
 
     /**
@@ -97,24 +96,29 @@ public class AlbumServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/");
             return;
         }
-        // WebContext
-        ServletContext servletContext = getServletContext();
-        WebContext webContext = new WebContext(request, response, servletContext, request.getLocale());
+        // Set JSON
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
         // Get album ID from request
-        int albumId = getAlbumId(request, response, webContext);
-        if (albumId == -1) {
-            response.sendRedirect(request.getContextPath() + "/home");
-            return;
+        int albumId = -1;
+        try {
+            albumId = getAlbumId(request);
+            if (albumId == -1) {
+                sendErrorRedirect(HttpServletResponse.SC_BAD_REQUEST, "Invalid album id.", request.getContextPath() + "/home", response);
+                return;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            sendErrorRedirect(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", request.getContextPath() + "/home", response);
         }
-        webContext.setVariable("albumId", albumId);
         // Return To Home or Logout
         String action = request.getParameter("action");
         if ("returnToHome".equals(action))
-            response.sendRedirect(request.getContextPath() + "/home");
-        else if ("logout".equals(action))
+            sendSuccessResponse(HttpServletResponse.SC_OK, "Back to home.", request.getContextPath() + "/home", response);
+        else if ("logoutAlbum".equals(action))
             handleLogout(request, response);
         else
-            response.sendRedirect(request.getContextPath() + "/album?albumId=" + albumId + "&page=0");
+            response.sendRedirect(request.getContextPath() + "/home");
     }
 
     /**
@@ -122,13 +126,12 @@ public class AlbumServlet extends HttpServlet {
      * Ensures the album ID is present, correctly formatted, and exists in the database.
      * Displays an error page if validation fails or a database error occurs.
      * @param request    the HTTP request object.
-     * @param response   the HTTP response object.
-     * @param webContext the WebContext object for setting template variables.
      * @return the valid album ID, or -1 if the ID is invalid or the album does not exist.
      * @throws ServletException if an error occurs during processing.
      * @throws IOException      if an I/O error occurs during processing.
      */
-    private int getAlbumId(HttpServletRequest request, HttpServletResponse response, WebContext webContext) throws ServletException, IOException {
+    private int getAlbumId(HttpServletRequest request) throws SQLException, ServletException, IOException {
+        // Get albumId parameter
         String albumIdParam = request.getParameter("albumId");
         int albumId = -1;
         if (albumIdParam == null || albumIdParam.isEmpty()) {
@@ -139,145 +142,141 @@ public class AlbumServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             return -1;
         }
-        try {
-            AlbumDAO albumDAO = new AlbumDAO();
-            boolean exists = albumDAO.doesAlbumExist(albumId);
-            if (exists)
-                return albumId;
-            else
-                return -1;
-        } catch (SQLException e) {
-            renderImagePageException(request, response, webContext);
-            e.printStackTrace();
+        // Check if the album exists
+        AlbumDAO albumDAO = new AlbumDAO();
+        boolean exists = albumDAO.doesAlbumExist(albumId);
+        if (exists)
+            return albumId;
+        else
             return -1;
-        }
     }
 
     /**
      * Renders the album page by loading album details and images.
      * Handles any database errors by setting error variables in the web context.
-     * @param request    the HTTP request object.
-     * @param response   the HTTP response object.
-     * @param webContext the WebContext object for managing template variables.
+     * @param request    the HTTP request object
      * @param albumId    the ID of the album to load and display.
      * @throws ServletException if an error occurs during processing.
      * @throws IOException      if an I/O error occurs during processing.
      */
-    private void renderAlbumPage(HttpServletRequest request, HttpServletResponse response, WebContext webContext, int albumId) throws ServletException, IOException {
-        try {
-            handleLoadAlbumData(webContext, albumId);
-            handleLoadAlbumImages(request, webContext, albumId);
-            templateEngine.process("album.html", webContext, response.getWriter());
-        } catch (SQLException e) {
-            renderImagePageException(request, response, webContext);
-            e.printStackTrace();
-        }
+    private Map<String, Object> renderAlbumPage(HttpServletRequest request, int albumId) throws SQLException, ServletException, IOException {
+        Map<String, Object> albumData = new HashMap<>();
+        // Album
+        Album album = handleLoadAlbumData(albumId);
+        if (album == null)
+            return Collections.emptyMap();
+        albumData.put("albumId", album.getAlbumId());
+        albumData.put("albumCreator", album.getAlbumCreator());
+        albumData.put("albumTitle", album.getAlbumTitle());
+        albumData.put("albumDate", album.getAlbumDate());
+        // Images with comments
+        List<Map<String, Object>> imagesList = handleLoadAlbumImages(albumId);
+        albumData.put("images", imagesList);
+        return albumData;
     }
 
     /**
      * Loads album details for the specified album ID and sets them in the web context.
-     * @param webContext the WebContext object for managing template variables.
      * @param albumId    the ID of the album to load.
      * @throws SQLException if a database access error occurs while retrieving the album data.
      */
-    private void handleLoadAlbumData(WebContext webContext, int albumId) throws SQLException {
+    private Album handleLoadAlbumData(int albumId) throws SQLException {
         AlbumDAO albumDAO = new AlbumDAO();
-        Album album = albumDAO.getAlbumById(albumId);
-        webContext.setVariable("album", album);
+        return albumDAO.getAlbumById(albumId);
     }
 
     /**
      * Loads and paginates the images for the specified album.
      * Retrieves all images associated with the album ID, calculates the current page,
      * and sets the paginated images along with pagination details in the web context.
-     * @param request    the HTTP request object, used to retrieve the "page" parameter.
-     * @param webContext the WebContext object for managing template variables.
      * @param albumId    the ID of the album whose images are to be loaded.
      * @throws SQLException if a database access error occurs while retrieving the images.
      */
-    private void handleLoadAlbumImages(HttpServletRequest request, WebContext webContext, int albumId) throws SQLException {
-        // Default information
-        int page = 0;
-        int pageSize = 5;
-        // Get album info
+    private List<Map<String, Object>> handleLoadAlbumImages(int albumId) throws SQLException {
+        // Get Image->List<Comment> map from DAO
         AlbumDAO albumDAO = new AlbumDAO();
-        int totalImages = albumDAO.getImagesCountByAlbumId(albumId);
-        // Calculate the maximum page index
-        int maxPage = 0;
-        if (totalImages > 0)
-            maxPage = (int) Math.ceil((double) totalImages / pageSize) - 1;
-        else
-            maxPage = 0;
-        // Manage current page with parameter (first page is 0)
-        String pageParam = request.getParameter("page");
-        if (pageParam != null && !pageParam.isEmpty()) {
-            try {
-                page = Integer.parseInt(pageParam);
-            } catch (NumberFormatException e) {
-                page = 0;
+        Map<Image, List<Comment>> imagesWithComments = albumDAO.getImagesWithCommentsByAlbumId(albumId);
+        // Create a list of maps, where each map represents an image + its list of comments
+        List<Map<String, Object>> imagesList = new ArrayList<>();
+        for (Map.Entry<Image, List<Comment>> entry : imagesWithComments.entrySet()) {
+            Image image = entry.getKey();
+            List<Comment> comments = entry.getValue();
+            // Single image
+            Map<String, Object> imageMap = new HashMap<>();
+            imageMap.put("imageId", image.getImageId());
+            imageMap.put("imageUploader", image.getImageUploader());
+            imageMap.put("imageTitle", image.getImageTitle());
+            imageMap.put("imageDate", image.getImageDate());
+            imageMap.put("imageText", image.getImageText());
+            imageMap.put("imagePath", image.getImagePath());
+            // Convert the list of comments into a “serializable” structure
+            List<Map<String, Object>> commentsData = new ArrayList<>();
+            for (Comment comment : comments) {
+                Map<String, Object> commentMap = new HashMap<>();
+                commentMap.put("commentId", comment.getCommentId());
+                commentMap.put("imageId", comment.getImageId());
+                commentMap.put("commentAuthor", comment.getCommentAuthor());
+                commentMap.put("commentText", comment.getCommentText());
+                commentsData.add(commentMap);
             }
-            if (page < 0 || page > maxPage)
-                page = 0;
-        } else {
-            page = 0;
+            // Insert the list of comments into the image map
+            imageMap.put("comments", commentsData);
+            // Add map to global list
+            imagesList.add(imageMap);
         }
-        // Calculate indexes
-        int startIndex = page * pageSize;
-        int endIndex = Math.min(startIndex + pageSize, totalImages);
-        // Load images to the page
-        ArrayList<Image> images = albumDAO.getImagesByAlbumIdWithPagination(albumId, pageSize, startIndex);
-        // WebContext
-        webContext.setVariable("images", images);
-        webContext.setVariable("currentPage", page);
-        webContext.setVariable("hasPrevious", page > 0);
-        webContext.setVariable("hasNext", endIndex < totalImages);
-    }
-
-    /**
-     * Renders an error page in case of database exceptions during image loading.
-     * @param request    the HTTP request object.
-     * @param response   the HTTP response object.
-     * @param webContext the WebContext object for managing template variables.
-     * @throws ServletException if an error occurs during processing.
-     * @throws IOException      if an I/O error occurs during processing.
-     */
-    private void renderImagePageException(HttpServletRequest request, HttpServletResponse response, WebContext webContext) throws ServletException, IOException {
-        webContext.setVariable("album", null);
-        webContext.setVariable("images", null);
-        webContext.setVariable("albumErrorMessage", "Database error. Please reload page.");
-        templateEngine.process("image.html", webContext, response.getWriter());
+        return imagesList;
     }
 
     /**
      * Handles the user logout process by invalidating the session and redirecting to the login page.
      * @param request  the HTTP request object.
      * @param response the HTTP response object.
-     * @throws ServletException if a servlet-specific error occurs.
-     * @throws IOException      if an I/O error occurs.
+     * @throws ServletException if an error occurs during processing.
+     * @throws IOException      if an I/O error occurs during processing.
      */
     private void handleLogout(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession(false);
         if (session != null)
             session.invalidate();
-        response.sendRedirect(request.getContextPath() + "/");
+        sendSuccessResponse(HttpServletResponse.SC_OK, "Logout successful.", request.getContextPath() + "/", response);
     }
 
     /**
-     * Shows success messages stored in the session, if any, and removes them after displaying.
-     * @param session    the current HTTP session.
-     * @param webContext the WebContext object for managing template variables.
+     * Sends an error response with the specified status and message.
+     * @param status   the HTTP status code.
+     * @param message  the error message.
+     * @param response the HTTP response object.
+     * @throws IOException if an I/O error occurs during response writing.
      */
-    private void showSuccessMessage(HttpSession session, WebContext webContext) {
-        if (session == null)
-            return;
-        String[] successMessages = {"deleteImageSuccessMessage"};
-        for (String successMessage : successMessages) {
-            Object message = session.getAttribute(successMessage);
-            if (message != null) {
-                webContext.setVariable(successMessage, message);
-                session.removeAttribute(successMessage);
-            }
-        }
+    private void sendErrorResponse(int status, String message, HttpServletResponse response) throws IOException {
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("message", message);
+        response.setStatus(status);
+        response.getWriter().write(gson.toJson(jsonObject));
+    }
+
+    private void sendErrorRedirect(int status, String message, String redirect, HttpServletResponse response) throws IOException {
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("message", message);
+        jsonObject.addProperty("redirect", redirect);
+        response.setStatus(status);
+        response.getWriter().write(gson.toJson(jsonObject));
+    }
+
+    /**
+     * Sends a success response with the specified status, message, and redirect URL.
+     * @param status    the HTTP status code.
+     * @param message   the success message.
+     * @param redirect  the redirect URL.
+     * @param response  the HTTP response object.
+     * @throws IOException if an I/O error occurs during response writing.
+     */
+    private void sendSuccessResponse(int status, String message, String redirect, HttpServletResponse response) throws IOException {
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("message", message);
+        jsonObject.addProperty("redirect", redirect);
+        response.setStatus(status);
+        response.getWriter().write(gson.toJson(jsonObject));
     }
 
 }

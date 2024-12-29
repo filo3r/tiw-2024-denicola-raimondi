@@ -3,6 +3,7 @@ package it.polimi.tiw.model;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Timestamp;
+import java.util.Objects;
 import java.util.Properties;
 
 /**
@@ -172,6 +173,32 @@ public class Image {
      */
     public void setImagePath(String imagePath) {
         this.imagePath = imagePath;
+    }
+
+    /**
+     * Compares this image to another object for equality.
+     * Two images are considered equal if their unique identifiers (imageId) are the same.
+     * @param o the object to compare with this image.
+     * @return true if the specified object is equal to this image, false otherwise.
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        Image image = (Image) o;
+        return imageId == image.imageId;
+    }
+
+    /**
+     * Generates a hash code for this image based on its unique identifier (imageId).
+     * This ensures that images with the same imageId produce the same hash code.
+     * @return the hash code for this image.
+     */
+    @Override
+    public int hashCode() {
+        return Objects.hash(imageId);
     }
 
 }
