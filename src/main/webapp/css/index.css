@@ -235,3 +235,7 @@ button:active, .button:active {
     background-color: #eeffee;
     padding: 10px;
 }
+
+.hidden {
+    display: none;
+}
