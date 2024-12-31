@@ -49,7 +49,7 @@ public class IndexServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // Check if the user is already logged in
         if (request.getSession(false) != null && request.getSession().getAttribute("user") != null) {
-            response.sendRedirect(request.getContextPath() + "/home");
+            response.sendRedirect(request.getContextPath() + "/spa");
             return;
         }
         // Render the page
@@ -68,7 +68,7 @@ public class IndexServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // Check if the user is already logged in
         if (request.getSession(false) != null && request.getSession().getAttribute("user") != null) {
-            response.sendRedirect(request.getContextPath() + "/home");
+            response.sendRedirect(request.getContextPath() + "/spa");
             return;
         }
         // Set JSON
@@ -120,7 +120,7 @@ public class IndexServlet extends HttpServlet {
             }
             if (successSignUp && successCreateAlbum) {
                 request.getSession().setAttribute("user", user);
-                sendSuccessResponse(HttpServletResponse.SC_OK, request.getContextPath() + "/home", response);
+                sendSuccessResponse(HttpServletResponse.SC_OK, request.getContextPath() + "/spa", response);
             } else if (successSignUp && !successCreateAlbum) {
                 userDAO.deleteUser(username);
                 sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", response);
@@ -157,7 +157,7 @@ public class IndexServlet extends HttpServlet {
                 user.setPassword(null);
                 user.setUsername(userDAO.getUsernameByEmail(user.getEmail()));
                 request.getSession().setAttribute("user", user);
-                sendSuccessResponse(HttpServletResponse.SC_OK, request.getContextPath() + "/home", response);
+                sendSuccessResponse(HttpServletResponse.SC_OK, request.getContextPath() + "/spa", response);
             } else {
                 sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Wrong credentials. Please try again.", response);
                 return;

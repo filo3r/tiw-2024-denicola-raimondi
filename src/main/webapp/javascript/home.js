@@ -1,5 +1,7 @@
 // Import StringUtil class
 import StringUtil from './StringUtil.js';
+// Import spa.js
+import { forceHashChange } from './spa.js';
 
 /**
  * Handles the creation of a new album.
@@ -32,7 +34,7 @@ async function createAlbum(event) {
         const result = await response.json();
         if (response.ok) {
             if (result.redirect) {
-                window.location.href = result.redirect;
+                forceHashChange(result.redirect);
             }
             if (result.message) {
                 successDiv.textContent = result.message;
@@ -120,7 +122,7 @@ async function addImage(event) {
             const result = await response.json();
             if (response.ok) {
                 if (result.redirect) {
-                    window.location.href = result.redirect;
+                    forceHashChange(result.redirect);
                 }
                 if (result.message) {
                     successDiv.textContent = result.message;
@@ -158,23 +160,27 @@ async function logoutHome() {
 }
 
 /**
- * Attaches an event listener to the create album form.
- * Submits the form and invokes the createAlbum function.
+ * Initializes event listeners for the homepage.
+ * Binds specific form submission events to their respective handler functions.
+ * Ensures proper functionality for album creation, image addition, and logout.
  */
-document.getElementById("createAlbumForm").addEventListener("submit", createAlbum);
-
-/**
- * Attaches an event listener to the add image form.
- * Submits the form and invokes the addImage function.
- */
-document.getElementById("addImageForm").addEventListener("submit", addImage);
-
-/**
- * Attaches an event listener to the logout form.
- * Prevents default form submission and invokes the logoutHome function asynchronously.
- * @param {Event} event - The event triggered by submitting the logout form.
- */
-document.getElementById("logoutHomeForm").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    await logoutHome();
-});
+export function initHomePageEventListeners() {
+    // Get the form for creating a new album and bind its submit event
+    const createAlbumForm = document.getElementById("createAlbumForm");
+    if (createAlbumForm) {
+        createAlbumForm.addEventListener("submit", createAlbum);
+    }
+    // Get the form for adding an image and bind its submit event
+    const addImageForm = document.getElementById("addImageForm");
+    if (addImageForm) {
+        addImageForm.addEventListener("submit", addImage);
+    }
+    // Get the form for logging out and bind its submit event
+    const logoutHomeForm = document.getElementById("logoutHomeForm");
+    if (logoutHomeForm) {
+        logoutHomeForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            await logoutHome();
+        });
+    }
+}

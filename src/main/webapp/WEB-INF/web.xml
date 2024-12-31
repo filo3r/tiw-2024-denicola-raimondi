@@ -55,6 +55,15 @@
     </servlet-mapping>
 
     <servlet>
+        <servlet-name>SpaServlet</servlet-name>
+        <servlet-class>it.polimi.tiw.controller.SpaServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SpaServlet</servlet-name>
+        <url-pattern>/spa</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
         <servlet-name>HomeServlet</servlet-name>
         <servlet-class>it.polimi.tiw.controller.HomeServlet</servlet-class>
     </servlet>

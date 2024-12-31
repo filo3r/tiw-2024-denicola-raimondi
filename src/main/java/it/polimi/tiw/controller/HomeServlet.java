@@ -55,28 +55,21 @@ public class HomeServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/");
             return;
         }
-        // Check the request type (HTML or JSON)
-        String acceptHeader = request.getHeader("Accept");
-        if (acceptHeader != null && acceptHeader.contains("application/json")) {
-            // Set JSON
-            response.setContentType("application/json");
-            response.setCharacterEncoding("UTF-8");
-            // Get user
-            User user = (User) session.getAttribute("user");
-            String username = user.getUsername();
-            // Render Home Page
-            try {
-                Map<String, Object> homeData = renderHomePage(request, user);
-                String json = gson.toJson(homeData);
-                response.setStatus(HttpServletResponse.SC_OK);
-                response.getWriter().write(json);
-            } catch (SQLException e) {
-                e.printStackTrace();
-                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload the page.", response);
-            }
-        } else {
-            // Render the SPA page
-            request.getRequestDispatcher("/WEB-INF/view/spa.html").forward(request, response);
+        // Set JSON
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        // Get user
+        User user = (User) session.getAttribute("user");
+        String username = user.getUsername();
+        // Render Home Page
+        try {
+            Map<String, Object> homeData = renderHomePage(request, user);
+            String json = gson.toJson(homeData);
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.getWriter().write(json);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload the page.", response);
         }
     }
 
@@ -113,7 +106,7 @@ public class HomeServlet extends HttpServlet {
             else if ("logoutHome".equals(action))
                 handleLogout(request, response);
             else
-                response.sendRedirect(request.getContextPath() + "/home");
+                response.sendRedirect(request.getContextPath() + "/spa");
         } catch (JsonSyntaxException e) {
             sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Server error.", response);
             e.printStackTrace();
@@ -139,7 +132,6 @@ public class HomeServlet extends HttpServlet {
         homeData.putAll(profileData);
         // User Info
         homeData.put("user", user);
-        homeData.put("username", user.getUsername());
         return homeData;
     }
 
@@ -207,7 +199,7 @@ public class HomeServlet extends HttpServlet {
             AlbumDAO albumDAO = new AlbumDAO();
             boolean success = albumDAO.createAlbum(album);
             if (success) {
-                sendSuccessResponse(HttpServletResponse.SC_OK, "Album created successfully.", request.getContextPath() + "/home", response);
+                sendSuccessResponse(HttpServletResponse.SC_OK, "Album created successfully.", "#home", response);
             } else {
                 sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload the page.", response);
             }
@@ -245,7 +237,7 @@ public class HomeServlet extends HttpServlet {
         boolean imageSaved = saveImageIntoDisk(response, imageFile, imageId, imageExtension);
         if (!imageSaved)
             return;
-        sendSuccessResponse(HttpServletResponse.SC_OK, "Image added successfully.", request.getContextPath() + "/home", response);
+        sendSuccessResponse(HttpServletResponse.SC_OK, "Image added successfully.", "#home", response);
     }
 
     /**
