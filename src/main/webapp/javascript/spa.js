@@ -1,16 +1,30 @@
+// Import home.js
 import { initHomePageEventListeners } from './home.js';
 
+/**
+ * Event listener that initializes the router once the DOM is fully loaded.
+ */
 document.addEventListener('DOMContentLoaded', () => {
     router();
 });
 
+/**
+ * Event listener that handles URL hash changes and updates the view accordingly.
+ */
 window.addEventListener("hashchange", router);
 
+/**
+ * Forces a hash change and triggers the "hashchange" event.
+ * @param {string} hash - The hash to set in the URL.
+ */
 export function forceHashChange(hash) {
     window.location.hash = hash;
     window.dispatchEvent(new Event("hashchange"));
 }
 
+/**
+ * Router function to handle navigation based on the URL hash.
+ */
 function router() {
     const path = window.location.hash || "#home";
     switch(path) {
@@ -25,6 +39,10 @@ function router() {
     }
 }
 
+/**
+ * Loads the Home Page by fetching its content and dynamically rendering it.
+ * Displays a loading message during the fetch operation.
+ */
 async function loadHomePage() {
     const spa = document.getElementById("spa");
     spa.innerHTML = `<p>Loading...</p>`;
@@ -43,6 +61,11 @@ async function loadHomePage() {
     }
 }
 
+/**
+ * Builds the HTML structure for the Home Page using the provided data.
+ * @param {Object} data - Data object containing user, albums, and stats information.
+ * @returns {string} The generated HTML content for the Home Page.
+ */
 function buildHomeHTML(data) {
     if (!data || !data.user || !data.myAlbums || !data.otherAlbums || !data.userStats) {
         return `<p>Error loading home page. Please try again.</p>`;
@@ -184,6 +207,10 @@ function buildHomeHTML(data) {
     return html;
 }
 
+/**
+ * Displays success messages.
+ * Messages are retrieved from sessionStorage and cleared after being shown.
+ */
 function showSuccessMessage() {
     // createAlbum
     const createAlbumSuccess = sessionStorage.getItem("createAlbumSuccess");
