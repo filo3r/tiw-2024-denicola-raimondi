@@ -37,6 +37,7 @@ async function loadHomePage() {
         const data = await response.json();
         spa.innerHTML = buildHomeHTML(data);
         initHomePageEventListeners();
+        showSuccessMessage();
     } catch (error) {
         spa.innerHTML = `<p>${error.message}</p>`;
     }
@@ -181,4 +182,27 @@ function buildHomeHTML(data) {
     </div>
     `;
     return html;
+}
+
+function showSuccessMessage() {
+    // createAlbum
+    const createAlbumSuccess = sessionStorage.getItem("createAlbumSuccess");
+    if (createAlbumSuccess) {
+        const successDiv = document.getElementById("createAlbumSuccess");
+        if (successDiv) {
+            successDiv.textContent = createAlbumSuccess;
+            successDiv.classList.remove("hidden");
+        }
+        sessionStorage.removeItem("createAlbumSuccess");
+    }
+    // addImage
+    const addImageSuccess = sessionStorage.getItem("addImageSuccess");
+    if (addImageSuccess) {
+        const successDiv = document.getElementById("addImageSuccess");
+        if (successDiv) {
+            successDiv.textContent = addImageSuccess;
+            successDiv.classList.remove("hidden");
+        }
+        sessionStorage.removeItem("addImageSuccess");
+    }
 }

@@ -13,12 +13,9 @@ async function createAlbum(event) {
     event.preventDefault();
     const albumTitle = document.getElementById("albumTitle").value;
     const errorDiv = document.getElementById("createAlbumError");
-    const successDiv = document.getElementById("createAlbumSuccess");
     // Reset errors
     errorDiv.textContent = "";
-    successDiv.textContent = "";
     errorDiv.classList.add("hidden");
-    successDiv.classList.add("hidden");
     // Check album title
     if (!StringUtil.isValidTitle(albumTitle)) {
         errorDiv.textContent = "Invalid album title.";
@@ -34,12 +31,11 @@ async function createAlbum(event) {
         });
         const result = await response.json();
         if (response.ok) {
+            if (result.message) {
+                sessionStorage.setItem("createAlbumSuccess", result.message);
+            }
             if (result.redirect) {
                 forceHashChange(result.redirect);
-            }
-            if (result.message) {
-                successDiv.textContent = result.message;
-                successDiv.classList.remove("hidden");
             }
         } else {
             errorDiv.textContent = result.message || "Error creating album.";
@@ -65,11 +61,9 @@ async function addImage(event) {
     const imageFile = document.getElementById("imageFile")
     const albumSelect = Array.from(document.querySelectorAll('input[name="albumSelect"]:checked')).map(cb => cb.value);
     const errorDiv = document.getElementById("addImageError");
-    const successDiv = document.getElementById("addImageSuccess");
+    // Reset errors
     errorDiv.textContent = "";
-    successDiv.textContent = "";
     errorDiv.classList.add("hidden");
-    successDiv.classList.add("hidden");
     // Check image title
     if (!StringUtil.isValidTitle(imageTitle)) {
         errorDiv.textContent = "Invalid image title.";
@@ -122,12 +116,11 @@ async function addImage(event) {
             });
             const result = await response.json();
             if (response.ok) {
+                if (result.message) {
+                    sessionStorage.setItem("addImageSuccess", result.message);
+                }
                 if (result.redirect) {
                     forceHashChange(result.redirect);
-                }
-                if (result.message) {
-                    successDiv.textContent = result.message;
-                    successDiv.classList.remove("hidden");
                 }
             } else {
                 errorDiv.textContent = result.message || "Error adding image.";
