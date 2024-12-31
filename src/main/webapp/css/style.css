@@ -488,3 +488,7 @@ button[type="submit"]:hover {
 .error-page-container {
     text-align: center;
 }
+
+.hidden {
+    display: none;
+}
