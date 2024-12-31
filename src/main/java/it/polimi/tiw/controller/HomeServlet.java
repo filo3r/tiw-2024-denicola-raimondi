@@ -63,7 +63,7 @@ public class HomeServlet extends HttpServlet {
         String username = user.getUsername();
         // Render Home Page
         try {
-            Map<String, Object> homeData = renderHomePage(request, user);
+            Map<String, Object> homeData = renderHomePage(user);
             String json = gson.toJson(homeData);
             response.setStatus(HttpServletResponse.SC_OK);
             response.getWriter().write(json);
@@ -100,9 +100,9 @@ public class HomeServlet extends HttpServlet {
             JsonObject jsonRequest = gson.fromJson(request.getReader(), JsonObject.class);
             String action = jsonRequest.get("action").getAsString();
             if ("createAlbum".equals(action))
-                handleCreateAlbum(jsonRequest, request, response, username);
+                handleCreateAlbum(jsonRequest, response, username);
             else if ("addImage".equals(action))
-                handleAddImage(jsonRequest, request, response, username);
+                handleAddImage(jsonRequest, response, username);
             else if ("logoutHome".equals(action))
                 handleLogout(request, response);
             else
@@ -115,14 +115,13 @@ public class HomeServlet extends HttpServlet {
 
     /**
      * Renders the home page by loading user-specific albums and profile data.
-     * @param request the HTTP request object.
-     * @param user    the authenticated user.
+     * @param user the authenticated user.
      * @return a map containing data required to render the home page.
      * @throws ServletException if an error occurs during processing.
      * @throws IOException      if an I/O error occurs during processing.
      * @throws SQLException     if a database access error occurs.
      */
-    private Map<String, Object> renderHomePage(HttpServletRequest request, User user) throws ServletException, IOException, SQLException {
+    private Map<String, Object> renderHomePage(User user) throws ServletException, IOException, SQLException {
         Map<String, Object> homeData = new HashMap<>();
         // Albums
         Map<String, Object> albumsData = handleLoadAlbums(user.getUsername());
@@ -182,13 +181,12 @@ public class HomeServlet extends HttpServlet {
     /**
      * Handles the creation of a new album for the user.
      * @param jsonRequest the JSON request containing the album details.
-     * @param request     the HTTP request object.
      * @param response    the HTTP response object.
      * @param username    the username of the authenticated user.
      * @throws ServletException if an error occurs during processing.
      * @throws IOException      if an I/O error occurs during processing.
      */
-    private void handleCreateAlbum(JsonObject jsonRequest, HttpServletRequest request, HttpServletResponse response, String username) throws ServletException, IOException {
+    private void handleCreateAlbum(JsonObject jsonRequest, HttpServletResponse response, String username) throws ServletException, IOException {
         String albumTitle = jsonRequest.get("albumTitle").getAsString();
         if (!StringUtil.isValidTitle(albumTitle)) {
             sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid album title.", response);
@@ -212,13 +210,12 @@ public class HomeServlet extends HttpServlet {
     /**
      * Handles the process of adding a new image to the user's albums.
      * @param jsonRequest the JSON request containing the image details.
-     * @param request     the HTTP request object.
      * @param response    the HTTP response object.
      * @param username    the username of the authenticated user.
      * @throws ServletException if an error occurs during processing.
      * @throws IOException      if an I/O error occurs during processing.
      */
-    private void handleAddImage(JsonObject jsonRequest, HttpServletRequest request, HttpServletResponse response, String username) throws ServletException, IOException {
+    private void handleAddImage(JsonObject jsonRequest, HttpServletResponse response, String username) throws ServletException, IOException {
         ArrayList<String> imageStringParameters = getImageStringParameters(jsonRequest, response);
         if (imageStringParameters == null || imageStringParameters.isEmpty())
             return;
