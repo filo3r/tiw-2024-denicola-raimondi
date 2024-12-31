@@ -18,6 +18,7 @@ async function createAlbum(event) {
     errorDiv.textContent = "";
     successDiv.textContent = "";
     errorDiv.classList.add("hidden");
+    successDiv.classList.add("hidden");
     // Check album title
     if (!StringUtil.isValidTitle(albumTitle)) {
         errorDiv.textContent = "Invalid album title.";
@@ -67,8 +68,8 @@ async function addImage(event) {
     const successDiv = document.getElementById("addImageSuccess");
     errorDiv.textContent = "";
     successDiv.textContent = "";
-    errorDiv.classList.remove("hidden");
-    successDiv.classList.remove("hidden");
+    errorDiv.classList.add("hidden");
+    successDiv.classList.add("hidden");
     // Check image title
     if (!StringUtil.isValidTitle(imageTitle)) {
         errorDiv.textContent = "Invalid image title.";

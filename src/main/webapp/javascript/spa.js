@@ -30,19 +30,21 @@ async function loadHomePage() {
     spa.innerHTML = `<p>Loading...</p>`;
     try {
         const response = await fetch("./home");
-        if (!response.ok)
-            throw new Error("Could not fetch home page");
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Error loading home page. Please try again.");
+        }
         const data = await response.json();
         spa.innerHTML = buildHomeHTML(data);
         initHomePageEventListeners();
     } catch (error) {
-        spa.innerHTML = `<p>Error loading home page.</p>`;
+        spa.innerHTML = `<p>${error.message}</p>`;
     }
 }
 
 function buildHomeHTML(data) {
     if (!data || !data.user || !data.myAlbums || !data.otherAlbums || !data.userStats) {
-        return `<p>Error loading home page.</p>`;
+        return `<p>Error loading home page. Please try again.</p>`;
     }
     // Dynamic Home HTML
     let html = `
@@ -120,6 +122,8 @@ function buildHomeHTML(data) {
             <input type="text" id="albumTitle" name="albumTitle" required minlength="1" maxlength="64">
             <button type="submit" id="createAlbumButton">Create</button>
         </form>
+        <div class="error-message hidden" id="createAlbumError"></div>
+        <div class="success-message hidden" id="createAlbumSuccess"></div>
     </div>
     `;
     // Add Image Content
@@ -156,6 +160,8 @@ function buildHomeHTML(data) {
             </div>
             <button type="submit" id="addImageButton">Add</button>
         </form>
+        <div class="error-message hidden" id="addImageError"></div>
+        <div class="success-message hidden" id="addImageSuccess"></div>
     </div>
     `;
     // Profile Content
