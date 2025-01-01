@@ -1,10 +1,7 @@
 package it.polimi.tiw.controller;
 
 import it.polimi.tiw.dao.ImageDAO;
-import it.polimi.tiw.util.ViewEngine;
-import org.thymeleaf.TemplateEngine;
 
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -34,25 +31,17 @@ public class UploadsServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Template engine for rendering HTML templates.
-     */
-    private TemplateEngine templateEngine;
-
-    /**
      * Path to the directory where image uploads are stored.
      */
     private Path uploadsPath;
 
     /**
-     * Initializes the servlet, retrieves the TemplateEngine instance, and
-     * determines the uploads directory path from configuration.
-     * @throws ServletException if an error occurs during initialization or if the
-     *                          uploads directory configuration is missing or invalid.
+     * Initializes the servlet and sets the path to the uploads directory
+     * based on the configuration file.
+     * @throws ServletException if the uploads directory configuration is missing or invalid.
      */
     @Override
     public void init() throws ServletException {
-        ServletContext servletContext = getServletContext();
-        this.templateEngine = ViewEngine.getTemplateEngine(servletContext);
         String uploadsPathString = getUploadsPath();
         if (uploadsPathString == null || uploadsPathString.isEmpty()) {
             this.uploadsPath = null;
