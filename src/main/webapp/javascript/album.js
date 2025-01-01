@@ -9,10 +9,10 @@
  */
 async function logoutAlbum() {
     try {
-        const response = await fetch("./home", {
+        const response = await fetch("./album", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({ action: "logoutHome" }),
+            body: JSON.stringify({ action: "logoutAlbum" }),
         });
         const result = await response.json();
         if (response.ok) {
@@ -41,7 +41,7 @@ async function returnToHome() {
         const result = await response.json();
         if (response.ok) {
             if (result.redirect)
-                window.location.href = result.redirect;
+                window.location.hash = result.redirect;
         }
     } catch (error) {}
 }

@@ -105,18 +105,6 @@ public class AlbumServlet extends HttpServlet {
         // Set JSON
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        // Get album ID from request
-        int albumId = -1;
-        try {
-            albumId = getAlbumId(request);
-            if (albumId == -1) {
-                sendErrorRedirect(HttpServletResponse.SC_BAD_REQUEST, "Invalid album id.", "#home", response);
-                return;
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            sendErrorRedirect(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", "#home", response);
-        }
         // Return To Home or Logout
         String action = request.getParameter("action");
         if ("returnToHome".equals(action))
