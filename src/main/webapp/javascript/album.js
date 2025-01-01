@@ -46,22 +46,21 @@ async function returnToHome() {
     } catch (error) {}
 }
 
-/**
- * Adds an event listener to the form with ID "logoutAlbumForm".
- * When the form is submitted, the default form submission behavior is prevented,
- * and the `logoutAlbum` function is executed.
- */
-document.getElementById("logoutAlbumForm").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    await logoutAlbum();
-});
-
-/**
- * Adds an event listener to the form with ID "returnToHomeForm".
- * When the form is submitted, the default form submission behavior is prevented,
- * and the `returnToHome` function is executed.
- */
-document.getElementById("returnToHomeForm").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    await returnToHome();
-});
+export function initAlbumPageEventListeners() {
+    // Get the form for return to home and bind its submit event
+    const returnToHomeForm = document.getElementById("returnToHomeForm");
+    if (returnToHomeForm) {
+        returnToHomeForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            await returnToHome();
+        });
+    }
+    // Get the form for logging out and bind its submit event
+    const logoutAlbumForm = document.getElementById("logoutAlbumForm");
+    if (logoutAlbumForm) {
+        logoutAlbumForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            await logoutAlbum();
+        });
+    }
+}

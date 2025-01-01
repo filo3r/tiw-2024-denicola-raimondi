@@ -1,5 +1,7 @@
 // Import home.js
 import { initHomePageEventListeners } from './home.js';
+// Import album.js
+import { initAlbumPageEventListeners } from './album.js';
 
 /**
  * Event listener that initializes the router once the DOM is fully loaded.
@@ -22,20 +24,46 @@ export function forceHashChange(hash) {
     window.dispatchEvent(new Event("hashchange"));
 }
 
+function getQueryParams(path) {
+    const queryIndex = path.indexOf("?");
+    if (queryIndex !== -1) {
+        const queryString = path.substring(queryIndex + 1);
+        const params = new URLSearchParams(queryString);
+        return Object.fromEntries(params.entries());
+    }
+    return {};
+}
+
 /**
  * Router function to handle navigation based on the URL hash.
  */
 function router() {
     const path = window.location.hash || "#home";
-    switch(path) {
-        case "#home":
+    switch(true) {
+        // Home Page
+        case path === "#home":
             loadHomePage();
             break;
-        case "#album":
-            loadAlbumPage();
+        // Album Page
+        case path.startsWith("#album"):
+            const queryParams = getQueryParams(path);
+            let albumId = queryParams.albumId || 0;
+            let page = queryParams.page || 0;
+            albumId = parseInt(albumId, 10);
+            if (isNaN(albumId) || albumId <= 0) {
+                window.location.hash = "#home";
+                return;
+            }
+            page = parseInt(page, 10);
+            if (isNaN(page) || page < 0) {
+                page = 0;
+            }
+            loadAlbumPage(albumId, page);
             break;
+        // Default
         default:
             window.location.hash = "#home";
+            break;
     }
 }
 
@@ -98,7 +126,7 @@ function buildHomeHTML(data) {
     if (data.myAlbums.length > 0) {
         data.myAlbums.forEach((album) => {
             html += `
-            <a href="/album?albumId=${album.albumId}&page=0">
+            <a href="#album?albumId=${album.albumId}&page=0">
                 <div class="album">
                     <p>${album.albumTitle}</p>
                     <p>${album.albumCreator}</p>
@@ -122,7 +150,7 @@ function buildHomeHTML(data) {
     if (data.otherAlbums.length > 0) {
         data.otherAlbums.forEach((album) => {
             html += `
-            <a href="/album?albumId=${album.albumId}&page=0">
+            <a href="#album?albumId=${album.albumId}&page=0">
                 <div class="album">
                     <p>${album.albumTitle}</p>
                     <p>${album.albumCreator}</p>
@@ -202,6 +230,107 @@ function buildHomeHTML(data) {
                 <button type="submit" id="logoutHomeButton">Logout</button>
             </form>
         </div>
+    </div>
+    `;
+    return html;
+}
+
+async function loadAlbumPage(albumId, page) {
+    const spa = document.getElementById("spa");
+    spa.innerHTML = `<p>Loading...</p>`;
+    try {
+        const response = await fetch(`./album?albumId=${encodeURIComponent(albumId)}`);
+        if (!response.ok) {
+            const errorData = await response.json();
+            if (errorData.redirect) {
+                window.location.hash = errorData.redirect;
+                return;
+            } else {
+                throw new Error(errorData.message || "Error loading album page. Please try again.");
+            }
+        }
+        const data = await response.json();
+        // Check page
+        const maxPage = Math.ceil(data.album.images.length / data.pageSize) - 1;
+        if (page > maxPage)
+            page = 0;
+        spa.innerHTML = buildAlbumHTML(data, page);
+        initAlbumPageEventListeners();
+        showSuccessMessage();
+    } catch (error) {
+        spa.innerHTML = `<p>${error.message}</p>`;
+    }
+}
+
+function buildAlbumHTML(data, page) {
+    if (!data || !data.album || !data.album.images || !data.pageSize) {
+        return `<p>Error loading album page. Please try again.</p>`;
+    }
+    // Calculate navigation flags
+    const hasPrevious = page > 0;
+    const hasNext = (page + 1) * data.pageSize < data.album.images.length;
+    // Start building the HTML
+    let html = `
+    <!-- Navbar -->
+    <header class="albumpage-navbar">
+        <nav class="navbar-content">
+            <!-- Home page -->
+            <form id="returnToHomeForm">
+                <button type="submit" id="returnToHomeButton">Home</button>
+            </form>
+            <!-- Album Title -->
+            <div class="navbar-title">${data.album.albumTitle}</div>
+            <!-- Logout -->
+            <form id="logoutAlbumForm">
+                <button type="submit" id="logoutAlbumButton">Logout</button>
+            </form>
+        </nav>
+    </header>
+    <!-- Navigation section -->
+    <div class="navigation">
+        <div class="nav-placeholder previous">
+            ${
+        hasPrevious
+            ? `<a href="#album?albumId=${data.album.albumId}&page=${page - 1}" class="nav-button">Previous</a>`
+            : ""
+    }
+        </div>
+        <div class="nav-placeholder next">
+            ${
+        hasNext
+            ? `<a href="#album?albumId=${data.album.albumId}&page=${page + 1}" class="nav-button">Next</a>`
+            : ""
+    }
+        </div>
+    </div>
+    <!-- Images container -->
+    <div class="images-container">
+    `;
+    // Calculate the starting index for the current page
+    const startIndex = page * data.pageSize;
+    const endIndex = Math.min(startIndex + data.pageSize, data.album.images.length);
+    let imagesOnPage = 0;
+    // Display the images for the current page
+    for (let i = startIndex; i < endIndex; i++) {
+        const image = data.album.images[i];
+        html += `
+        <div class="image-cell">
+            <img src="./uploads?imageId=${image.imageId}" alt="${image.imageTitle}" class="image-item">
+            <div class="image-title">${image.imageTitle}</div>
+        </div>
+        `;
+        imagesOnPage++;
+    }
+    // Add empty cells if there are less images than pageSize
+    for (let i = imagesOnPage; i < data.pageSize; i++) {
+        html += `
+        <div class="image-cell">
+            <div class="empty-cell"></div>
+        </div>
+        `;
+    }
+    // Close the images container
+    html += `
     </div>
     `;
     return html;

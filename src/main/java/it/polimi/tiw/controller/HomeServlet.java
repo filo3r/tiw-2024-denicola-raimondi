@@ -106,7 +106,7 @@ public class HomeServlet extends HttpServlet {
             else if ("logoutHome".equals(action))
                 handleLogout(request, response);
             else
-                response.sendRedirect(request.getContextPath() + "/spa");
+                response.sendRedirect(request.getContextPath() + "/spa#home");
         } catch (JsonSyntaxException e) {
             sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Server error.", response);
             e.printStackTrace();

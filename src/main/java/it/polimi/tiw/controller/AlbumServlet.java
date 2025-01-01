@@ -34,6 +34,8 @@ public class AlbumServlet extends HttpServlet {
 
     private final Gson gson = new Gson();
 
+    private static final int PAGE_SIZE = 5;
+
     /**
      * Handles GET requests to the album page.
      * Verifies user authentication and loads album details.
@@ -58,23 +60,27 @@ public class AlbumServlet extends HttpServlet {
         try {
             albumId = getAlbumId(request);
             if (albumId == -1) {
-                sendErrorRedirect(HttpServletResponse.SC_BAD_REQUEST, "Invalid album id.", request.getContextPath() + "/home", response);
+                sendErrorRedirect(HttpServletResponse.SC_BAD_REQUEST, "Invalid album id.", "#home", response);
                 return;
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            sendErrorRedirect(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", request.getContextPath() + "/home", response);
+            sendErrorRedirect(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", "#home", response);
         }
         // Render Album Page
         try {
             Map<String, Object> albumData = renderAlbumPage(request, albumId);
             if (albumData == null || albumData.isEmpty()) {
-                sendErrorRedirect(HttpServletResponse.SC_BAD_REQUEST, "Invalid album id.", request.getContextPath() + "/home", response);
+                sendErrorRedirect(HttpServletResponse.SC_BAD_REQUEST, "Invalid album id.", "#home", response);
                 return;
             }
-            String json = gson.toJson(albumData);
+            // Page Size
+            int pageSize = PAGE_SIZE;
+            JsonObject jsonObject = new JsonObject();
+            jsonObject.addProperty("pageSize", pageSize);
+            jsonObject.add("album", gson.toJsonTree(albumData));
             response.setStatus(HttpServletResponse.SC_OK);
-            response.getWriter().write(json);
+            response.getWriter().write(jsonObject.toString());
         } catch (SQLException e) {
             e.printStackTrace();
             sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload the page.", response);
@@ -104,21 +110,21 @@ public class AlbumServlet extends HttpServlet {
         try {
             albumId = getAlbumId(request);
             if (albumId == -1) {
-                sendErrorRedirect(HttpServletResponse.SC_BAD_REQUEST, "Invalid album id.", request.getContextPath() + "/home", response);
+                sendErrorRedirect(HttpServletResponse.SC_BAD_REQUEST, "Invalid album id.", "#home", response);
                 return;
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            sendErrorRedirect(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", request.getContextPath() + "/home", response);
+            sendErrorRedirect(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", "#home", response);
         }
         // Return To Home or Logout
         String action = request.getParameter("action");
         if ("returnToHome".equals(action))
-            sendSuccessResponse(HttpServletResponse.SC_OK, "Back to home.", request.getContextPath() + "/home", response);
+            sendSuccessResponse(HttpServletResponse.SC_OK, "Back to home.", "#home", response);
         else if ("logoutAlbum".equals(action))
             handleLogout(request, response);
         else
-            response.sendRedirect(request.getContextPath() + "/home");
+            response.sendRedirect(request.getContextPath() + "/spa#home");
     }
 
     /**
