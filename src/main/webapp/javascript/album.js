@@ -7,9 +7,9 @@
  * @function logoutAlbum
  * @returns {Promise<void>} Resolves when the request is complete.
  */
-async function logoutAlbum() {
+async function logoutAlbum(albumId) {
     try {
-        const response = await fetch("./album", {
+        const response = await fetch(`./album?albumId=${encodeURIComponent(albumId)}`, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({ action: "logoutAlbum" }),
@@ -31,9 +31,9 @@ async function logoutAlbum() {
  * @function returnToHome
  * @returns {Promise<void>} Resolves when the request is complete.
  */
-async function returnToHome() {
+async function returnToHome(albumId) {
     try {
-        const response = await fetch("./album", {
+        const response = await fetch(`./album?albumId=${encodeURIComponent(albumId)}`, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({ action: "returnToHome" }),
@@ -46,13 +46,13 @@ async function returnToHome() {
     } catch (error) {}
 }
 
-export function initAlbumPageEventListeners() {
+export function initAlbumPageEventListeners(albumId) {
     // Get the form for return to home and bind its submit event
     const returnToHomeForm = document.getElementById("returnToHomeForm");
     if (returnToHomeForm) {
         returnToHomeForm.addEventListener("submit", async (event) => {
             event.preventDefault();
-            await returnToHome();
+            await returnToHome(albumId);
         });
     }
     // Get the form for logging out and bind its submit event
@@ -60,7 +60,7 @@ export function initAlbumPageEventListeners() {
     if (logoutAlbumForm) {
         logoutAlbumForm.addEventListener("submit", async (event) => {
             event.preventDefault();
-            await logoutAlbum();
+            await logoutAlbum(albumId);
         });
     }
 }

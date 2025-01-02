@@ -255,7 +255,7 @@ async function loadAlbumPage(albumId, page) {
         if (page > maxPage)
             page = 0;
         spa.innerHTML = buildAlbumHTML(data, page);
-        initAlbumPageEventListeners();
+        initAlbumPageEventListeners(albumId);
         showSuccessMessage();
     } catch (error) {
         spa.innerHTML = `<p>${error.message}</p>`;
