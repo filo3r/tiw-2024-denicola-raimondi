@@ -2,6 +2,7 @@ package it.polimi.tiw.controller;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import it.polimi.tiw.dao.AlbumDAO;
 import it.polimi.tiw.model.Album;
 import it.polimi.tiw.model.Comment;
@@ -106,13 +107,19 @@ public class AlbumServlet extends HttpServlet {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         // Return To Home or Logout
-        String action = request.getParameter("action");
-        if ("returnToHome".equals(action))
-            sendSuccessResponse(HttpServletResponse.SC_OK, "Back to home.", "#home", response);
-        else if ("logoutAlbum".equals(action))
-            handleLogout(request, response);
-        else
-            response.sendRedirect(request.getContextPath() + "/spa#home");
+        try {
+            JsonObject jsonRequest = gson.fromJson(request.getReader(), JsonObject.class);
+            String action = jsonRequest.get("action").getAsString();
+            if ("returnToHome".equals(action))
+                sendSuccessResponse(HttpServletResponse.SC_OK, "Back to home.", "#home", response);
+            else if ("logoutAlbum".equals(action))
+                handleLogout(request, response);
+            else
+                response.sendRedirect(request.getContextPath() + "/spa#home");
+        } catch (JsonSyntaxException e) {
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Server error.", response);
+            e.printStackTrace();
+        }
     }
 
     /**
