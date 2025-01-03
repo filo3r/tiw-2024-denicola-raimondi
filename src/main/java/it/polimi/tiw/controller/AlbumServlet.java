@@ -276,6 +276,9 @@ public class AlbumServlet extends HttpServlet {
             sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid sorted image list.", response);
             return;
         }
+        // Remove duplicates
+        LinkedHashSet<Integer> uniqueIds = new LinkedHashSet<>(sortedImageIds);
+        sortedImageIds = new ArrayList<>(uniqueIds);
         // Save on database
         try {
             UserImageOrderDAO userImageOrderDAO = new UserImageOrderDAO();
