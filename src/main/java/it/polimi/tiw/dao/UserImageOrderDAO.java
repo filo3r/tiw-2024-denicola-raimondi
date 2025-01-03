@@ -87,6 +87,30 @@ public class UserImageOrderDAO {
         }
     }
 
+    public ArrayList<Integer> getUserImagesOrdersForAlbum(String username, int albumId) throws SQLException {
+        String query = "SELECT image_id FROM UserImageOrder WHERE username = ? AND album_id = ? ORDER BY order_position ASC";
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet result = null;
+        ArrayList<Integer> imageIds = new ArrayList<>();
+        try {
+            connection = databaseConnectionPool.getConnection();
+            statement = connection.prepareStatement(query);
+            statement.setString(1, username);
+            statement.setInt(2, albumId);
+            result = statement.executeQuery();
+            while (result.next())
+                imageIds.add(result.getInt("image_id"));
+            return imageIds;
+        } finally {
+            if (result != null)
+                result.close();
+            if (statement != null)
+                statement.close();
+            if (connection != null)
+                databaseConnectionPool.releaseConnection(connection);
+        }
+    }
 
 
 }
