@@ -73,7 +73,6 @@ function router() {
  */
 async function loadHomePage() {
     const spa = document.getElementById("spa");
-    spa.innerHTML = `<p>Loading...</p>`;
     try {
         const response = await fetch("./home");
         if (!response.ok) {
@@ -237,7 +236,6 @@ function buildHomeHTML(data) {
 
 async function loadAlbumPage(albumId, page) {
     const spa = document.getElementById("spa");
-    spa.innerHTML = `<p>Loading...</p>`;
     try {
         const response = await fetch(`./album?albumId=${encodeURIComponent(albumId)}`);
         if (!response.ok) {
@@ -286,6 +284,22 @@ function buildAlbumHTML(data, page) {
             </form>
         </nav>
     </header>
+    <!-- Navbar for panel -->
+    <nav class="album-panel-navbar">
+      <ul>
+        <li>
+          <label for="imagesPanel">Album images</label>
+        </li>
+        <li>
+          <label for="orderPanel">Images' order</label>
+        </li>
+      </ul>
+    </nav>
+    <input type="radio" name="panel" id="imagesPanel" checked hidden>
+    <input type="radio" name="panel" id="orderPanel" hidden>
+    <!-- Images panel -->
+    <div class="content" id="imagesContent">
+    <h1>Album images</h1>
     <!-- Navigation section -->
     <div class="navigation">
         <div class="nav-placeholder previous">
@@ -331,6 +345,30 @@ function buildAlbumHTML(data, page) {
     }
     // Close the images container
     html += `
+    </div> <!-- Closing images-container -->
+    </div> <!-- Closing imagesContent -->
+    <!-- Order panel -->
+    <div class="content" id="orderContent">
+    <h1>Images' order</h1>
+    <div class="image-list-container">
+      <button id="editOrderButton">Edit</button>
+      <button id="saveOrderButton" style="display: none;">Save</button>
+      <ul id="imagesOrderList" class="image-order-list">
+    `;
+    // Add titles of all images in the album for drag-and-drop ordering
+    for (const image of data.album.images) {
+        html += `
+        <li draggable="true" class="image-order-item" data-id="${image.imageId}">
+            ${image.imageTitle}
+        </li>
+        `;
+    }
+    // Close the order list
+    html += `
+      </ul>
+    </div>
+    <div class="error-message hidden" id="saveOrderError"></div>
+    <div class="success-message hidden" id="saveOrderSuccess"></div>
     </div>
     `;
     return html;
@@ -360,5 +398,15 @@ function showSuccessMessage() {
             successDiv.classList.remove("hidden");
         }
         sessionStorage.removeItem("addImageSuccess");
+    }
+    // saveOrder
+    const saveOrderSuccess = sessionStorage.getItem("saveOrderSuccess");
+    if (saveOrderSuccess) {
+        const successDiv = document.getElementById("saveOrderSuccess");
+        if (successDiv) {
+            successDiv.textContent = saveOrderSuccess;
+            successDiv.classList.remove("hidden");
+        }
+        sessionStorage.removeItem("saveOrderSuccess");
     }
 }

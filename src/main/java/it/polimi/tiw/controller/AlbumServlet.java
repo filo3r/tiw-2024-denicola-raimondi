@@ -3,10 +3,13 @@ package it.polimi.tiw.controller;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 import it.polimi.tiw.dao.AlbumDAO;
+import it.polimi.tiw.dao.UserImageOrderDAO;
 import it.polimi.tiw.model.Album;
 import it.polimi.tiw.model.Comment;
 import it.polimi.tiw.model.Image;
+import it.polimi.tiw.model.User;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -106,6 +109,9 @@ public class AlbumServlet extends HttpServlet {
         // Set JSON
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
+        // Get user
+        User user = (User) session.getAttribute("user");
+        String username = user.getUsername();
         // Get album ID from request
         int albumId = -1;
         try {
@@ -126,6 +132,8 @@ public class AlbumServlet extends HttpServlet {
                 sendSuccessResponse(HttpServletResponse.SC_OK, "Back to home.", "#home", response);
             else if ("logoutAlbum".equals(action))
                 handleLogout(request, response);
+            else if ("saveOrder".equals(action))
+                handleSaveImagesOrder(jsonRequest, response, username, albumId);
             else
                 response.sendRedirect(request.getContextPath() + "/spa#home");
         } catch (JsonSyntaxException e) {
@@ -252,6 +260,41 @@ public class AlbumServlet extends HttpServlet {
         if (session != null)
             session.invalidate();
         sendSuccessResponse(HttpServletResponse.SC_OK, "Logout successful.", request.getContextPath() + "/", response);
+    }
+
+    private void handleSaveImagesOrder(JsonObject jsonRequest, HttpServletResponse response, String username, int albumId) throws ServletException, IOException {
+        // Get sorted image ids
+        ArrayList<Integer> sortedImageIds;
+        try {
+            sortedImageIds = gson.fromJson(jsonRequest.getAsJsonArray("sortedImageIds"), new TypeToken<ArrayList<Integer>>() {}.getType());
+        } catch (JsonSyntaxException e) {
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid sorted image list.", response);
+            return;
+        }
+        // Check sortedImageIds
+        if (sortedImageIds == null || sortedImageIds.isEmpty()) {
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid sorted image list.", response);
+            return;
+        }
+        // Save on database
+        try {
+            UserImageOrderDAO userImageOrderDAO = new UserImageOrderDAO();
+            // Check if there is already a custom sort
+            if (userImageOrderDAO.userHasImagesOrderForAlbum(username, albumId)) {
+                // Delete existing custom sorting
+                if (!userImageOrderDAO.deleteUserImagesOrderForAlbum(username, albumId)) {
+                    sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload the page.", response);
+                    return;
+                }
+            }
+            if (!userImageOrderDAO.saveUserImagesOrderForAlbum(username, albumId, sortedImageIds))
+                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload the page.", response);
+            else
+                sendSuccessResponse(HttpServletResponse.SC_OK, "Custom sorting successfully saved.", "#album?albumId=" + albumId + "&page=0", response);
+        } catch (SQLException e) {
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload the page.", response);
+            e.printStackTrace();
+        }
     }
 
     /**

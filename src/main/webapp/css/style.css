@@ -378,6 +378,12 @@ button[type="submit"]:hover {
     height: 190px;
 }
 
+/* Show the content corresponding to the selected radio button */
+#imagesPanel:checked ~ #imagesContent,
+#orderPanel:checked ~ #orderContent {
+    display: block;
+}
+
 /* ---------------------------------- Image Page Style---------------------------------- */
 
 
