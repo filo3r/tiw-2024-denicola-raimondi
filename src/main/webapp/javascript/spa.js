@@ -351,52 +351,64 @@ function buildAlbumHTML(data, page) {
     <!-- Images container -->
     <div class="images-container">
     `;
-    // Calculate the starting index for the current page
-    const startIndex = page * data.pageSize;
-    const endIndex = Math.min(startIndex + data.pageSize, data.album.images.length);
-    let imagesOnPage = 0;
-    // Display the images for the current page
-    for (let i = startIndex; i < endIndex; i++) {
-        const image = data.album.images[i];
-        html += `
-        <div class="image-cell">
-            <img src="./uploads?imageId=${image.imageId}" alt="${image.imageTitle}" class="image-item">
-            <div class="image-title">${image.imageTitle}</div>
-        </div>
-        `;
-        imagesOnPage++;
-    }
-    // Add empty cells if there are less images than pageSize
-    for (let i = imagesOnPage; i < data.pageSize; i++) {
-        html += `
-        <div class="image-cell">
-            <div class="empty-cell"></div>
-        </div>
-        `;
+    if (data.album.images.length === 0) {
+        html += `<p>Empty album.</p>`;
+    } else {
+        // Calculate the starting index for the current page
+        const startIndex = page * data.pageSize;
+        const endIndex = Math.min(startIndex + data.pageSize, data.album.images.length);
+        let imagesOnPage = 0;
+        // Display the images for the current page
+        for (let i = startIndex; i < endIndex; i++) {
+            const image = data.album.images[i];
+            html += `
+            <div class="image-cell">
+                <img src="./uploads?imageId=${image.imageId}" alt="${image.imageTitle}" class="image-item">
+                <div class="image-title">${image.imageTitle}</div>
+            </div>
+            `;
+            imagesOnPage++;
+        }
+        // Add empty cells if there are less images than pageSize
+        for (let i = imagesOnPage; i < data.pageSize; i++) {
+            html += `
+            <div class="image-cell">
+                <div class="empty-cell"></div>
+            </div>
+            `;
+        }
     }
     // Close the images container
     html += `
-    </div> <!-- Closing images-container -->
-    </div> <!-- Closing imagesContent -->
+    </div>
+    </div>
     <!-- Order panel -->
     <div class="content" id="orderContent">
     <h1>Images' order</h1>
     <div class="image-list-container">
+    `;
+    if (data.album.images.length === 0) {
+        html += `<p>Empty album.</p>`;
+    } else {
+        html += `
       <button id="editOrderButton">Edit</button>
       <button id="saveOrderButton" style="display: none;">Save</button>
       <ul id="imagesOrderList" class="image-order-list">
-    `;
-    // Add titles of all images in the album for drag-and-drop ordering
-    for (const image of data.album.images) {
+        `;
+        // Add titles of all images in the album for drag-and-drop ordering
+        for (const image of data.album.images) {
+            html += `
+            <li draggable="true" class="image-order-item" data-id="${image.imageId}">
+                ${image.imageTitle}
+            </li>
+            `;
+        }
+        // Close the order list
         html += `
-        <li draggable="true" class="image-order-item" data-id="${image.imageId}">
-            ${image.imageTitle}
-        </li>
+      </ul>
         `;
     }
-    // Close the order list
     html += `
-      </ul>
     </div>
     <div class="error-message hidden" id="saveOrderError"></div>
     <div class="success-message hidden" id="saveOrderSuccess"></div>
