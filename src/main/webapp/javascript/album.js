@@ -3,11 +3,12 @@ import { forceHashChange } from './spa.js';
 
 /**
  * Sends a POST request to log out the user and redirects them to the appropriate page.
- * The function sends a POST request to the server at "./home" with the action "logoutHome".
+ * The function sends a POST request to the server at "./album" with the action "logoutAlbum".
  * If the server response is successful and includes a "redirect" URL, the browser will
  * navigate to that URL.
  * @async
  * @function logoutAlbum
+ * @param {number} albumId - The ID of the album to include in the logout request.
  * @returns {Promise<void>} Resolves when the request is complete.
  */
 async function logoutAlbum(albumId) {
@@ -32,6 +33,7 @@ async function logoutAlbum(albumId) {
  * navigate to that URL.
  * @async
  * @function returnToHome
+ * @param {number} albumId - The ID of the album to include in the request.
  * @returns {Promise<void>} Resolves when the request is complete.
  */
 async function returnToHome(albumId) {
@@ -49,6 +51,12 @@ async function returnToHome(albumId) {
     } catch (error) {}
 }
 
+/**
+ * Initializes drag-and-drop functionality for reordering images within an album.
+ * Adds event listeners to enable editing and saving a custom image order.
+ * @function initDragAndDrop
+ * @param {number} albumId - The ID of the album for which drag-and-drop functionality is enabled.
+ */
 function initDragAndDrop(albumId) {
     const editButton = document.getElementById("editOrderButton");
     const saveButton = document.getElementById("saveOrderButton");
@@ -135,6 +143,13 @@ function initDragAndDrop(albumId) {
     }
 }
 
+/**
+ * Initializes event listeners for actions on the album page.
+ * Binds event listeners for the return-to-home and logout forms, and sets up drag-and-drop
+ * functionality for customizing the order of images.
+ * @function initAlbumPageEventListeners
+ * @param {number} albumId - The ID of the album to initialize the event listeners for.
+ */
 export function initAlbumPageEventListeners(albumId) {
     // Get the form for return to home and bind its submit event
     const returnToHomeForm = document.getElementById("returnToHomeForm");

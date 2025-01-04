@@ -8,14 +8,32 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
+/**
+ * Data Access Object (DAO) class for managing the user's custom image order for albums.
+ * This class provides methods to check, retrieve, save, and delete custom image orders in the database.
+ */
 public class UserImageOrderDAO {
 
+    /**
+     * Connection pool to manage database connections efficiently.
+     */
     private final DatabaseConnectionPool databaseConnectionPool;
 
+    /**
+     * Constructor that initializes the connection pool.
+     * @throws SQLException if an error occurs while retrieving the connection pool instance.
+     */
     public UserImageOrderDAO() throws SQLException {
         this.databaseConnectionPool = DatabaseConnectionPool.getInstance();
     }
 
+    /**
+     * Checks if the user has a custom image order for a specific album.
+     * @param username the username of the user.
+     * @param albumId  the ID of the album.
+     * @return true if the user has a custom order, false otherwise.
+     * @throws SQLException if a database access error occurs.
+     */
     public boolean userHasImagesOrderForAlbum(String username, int albumId) throws SQLException {
         String query = "SELECT EXISTS (SELECT 1 FROM UserImageOrder WHERE username = ? AND album_id = ?)";
         Connection connection = null;
@@ -40,6 +58,13 @@ public class UserImageOrderDAO {
         }
     }
 
+    /**
+     * Deletes the user's custom image order for a specific album.
+     * @param username the username of the user.
+     * @param albumId  the ID of the album.
+     * @return true if the deletion was successful, false otherwise.
+     * @throws SQLException if a database access error occurs.
+     */
     public boolean deleteUserImagesOrderForAlbum(String username, int albumId) throws SQLException {
         String query = "DELETE FROM UserImageOrder WHERE username = ? AND album_id = ?";
         Connection connection = null;
@@ -59,6 +84,14 @@ public class UserImageOrderDAO {
         }
     }
 
+    /**
+     * Saves a custom image order for a specific album for the user.
+     * @param username the username of the user.
+     * @param albumId  the ID of the album.
+     * @param imageIds the list of image IDs in the desired order.
+     * @return true if the save operation was successful, false otherwise.
+     * @throws SQLException if a database access error occurs.
+     */
     public boolean saveUserImagesOrderForAlbum(String username, int albumId, ArrayList<Integer> imageIds) throws SQLException {
         String query = "INSERT INTO UserImageOrder (username, album_id, image_id, order_position) VALUES (?, ?, ?, ?)";
         Connection connection = null;
@@ -87,7 +120,14 @@ public class UserImageOrderDAO {
         }
     }
 
-    public ArrayList<Integer> getUserImagesOrdersForAlbum(String username, int albumId) throws SQLException {
+    /**
+     * Retrieves the user's custom image order for a specific album.
+     * @param username the username of the user.
+     * @param albumId  the ID of the album.
+     * @return a list of image IDs in the order defined by the user.
+     * @throws SQLException if a database access error occurs.
+     */
+    public ArrayList<Integer> getUserImagesOrderForAlbum(String username, int albumId) throws SQLException {
         String query = "SELECT image_id FROM UserImageOrder WHERE username = ? AND album_id = ? ORDER BY order_position ASC";
         Connection connection = null;
         PreparedStatement statement = null;
@@ -111,6 +151,5 @@ public class UserImageOrderDAO {
                 databaseConnectionPool.releaseConnection(connection);
         }
     }
-
 
 }

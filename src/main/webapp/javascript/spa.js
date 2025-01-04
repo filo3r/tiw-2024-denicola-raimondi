@@ -4,26 +4,34 @@ import { initHomePageEventListeners } from './home.js';
 import { initAlbumPageEventListeners } from './album.js';
 
 /**
- * Event listener that initializes the router once the DOM is fully loaded.
+ * Initializes the router when the DOM content is fully loaded.
+ * Sets up the routing mechanism for single-page navigation.
  */
 document.addEventListener('DOMContentLoaded', () => {
     router();
 });
 
 /**
- * Event listener that handles URL hash changes and updates the view accordingly.
+ * Handles URL hash changes and updates the view accordingly.
+ * Triggers the router function whenever the hash part of the URL changes.
  */
 window.addEventListener("hashchange", router);
 
 /**
- * Forces a hash change and triggers the "hashchange" event.
- * @param {string} hash - The hash to set in the URL.
+ * Forces a hash change and manually triggers the "hashchange" event.
+ * Updates the browser's URL hash and invokes the routing logic.
+ * @param {string} hash - The hash to set in the URL (e.g., "#home", "#album?albumId=1").
  */
 export function forceHashChange(hash) {
     window.location.hash = hash;
     window.dispatchEvent(new Event("hashchange"));
 }
 
+/**
+ * Parses query parameters from a URL path.
+ * @param {string} path - The URL path containing query parameters.
+ * @returns {Object} An object representing the query parameters as key-value pairs.
+ */
 function getQueryParams(path) {
     const queryIndex = path.indexOf("?");
     if (queryIndex !== -1) {
@@ -35,7 +43,8 @@ function getQueryParams(path) {
 }
 
 /**
- * Router function to handle navigation based on the URL hash.
+ * Router function to manage navigation and view rendering based on the URL hash.
+ * Handles routing logic for the Home Page and Album Page.
  */
 function router() {
     const path = window.location.hash || "#home";
@@ -70,6 +79,10 @@ function router() {
 /**
  * Loads the Home Page by fetching its content and dynamically rendering it.
  * Displays a loading message during the fetch operation.
+ * Initializes event listeners for the Home Page after rendering.
+ * @async
+ * @function loadHomePage
+ * @returns {Promise<void>} Resolves when the Home Page is successfully loaded.
  */
 async function loadHomePage() {
     const spa = document.getElementById("spa");
@@ -90,6 +103,7 @@ async function loadHomePage() {
 
 /**
  * Builds the HTML structure for the Home Page using the provided data.
+ * @function buildHomeHTML
  * @param {Object} data - Data object containing user, albums, and stats information.
  * @returns {string} The generated HTML content for the Home Page.
  */
@@ -234,6 +248,16 @@ function buildHomeHTML(data) {
     return html;
 }
 
+/**
+ * Loads the Album Page by fetching its content and dynamically rendering it.
+ * Displays a loading message during the fetch operation.
+ * Initializes event listeners for the Album Page after rendering.
+ * @async
+ * @function loadAlbumPage
+ * @param {number} albumId - The ID of the album to load.
+ * @param {number} page - The page number to display for the album's images.
+ * @returns {Promise<void>} Resolves when the Album Page is successfully loaded.
+ */
 async function loadAlbumPage(albumId, page) {
     const spa = document.getElementById("spa");
     try {
@@ -260,6 +284,13 @@ async function loadAlbumPage(albumId, page) {
     }
 }
 
+/**
+ * Builds the HTML structure for the Album Page using the provided data.
+ * @function buildAlbumHTML
+ * @param {Object} data - Data object containing album details and images.
+ * @param {number} page - The current page number for image pagination.
+ * @returns {string} The generated HTML content for the Album Page.
+ */
 function buildAlbumHTML(data, page) {
     if (!data || !data.album || !data.album.images || !data.pageSize) {
         return `<p>Error loading album page. Please try again.</p>`;
@@ -375,8 +406,9 @@ function buildAlbumHTML(data, page) {
 }
 
 /**
- * Displays success messages.
- * Messages are retrieved from sessionStorage and cleared after being shown.
+ * Displays success messages stored in sessionStorage and clears them after showing.
+ * Supports messages for album creation, image addition, and image order saving.
+ * @function showSuccessMessage
  */
 function showSuccessMessage() {
     // createAlbum

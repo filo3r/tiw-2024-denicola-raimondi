@@ -23,9 +23,7 @@ import java.util.*;
 /**
  * Servlet responsible for handling requests related to albums.
  * This class manages user session validation, retrieves album details and images,
- * and renders the appropriate Thymeleaf templates for displaying album pages.
- * It also handles actions such as logout and redirects users based on their actions or
- * errors encountered during processing.
+ * and handles actions such as logout and saving image orders.
  */
 public class AlbumServlet extends HttpServlet {
 
@@ -36,13 +34,19 @@ public class AlbumServlet extends HttpServlet {
      */
     private static final long serialVersionUID = 1L;
 
+    /**
+     * Gson instance for parsing and serializing JSON data.
+     */
     private final Gson gson = new Gson();
 
+    /**
+     * The default size for paginated results.
+     */
     private static final int PAGE_SIZE = 5;
 
     /**
      * Handles GET requests to the album page.
-     * Verifies user authentication and loads album details.
+     * Verifies user authentication, loads album details, and sends the album data in JSON format.
      * @param request  the HTTP request object.
      * @param response the HTTP response object.
      * @throws ServletException if an error occurs during processing.
@@ -59,6 +63,9 @@ public class AlbumServlet extends HttpServlet {
         // Set JSON
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
+        // Get user
+        User user = (User) session.getAttribute("user");
+        String username = user.getUsername();
         // Get album ID from request
         int albumId = -1;
         try {
@@ -73,7 +80,7 @@ public class AlbumServlet extends HttpServlet {
         }
         // Render Album Page
         try {
-            Map<String, Object> albumData = renderAlbumPage(request, albumId);
+            Map<String, Object> albumData = renderAlbumPage(username, albumId);
             if (albumData == null || albumData.isEmpty()) {
                 sendErrorRedirect(HttpServletResponse.SC_BAD_REQUEST, "Invalid album id.", "#home", response);
                 return;
@@ -92,7 +99,7 @@ public class AlbumServlet extends HttpServlet {
     }
 
     /**
-     * Handles POST requests, primarily for logout functionality.
+     * Handles POST requests for actions like logout and saving image orders.
      * @param request  the HTTP request object.
      * @param response the HTTP response object.
      * @throws ServletException if an error occurs during processing.
@@ -124,7 +131,7 @@ public class AlbumServlet extends HttpServlet {
             e.printStackTrace();
             sendErrorRedirect(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", "#home", response);
         }
-        // Return To Home or Logout
+        // Return To Home or Logout or Save Order
         try {
             JsonObject jsonRequest = gson.fromJson(request.getReader(), JsonObject.class);
             String action = jsonRequest.get("action").getAsString();
@@ -145,9 +152,9 @@ public class AlbumServlet extends HttpServlet {
     /**
      * Retrieves and validates the album ID from the request.
      * Ensures the album ID is present, correctly formatted, and exists in the database.
-     * Displays an error page if validation fails or a database error occurs.
-     * @param request    the HTTP request object.
+     * @param request the HTTP request object.
      * @return the valid album ID, or -1 if the ID is invalid or the album does not exist.
+     * @throws SQLException if a database access error occurs.
      * @throws ServletException if an error occurs during processing.
      * @throws IOException      if an I/O error occurs during processing.
      */
@@ -174,32 +181,37 @@ public class AlbumServlet extends HttpServlet {
 
     /**
      * Renders the album page by loading album details and images.
-     * Handles any database errors by setting error variables in the web context.
-     * @param request    the HTTP request object
-     * @param albumId    the ID of the album to load and display.
+     * @param username the username of the current user.
+     * @param albumId  the ID of the album to load.
+     * @return a map containing album details and images.
+     * @throws SQLException if a database access error occurs.
      * @throws ServletException if an error occurs during processing.
      * @throws IOException      if an I/O error occurs during processing.
      */
-    private Map<String, Object> renderAlbumPage(HttpServletRequest request, int albumId) throws SQLException, ServletException, IOException {
+    private Map<String, Object> renderAlbumPage(String username, int albumId) throws SQLException, ServletException, IOException {
+        // Create a map to hold all album data that will be sent as a response
         Map<String, Object> albumData = new HashMap<>();
-        // Album
+        // Load album details from the database
         Album album = handleLoadAlbumData(albumId);
         if (album == null)
             return Collections.emptyMap();
+        // Add basic album details to the map
         albumData.put("albumId", album.getAlbumId());
         albumData.put("albumCreator", album.getAlbumCreator());
         albumData.put("albumTitle", album.getAlbumTitle());
         albumData.put("albumDate", album.getAlbumDate());
-        // Images with comments
-        List<Map<String, Object>> imagesList = handleLoadAlbumImages(albumId);
+        // Load all images and their associated comments for the specified album
+        List<Map<String, Object>> imagesList = handleLoadAlbumImages(username, albumId);
+        // Add the images list to the album data map
         albumData.put("images", imagesList);
         return albumData;
     }
 
     /**
-     * Loads album details for the specified album ID and sets them in the web context.
-     * @param albumId    the ID of the album to load.
-     * @throws SQLException if a database access error occurs while retrieving the album data.
+     * Loads album details for the specified album ID.
+     * @param albumId the ID of the album to load.
+     * @return the Album object or null if not found.
+     * @throws SQLException if a database access error occurs.
      */
     private Album handleLoadAlbumData(int albumId) throws SQLException {
         AlbumDAO albumDAO = new AlbumDAO();
@@ -207,61 +219,152 @@ public class AlbumServlet extends HttpServlet {
     }
 
     /**
-     * Loads and paginates the images for the specified album.
-     * Retrieves all images associated with the album ID, calculates the current page,
-     * and sets the paginated images along with pagination details in the web context.
-     * @param albumId    the ID of the album whose images are to be loaded.
-     * @throws SQLException if a database access error occurs while retrieving the images.
+     * Loads and optionally sorts the images for the specified album based on user preferences.
+     * @param username the username of the current user.
+     * @param albumId  the ID of the album whose images are to be loaded.
+     * @return a list of maps representing the images and their comments.
+     * @throws SQLException if a database access error occurs.
      */
-    private List<Map<String, Object>> handleLoadAlbumImages(int albumId) throws SQLException {
-        // Get Image->List<Comment> map from DAO
+    private List<Map<String, Object>> handleLoadAlbumImages(String username, int albumId) throws SQLException {
         AlbumDAO albumDAO = new AlbumDAO();
+        UserImageOrderDAO userImageOrderDAO = new UserImageOrderDAO();
+        // Retrieve all images and their associated comments for the specified album
         Map<Image, List<Comment>> imagesWithComments = albumDAO.getImagesWithCommentsByAlbumId(albumId);
-        // Create a list of maps, where each map represents an image + its list of comments
-        List<Map<String, Object>> imagesList = new ArrayList<>();
+        // Check if the user has a saved custom image order for the album
+        if (userImageOrderDAO.userHasImagesOrderForAlbum(username, albumId)) {
+            // Retrieve the user's custom order (list of image IDs)
+            List<Integer> userOrder = userImageOrderDAO.getUserImagesOrderForAlbum(username, albumId);
+            // Map image IDs to their corresponding image and comments entries for sorting
+            Map<Integer, Map.Entry<Image, List<Comment>>> imageIdToEntry = mapImageIdToEntry(imagesWithComments);
+            // Sort images based on the custom user order
+            return orderImages(userOrder, imageIdToEntry);
+        } else {
+            // If no custom order exists, return images in their default order
+            return defaultImageOrder(imagesWithComments);
+        }
+    }
+
+    /**
+     * Maps image IDs to their corresponding image and comment entries.
+     * @param imagesWithComments a map of images and their comments.
+     * @return a map from image IDs to their corresponding entries.
+     */
+    private Map<Integer, Map.Entry<Image, List<Comment>>> mapImageIdToEntry(Map<Image, List<Comment>> imagesWithComments) {
+        // Initialize a map to store image IDs as keys and their corresponding entries (image and comments) as values
+        Map<Integer, Map.Entry<Image, List<Comment>>> imageIdToEntry = new HashMap<>();
+        // Iterate over each entry in the input map
         for (Map.Entry<Image, List<Comment>> entry : imagesWithComments.entrySet()) {
+            // Use the image ID as the key
+            // Map the image ID to the corresponding entry (image and its list of comments)
+            imageIdToEntry.put(entry.getKey().getImageId(), entry);
+        }
+        return imageIdToEntry;
+    }
+
+    /**
+     * Orders images based on a user-defined order, appending remaining images in their original order.
+     * @param userOrder          a list of image IDs defining the user order.
+     * @param imageIdToEntry     a map from image IDs to their corresponding image and comments.
+     * @return a list of maps representing ordered images.
+     */
+    private List<Map<String, Object>> orderImages(List<Integer> userOrder, Map<Integer, Map.Entry<Image, List<Comment>>> imageIdToEntry) {
+        // Initialize a list to hold the images in the desired order
+        List<Map<String, Object>> orderedImagesList = new ArrayList<>();
+        // Add images based on the user's custom order
+        for (int imageId : userOrder) {
+            // Check if the image ID exists in the map
+            if (imageIdToEntry.containsKey(imageId)) {
+                // Retrieve the image and its comments
+                Map.Entry<Image, List<Comment>> entry = imageIdToEntry.get(imageId);
+                Image image = entry.getKey();
+                List<Comment> comments = entry.getValue();
+                // Convert the image and its comments into a serializable map and add to the ordered list
+                orderedImagesList.add(createImageMap(image, comments));
+                // Remove the image ID from the map to avoid duplicates
+                imageIdToEntry.remove(imageId);
+            }
+        }
+        // Append any remaining images (not included in the user's custom order) in their original order
+        for (Map.Entry<Image, List<Comment>> entry : imageIdToEntry.values()) {
             Image image = entry.getKey();
             List<Comment> comments = entry.getValue();
-            // Single image
-            Map<String, Object> imageMap = new HashMap<>();
-            imageMap.put("imageId", image.getImageId());
-            imageMap.put("imageUploader", image.getImageUploader());
-            imageMap.put("imageTitle", image.getImageTitle());
-            imageMap.put("imageDate", image.getImageDate());
-            imageMap.put("imageText", image.getImageText());
-            imageMap.put("imagePath", image.getImagePath());
-            // Convert the list of comments into a “serializable” structure
-            List<Map<String, Object>> commentsData = new ArrayList<>();
-            for (Comment comment : comments) {
-                Map<String, Object> commentMap = new HashMap<>();
-                commentMap.put("commentId", comment.getCommentId());
-                commentMap.put("imageId", comment.getImageId());
-                commentMap.put("commentAuthor", comment.getCommentAuthor());
-                commentMap.put("commentText", comment.getCommentText());
-                commentsData.add(commentMap);
-            }
-            // Insert the list of comments into the image map
-            imageMap.put("comments", commentsData);
-            // Add map to global list
-            imagesList.add(imageMap);
+            orderedImagesList.add(createImageMap(image, comments));
+        }
+        return orderedImagesList;
+    }
+
+    /**
+     * Creates a default order for images.
+     * @param imagesWithComments a map of images and their comments.
+     * @return a list of maps representing images in their original order.
+     */
+    private List<Map<String, Object>> defaultImageOrder(Map<Image, List<Comment>> imagesWithComments) {
+        // Initialize a list to hold the images in their default order
+        List<Map<String, Object>> imagesList = new ArrayList<>();
+        // Iterate over each entry in the map of images and their comments
+        for (Map.Entry<Image, List<Comment>> entry : imagesWithComments.entrySet()) {
+            // Extract the image and its associated comments
+            Image image = entry.getKey();
+            List<Comment> comments = entry.getValue();
+            // Convert the image and its comments into a serializable map format and add to the list
+            imagesList.add(createImageMap(image, comments));
         }
         return imagesList;
     }
 
     /**
-     * Handles the user logout process by invalidating the session and redirecting to the login page.
-     * @param request  the HTTP request object.
-     * @param response the HTTP response object.
-     * @throws ServletException if an error occurs during processing.
-     * @throws IOException      if an I/O error occurs during processing.
+     * Converts an image and its comments into a serializable map.
+     * @param image    the image object.
+     * @param comments the list of comments associated with the image.
+     * @return a map representing the image and its comments.
      */
-    private void handleLogout(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        HttpSession session = request.getSession(false);
-        if (session != null)
-            session.invalidate();
-        sendSuccessResponse(HttpServletResponse.SC_OK, "Logout successful.", request.getContextPath() + "/", response);
+    private Map<String, Object> createImageMap(Image image, List<Comment> comments) {
+        // Initialize a map to hold the serialized data for the image and its comments
+        Map<String, Object> imageMap = new HashMap<>();
+        // Add basic image details to the map
+        imageMap.put("imageId", image.getImageId());
+        imageMap.put("imageUploader", image.getImageUploader());
+        imageMap.put("imageTitle", image.getImageTitle());
+        imageMap.put("imageDate", image.getImageDate());
+        imageMap.put("imageText", image.getImageText());
+        imageMap.put("imagePath", image.getImagePath());
+        // Convert the list of comments into a serializable structure and add it to the map
+        imageMap.put("comments", handleLoadImageComments(comments));
+        return imageMap;
     }
 
+    /**
+     * Converts a list of comments into a serializable structure.
+     * @param comments the list of comments to be converted.
+     * @return a list of maps representing the comments.
+     */
+    private List<Map<String, Object>> handleLoadImageComments(List<Comment> comments) {
+        // Initialize a list to hold the serialized data for each comment
+        List<Map<String, Object>> commentsData = new ArrayList<>();
+        // Iterate over the list of comments
+        for (Comment comment : comments) {
+            // Create a map to store serialized data for the current comment
+            Map<String, Object> commentMap = new HashMap<>();
+            // Add comment details to the map
+            commentMap.put("commentId", comment.getCommentId());
+            commentMap.put("imageId", comment.getImageId());
+            commentMap.put("commentAuthor", comment.getCommentAuthor());
+            commentMap.put("commentText", comment.getCommentText());
+            // Add the serialized comment map to the list
+            commentsData.add(commentMap);
+        }
+        return commentsData;
+    }
+
+    /**
+     * Saves a custom order of images for the specified album.
+     * @param jsonRequest the JSON request containing the sorted image IDs.
+     * @param response    the HTTP response object.
+     * @param username    the username of the current user.
+     * @param albumId     the ID of the album.
+     * @throws ServletException if an error occurs during processing.
+     * @throws IOException if an I/O error occurs during processing.
+     */
     private void handleSaveImagesOrder(JsonObject jsonRequest, HttpServletResponse response, String username, int albumId) throws ServletException, IOException {
         // Get sorted image ids
         ArrayList<Integer> sortedImageIds;
@@ -301,6 +404,20 @@ public class AlbumServlet extends HttpServlet {
     }
 
     /**
+     * Handles the user logout process by invalidating the session and redirecting to the login page.
+     * @param request  the HTTP request object.
+     * @param response the HTTP response object.
+     * @throws ServletException if an error occurs during processing.
+     * @throws IOException      if an I/O error occurs during processing.
+     */
+    private void handleLogout(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        HttpSession session = request.getSession(false);
+        if (session != null)
+            session.invalidate();
+        sendSuccessResponse(HttpServletResponse.SC_OK, "Logout successful.", request.getContextPath() + "/", response);
+    }
+
+    /**
      * Sends an error response with the specified status and message.
      * @param status   the HTTP status code.
      * @param message  the error message.
@@ -314,6 +431,14 @@ public class AlbumServlet extends HttpServlet {
         response.getWriter().write(gson.toJson(jsonObject));
     }
 
+    /**
+     * Sends an error response with the specified status, message, and redirect URL.
+     * @param status   the HTTP status code
+     * @param message  the error message
+     * @param redirect the redirect URL
+     * @param response the HTTP response object
+     * @throws IOException if an I/O error occurs during response writing
+     */
     private void sendErrorRedirect(int status, String message, String redirect, HttpServletResponse response) throws IOException {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("message", message);
