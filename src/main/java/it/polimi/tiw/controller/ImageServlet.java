@@ -20,9 +20,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 /**
- * ImageServlet handles requests related to individual images.
- * It provides functionalities to display images, add comments, delete images,
- * and navigate back to albums or the home page.
+ * ImageServlet handles HTTP POST requests related to individual images.
+ * It provides functionalities for adding comments to images and validating
+ * the relationship between images and albums.
  */
 public class ImageServlet extends HttpServlet {
 
@@ -40,11 +40,14 @@ public class ImageServlet extends HttpServlet {
 
     /**
      * Handles HTTP POST requests for actions related to the image page.
-     * Supports actions such as adding comments, deleting images, and navigating.
+     * Validates the user's session, parses the request to identify the action,
+     * and supports adding comments to images.
+     * If the action is "addComment", the method processes the comment addition.
+     * Otherwise, it redirects the user to the album page.
      * @param request  the HTTP request object.
      * @param response the HTTP response object.
-     * @throws ServletException if an error occurs during processing.
-     * @throws IOException      if an I/O error occurs during processing.
+     * @throws ServletException if an error occurs during request handling.
+     * @throws IOException      if an I/O error occurs during request handling.
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -87,13 +90,21 @@ public class ImageServlet extends HttpServlet {
 
     /**
      * Retrieves and validates the image and album IDs from the request parameters.
-     * @param request    the HTTP request object.
-     * @param response   the HTTP response object.
-     * @return           a list containing the image ID and album ID.
-     * @throws ServletException if an error occurs during processing.
-     * @throws IOException      if an I/O error occurs.
+     * Ensures that:
+     * - The album ID is valid and exists in the database.
+     * - The image ID is valid and exists in the database.
+     * - The image belongs to the specified album.
+     * If validation fails, the method sends an appropriate error response or
+     * redirect to the client.
+     * @param request  the HTTP request object.
+     * @param response the HTTP response object.
+     * @return a list containing the image ID and album ID if validation is successful,
+     *         or null if validation fails.
+     * @throws SQLException      if a database error occurs during validation.
+     * @throws ServletException  if an error occurs during request handling.
+     * @throws IOException       if an I/O error occurs during response handling.
      */
-    private ArrayList<Integer> getImageAndAlbumIds (HttpServletRequest request, HttpServletResponse response) throws SQLException, ServletException, IOException {
+    private ArrayList<Integer> getImageAndAlbumIds(HttpServletRequest request, HttpServletResponse response) throws SQLException, ServletException, IOException {
         // Get imageId and albumId
         String imageIdParam = request.getParameter("imageId");
         String albumIdParam = request.getParameter("albumId");
@@ -148,11 +159,15 @@ public class ImageServlet extends HttpServlet {
 
     /**
      * Handles the addition of a comment to an image.
-     * @param response          the HTTP response object.
-     * @param username          the username of the logged-in user.
-     * @param imageAndAlbumIds  the list containing the image ID and album ID.
-     * @throws ServletException if an error occurs during processing.
-     * @throws IOException      if an I/O error occurs.
+     * Validates the comment text and inserts the comment into the database if valid.
+     * Sends an appropriate success or error response based on the outcome.
+     * @param jsonRequest        the JSON object containing the request data.
+     *                           Expected to contain "action" and "commentText" fields.
+     * @param response           the HTTP response object.
+     * @param username           the username of the logged-in user.
+     * @param imageAndAlbumIds   the list containing the image ID and album ID.
+     * @throws ServletException if an error occurs during request handling.
+     * @throws IOException      if an I/O error occurs during response handling.
      */
     private void handleAddComment(JsonObject jsonRequest, HttpServletResponse response, String username, ArrayList<Integer> imageAndAlbumIds) throws ServletException, IOException {
         String commentText = jsonRequest.get("commentText").getAsString();
