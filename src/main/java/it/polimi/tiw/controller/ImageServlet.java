@@ -145,7 +145,7 @@ public class ImageServlet extends HttpServlet {
      * @throws ServletException if an error occurs during processing.
      * @throws IOException      if an I/O error occurs.
      */
-    private ArrayList<Integer> getImageAndAlbumIds (HttpServletRequest request, HttpServletResponse response, WebContext webContext) throws ServletException, IOException {
+    private ArrayList<Integer> getImageAndAlbumIds(HttpServletRequest request, HttpServletResponse response, WebContext webContext) throws ServletException, IOException {
         String imageIdParam = request.getParameter("imageId");
         String albumIdParam = request.getParameter("albumId");
         int imageId = -1;
