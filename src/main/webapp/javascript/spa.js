@@ -2,6 +2,8 @@
 import { initHomePageEventListeners } from './home.js';
 // Import album.js
 import { initAlbumPageEventListeners } from './album.js';
+// Import image.js
+import { initImagePageEventListeners } from './image.js';
 
 /**
  * Initializes the router when the DOM content is fully loaded.
@@ -278,6 +280,7 @@ async function loadAlbumPage(albumId, page) {
             page = 0;
         spa.innerHTML = buildAlbumHTML(data, page);
         initAlbumPageEventListeners(albumId);
+        initImagePageEventListeners(data);
         showSuccessMessage();
     } catch (error) {
         spa.innerHTML = `<p>${error.message}</p>`;
@@ -330,9 +333,9 @@ function buildAlbumHTML(data, page) {
     <input type="radio" name="panel" id="orderPanel" hidden>
     <!-- Images panel -->
     <div class="content" id="imagesContent">
-    <h1>Album images</h1>
-    <!-- Navigation section -->
-    <div class="navigation">
+      <h1>Album images</h1>
+      <!-- Navigation section -->
+      <div class="navigation">
         <div class="nav-placeholder previous">
             ${
         hasPrevious
@@ -347,9 +350,9 @@ function buildAlbumHTML(data, page) {
             : ""
     }
         </div>
-    </div>
-    <!-- Images container -->
-    <div class="images-container">
+      </div>
+      <!-- Images container -->
+      <div class="images-container">
     `;
     if (data.album.images.length === 0) {
         html += `<p>Empty album.</p>`;
@@ -358,12 +361,13 @@ function buildAlbumHTML(data, page) {
         const startIndex = page * data.pageSize;
         const endIndex = Math.min(startIndex + data.pageSize, data.album.images.length);
         let imagesOnPage = 0;
+
         // Display the images for the current page
         for (let i = startIndex; i < endIndex; i++) {
             const image = data.album.images[i];
             html += `
             <div class="image-cell">
-                <img src="./uploads?imageId=${image.imageId}" alt="${image.imageTitle}" class="image-item">
+                <img src="./uploads?imageId=${image.imageId}" alt="${image.imageTitle}" class="image-item" data-image-index="${i}">
                 <div class="image-title">${image.imageTitle}</div>
             </div>
             `;
@@ -380,21 +384,21 @@ function buildAlbumHTML(data, page) {
     }
     // Close the images container
     html += `
-    </div>
+      </div>
     </div>
     <!-- Order panel -->
     <div class="content" id="orderContent">
-    <h1>Images' order</h1>
-    <div class="image-list-container">
+      <h1>Images' order</h1>
+      <div class="image-list-container">
     `;
     if (data.album.images.length === 0) {
         html += `<p>Empty album.</p>`;
     } else {
         html += `
-      <button id="editOrderButton">Edit</button>
-      <button id="saveOrderButton" style="display: none;">Save</button>
-      <ul id="imagesOrderList" class="image-order-list">
-        `;
+        <button id="editOrderButton">Edit</button>
+        <button id="saveOrderButton" style="display: none;">Save</button>
+        <ul id="imagesOrderList" class="image-order-list">
+      `;
         // Add titles of all images in the album for drag-and-drop ordering
         for (const image of data.album.images) {
             html += `
@@ -405,15 +409,54 @@ function buildAlbumHTML(data, page) {
         }
         // Close the order list
         html += `
-      </ul>
+        </ul>
         `;
     }
+    // Error/success placeholders
     html += `
-    </div>
-    <div class="error-message hidden" id="saveOrderError"></div>
-    <div class="success-message hidden" id="saveOrderSuccess"></div>
+      </div>
+      <div class="error-message hidden" id="saveOrderError"></div>
+      <div class="success-message hidden" id="saveOrderSuccess"></div>
     </div>
     `;
+    // Image page (modal)
+    html += `
+    <!-- Error and success messages -->
+    <div class="error-message hidden" id="addCommentError"></div>
+    <div class="success-message hidden" id="addCommentSuccess"></div>
+    <!-- Modal for image details -->
+    <div class="modal" id="imageModal" style="display: none;">
+      <div class="modal-content">
+        <!-- Header -->
+        <div class="modal-header">
+          <span id="closeModalButton" class="close">&times;</span>
+          <h2 id="modalImageTitle">Image Title</h2>
+        </div>
+        <!-- Body -->
+        <div class="modal-body">
+          <!-- Image details -->
+          <div class="image-container">
+            <img id="modalFullImage" src="" alt="Full Image">
+            <p><strong>Title: </strong><span id="imageTitle"></span></p>
+            <p><strong>Description: </strong><span id="imageDescription"></span></p>
+            <p><strong>Uploader: </strong><span id="imageUploader"></span></p>
+            <p><strong>Date: </strong><span id="imageDate"></span></p>
+          </div>
+          <!-- Form Add Comment -->
+          <div class="comment-container">
+            <form id="addCommentForm">
+              <label for="commentText">Write a comment:</label>
+              <textarea rows="5" cols="50" id="commentText" name="commentText" required minlength="1" maxlength="512"></textarea>
+              <button type="submit" id="sendCommentButton">Send</button>
+            </form>
+            <!-- Comments -->
+            <div class="comments-list" id="commentsList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    `;
+    // Return the complete HTML
     return html;
 }
 
@@ -452,5 +495,15 @@ function showSuccessMessage() {
             successDiv.classList.remove("hidden");
         }
         sessionStorage.removeItem("saveOrderSuccess");
+    }
+    // addComment
+    const addCommentSuccess = sessionStorage.getItem("addCommentSuccess");
+    if (addCommentSuccess) {
+        const successDiv = document.getElementById("addCommentSuccess");
+        if (successDiv) {
+            successDiv.textContent = addCommentSuccess;
+            successDiv.classList.remove("hidden");
+        }
+        sessionStorage.removeItem("addCommentSuccess");
     }
 }

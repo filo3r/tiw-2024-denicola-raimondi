@@ -142,7 +142,7 @@ public class AlbumServlet extends HttpServlet {
             else if ("saveOrder".equals(action))
                 handleSaveImagesOrder(jsonRequest, response, username, albumId);
             else
-                response.sendRedirect(request.getContextPath() + "/spa#home");
+                response.sendRedirect(request.getContextPath() + "/spa#album?albumId=" + albumId + "&page=0");
         } catch (JsonSyntaxException e) {
             sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Server error.", response);
             e.printStackTrace();
