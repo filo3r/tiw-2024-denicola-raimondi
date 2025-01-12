@@ -11,11 +11,14 @@ import { forceHashChange } from "./spa.js";
  */
 async function createAlbum(event) {
     event.preventDefault();
-    const albumTitle = document.getElementById("albumTitle").value;
+    const albumTitle = document.getElementById("albumTitle").value.trim();
     const errorDiv = document.getElementById("createAlbumError");
-    // Reset errors
+    const successDiv = document.getElementById("createAlbumSuccess");
+    // Reset messages
     errorDiv.textContent = "";
+    successDiv.textContent = "";
     errorDiv.classList.add("hidden");
+    successDiv.classList.add("hidden");
     // Check album title
     if (!StringUtil.isValidTitle(albumTitle)) {
         errorDiv.textContent = "Invalid album title.";
@@ -42,7 +45,7 @@ async function createAlbum(event) {
             errorDiv.classList.remove("hidden");
         }
     } catch (error) {
-        errorDiv.textContent = "Server error.";
+        errorDiv.textContent = "Internal server error. Please try again.";
         errorDiv.classList.remove("hidden");
     }
 }
@@ -61,9 +64,12 @@ async function addImage(event) {
     const imageFile = document.getElementById("imageFile")
     const albumSelect = Array.from(document.querySelectorAll('input[name="albumSelect"]:checked')).map(cb => cb.value);
     const errorDiv = document.getElementById("addImageError");
-    // Reset errors
+    const successDiv = document.getElementById("addImageSuccess");
+    // Reset messages
     errorDiv.textContent = "";
+    successDiv.textContent = "";
     errorDiv.classList.add("hidden");
+    successDiv.classList.add("hidden");
     // Check image title
     if (!StringUtil.isValidTitle(imageTitle)) {
         errorDiv.textContent = "Invalid image title.";
@@ -127,7 +133,7 @@ async function addImage(event) {
                 errorDiv.classList.remove("hidden");
             }
         } catch (error) {
-            errorDiv.textContent = "Server error.";
+            errorDiv.textContent = "Internal server error. Please try again.";
             errorDiv.classList.remove("hidden");
         }
     };
@@ -139,6 +145,9 @@ async function addImage(event) {
  * Sends a logout request to the server and redirects the user if necessary.
  */
 async function logoutHome() {
+    const errorDiv = document.getElementById("profileError");
+    errorDiv.textContent = "";
+    errorDiv.classList.add("hidden");
     try {
         const response = await fetch("./home", {
             method: "POST",
@@ -150,7 +159,10 @@ async function logoutHome() {
             if (result.redirect)
                 window.location.href = result.redirect;
         }
-    } catch (error) {}
+    } catch (error) {
+        errorDiv.textContent = "Internal server error. Please try again.";
+        errorDiv.classList.remove("hidden");
+    }
 }
 
 /**

@@ -12,6 +12,9 @@ import { forceHashChange } from "./spa.js";
  * @returns {Promise<void>} Resolves when the request is complete.
  */
 async function logoutAlbum(albumId) {
+    const errorDiv = document.getElementById("albumError");
+    errorDiv.textContent = "";
+    errorDiv.classList.add("hidden");
     try {
         const response = await fetch(`./album?albumId=${encodeURIComponent(albumId)}`, {
             method: "POST",
@@ -23,7 +26,10 @@ async function logoutAlbum(albumId) {
             if (result.redirect)
                 window.location.href = result.redirect;
         }
-    } catch (error) {}
+    } catch (error) {
+        errorDiv.textContent = "Internal server error. Please try again.";
+        errorDiv.classList.remove("hidden");
+    }
 }
 
 /**
@@ -37,6 +43,9 @@ async function logoutAlbum(albumId) {
  * @returns {Promise<void>} Resolves when the request is complete.
  */
 async function returnToHome(albumId) {
+    const errorDiv = document.getElementById("albumError");
+    errorDiv.textContent = "";
+    errorDiv.classList.add("hidden");
     try {
         const response = await fetch(`./album?albumId=${encodeURIComponent(albumId)}`, {
             method: "POST",
@@ -48,7 +57,10 @@ async function returnToHome(albumId) {
             if (result.redirect)
                 window.location.hash = result.redirect;
         }
-    } catch (error) {}
+    } catch (error) {
+        errorDiv.textContent = "Internal server error. Please try again.";
+        errorDiv.classList.remove("hidden");
+    }
 }
 
 /**
@@ -62,8 +74,11 @@ function initDragAndDrop(albumId) {
     const saveButton = document.getElementById("saveOrderButton");
     const orderList = document.getElementById("imagesOrderList");
     const errorDiv = document.getElementById("saveOrderError");
+    const successDiv = document.getElementById("saveOrderSuccess");
     errorDiv.textContent = "";
+    successDiv.textContent = "";
     errorDiv.classList.add("hidden");
+    successDiv.classList.add("hidden");
     let draggedItem = null;
     // Disable drag-and-drop by default
     if (orderList) {
@@ -136,7 +151,7 @@ function initDragAndDrop(albumId) {
                     errorDiv.classList.remove("hidden");
                 }
             } catch (error) {
-                errorDiv.textContent = "Server error.";
+                errorDiv.textContent = "Internal server error. Please try again.";
                 errorDiv.classList.remove("hidden");
             }
         })

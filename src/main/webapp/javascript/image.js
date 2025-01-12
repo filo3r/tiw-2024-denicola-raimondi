@@ -112,8 +112,11 @@ async function addComment(event) {
     const commentText = document.getElementById("commentText").value;
     // Reset errors
     const errorDiv = document.getElementById("addCommentError");
+    const successDiv = document.getElementById("addCommentSuccess");
     errorDiv.textContent = "";
+    successDiv.textContent = "";
     errorDiv.classList.add("hidden");
+    successDiv.classList.add("hidden");
     // Check comment
     if (!StringUtil.isValidText(commentText)) {
         errorDiv.textContent = "Invalid comment text.";
@@ -140,7 +143,7 @@ async function addComment(event) {
             errorDiv.classList.remove("hidden");
         }
     } catch (error) {
-        errorDiv.textContent = "Server error.";
+        errorDiv.textContent = "Internal server error. Please try again.";
         errorDiv.classList.remove("hidden");
     }
 }

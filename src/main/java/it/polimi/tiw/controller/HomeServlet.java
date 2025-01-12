@@ -69,7 +69,7 @@ public class HomeServlet extends HttpServlet {
             response.getWriter().write(json);
         } catch (SQLException e) {
             e.printStackTrace();
-            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload the page.", response);
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload the page.", null, response);
         }
     }
 
@@ -108,7 +108,7 @@ public class HomeServlet extends HttpServlet {
             else
                 response.sendRedirect(request.getContextPath() + "/spa#home");
         } catch (JsonSyntaxException e) {
-            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Server error.", response);
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid JSON format. Please try again.", null, response);
             e.printStackTrace();
         }
     }
@@ -189,7 +189,7 @@ public class HomeServlet extends HttpServlet {
     private void handleCreateAlbum(JsonObject jsonRequest, HttpServletResponse response, String username) throws ServletException, IOException {
         String albumTitle = jsonRequest.get("albumTitle").getAsString();
         if (!StringUtil.isValidTitle(albumTitle)) {
-            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid album title.", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid album title.", null, response);
             return;
         }
         Album album = new Album(username, albumTitle);
@@ -199,10 +199,10 @@ public class HomeServlet extends HttpServlet {
             if (success) {
                 sendSuccessResponse(HttpServletResponse.SC_OK, "Album created successfully.", "#home", response);
             } else {
-                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload the page.", response);
+                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", null, response);
             }
         } catch (SQLException e) {
-            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload the page.", response);
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", null, response);
             e.printStackTrace();
         }
     }
@@ -249,11 +249,11 @@ public class HomeServlet extends HttpServlet {
         String imageTitle = jsonRequest.get("imageTitle").getAsString();
         String imageText = jsonRequest.get("imageText").getAsString();
         if (!StringUtil.isValidTitle(imageTitle)) {
-            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image title.", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image title.", null, response);
             return null;
         }
         if (!StringUtil.isValidText(imageText)) {
-            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image description.", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image description.", null, response);
             return null;
         }
         ArrayList<String> imageStringParameters = new ArrayList<>();
@@ -275,7 +275,7 @@ public class HomeServlet extends HttpServlet {
     private ArrayList<Integer> getSelectedAlbums(JsonObject jsonRequest, HttpServletResponse response, String username) throws ServletException, IOException {
         // Retrieve the array of selected albums
         if (!jsonRequest.has("albumSelect")) {
-            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid albums selected.", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid albums selected.", null, response);
             return null;
         }
         ArrayList<Integer> selectedAlbums = new ArrayList<>();
@@ -283,7 +283,7 @@ public class HomeServlet extends HttpServlet {
             try {
                 selectedAlbums.add(album.getAsInt());
             } catch (NumberFormatException e) {
-                sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid albums selected.", response);
+                sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid albums selected.", null, response);
                 return null;
             }
         }
@@ -303,13 +303,13 @@ public class HomeServlet extends HttpServlet {
             ArrayList<Integer> userAlbumsIds = albumDAO.getMyAlbumIds(username);
             for (Integer albumId : selectedAlbums) {
                 if (!userAlbumsIds.contains(albumId)) {
-                    sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid albums selected.", response);
+                    sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid albums selected.", null, response);
                     return null;
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload the page.", response);
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", null, response);
             return null;
         }
         // Remove duplicates and return the list
@@ -327,12 +327,12 @@ public class HomeServlet extends HttpServlet {
     private byte[] getImageFile(JsonObject jsonRequest, HttpServletResponse response) throws ServletException, IOException {
         // Read base64 string
         if (!jsonRequest.has("imageFile")) {
-            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image file.", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image file.", null, response);
             return null;
         }
         String base64String = jsonRequest.get("imageFile").getAsString();
         if (base64String == null || base64String.isEmpty()) {
-            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image file.", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image file.", null, response);
             return null;
         }
         // Decode base64 string into byte array
@@ -340,17 +340,17 @@ public class HomeServlet extends HttpServlet {
         try {
             imageFile = Base64.getDecoder().decode(base64String);
         } catch (IllegalArgumentException e) {
-            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image file.", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image file.", null, response);
             return null;
         }
         // Check imageFile
         if (imageFile == null || imageFile.length == 0) {
-            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image file.", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image file.", null, response);
             return null;
         }
         // Maximum size control (100 MB)
         if (imageFile.length > 1024L * 1024L * 100L) {
-            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image file.", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image file.", null, response);
             return null;
         }
         return imageFile;
@@ -369,13 +369,13 @@ public class HomeServlet extends HttpServlet {
         String imageMimeType = null;
         imageMimeType = MimeDetector.detectMimeType(imageFile);
         if (imageMimeType == null) {
-            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image file.", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image file.", null, response);
             return null;
         }
         // Make sure it is one of the allowed MIMEs
         List<String> allowedMimeTypes = Arrays.asList("image/jpg", "image/jpeg", "image/png", "image/webp");
         if (!allowedMimeTypes.contains(imageMimeType)) {
-            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image file.", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image file.", null, response);
             return null;
         }
         return MimeDetector.getExtension(imageMimeType);
@@ -398,29 +398,29 @@ public class HomeServlet extends HttpServlet {
             ImageDAO imageDAO = new ImageDAO();
             int imageId = imageDAO.addImage(image);
             if (imageId == -1) {
-                sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Database error. Please reload the page.", response);
+                sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Database error. Please try again.", null, response);
                 return -1;
             }
             String uploadsPathString = getUploadsPath();
             if (uploadsPathString == null) {
-                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Server error. Please reload page.", response);
+                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Server error. Please try again.", null, response);
                 return -1;
             }
             Path uploadsPath = Paths.get(uploadsPathString);
             Path imagePath = uploadsPath.resolve(imageId + imageExtension);
             boolean updatedPath = imageDAO.updateImagePath(imageId, imagePath.toString());
             if (!updatedPath) {
-                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload page.", response);
+                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", null, response);
                 return -1;
             }
             boolean imageIntoAlbums = imageDAO.addImageToAlbums(imageId, selectedAlbums);
             if (!imageIntoAlbums) {
-                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload page.", response);
+                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", null, response);
                 return -1;
             }
             return imageId;
         } catch (SQLException e) {
-            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. There may have been errors adding the image. Please reload page.", response);
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. There may have been errors adding the image. Please try again.", null, response);
             return -1;
         }
     }
@@ -439,7 +439,7 @@ public class HomeServlet extends HttpServlet {
         // Destination directory to save images
         String uploadsPathString = getUploadsPath();
         if (uploadsPathString == null) {
-            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Server error. Please reload page.", response);
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Internal server error. Please try again.", null, response);
             return false;
         }
         // Create Path object from the loaded uploads path
@@ -453,7 +453,7 @@ public class HomeServlet extends HttpServlet {
             Files.write(imagePath, imageFile, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
             // Verify that the file has been created
             if (!Files.exists(imagePath)) {
-                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error saving image to server. Please reload page.", response);
+                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error saving image to server. Please try again", null, response);
                 return false;
             }
         } catch (IOException save) {
@@ -463,7 +463,7 @@ public class HomeServlet extends HttpServlet {
             } catch (IOException delete) {
                 delete.printStackTrace();
             }
-            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error saving image to server. Please reload page.", response);
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error saving image to server. Please try again.", null, response);
             save.printStackTrace();
             return false;
         }
@@ -505,19 +505,23 @@ public class HomeServlet extends HttpServlet {
         HttpSession session = request.getSession(false);
         if (session != null)
             session.invalidate();
-        sendSuccessResponse(HttpServletResponse.SC_OK, "Logout successful.", request.getContextPath() + "/", response);
+        sendSuccessResponse(HttpServletResponse.SC_OK, null, request.getContextPath() + "/", response);
     }
 
     /**
-     * Sends an error response with the specified status and message.
-     * @param status   the HTTP status code.
-     * @param message  the error message.
-     * @param response the HTTP response object.
-     * @throws IOException if an I/O error occurs during response writing.
+     * Sends an error response with the specified status, message, and redirect URL.
+     * @param status   the HTTP status code
+     * @param message  the error message
+     * @param redirect the redirect URL
+     * @param response the HTTP response object
+     * @throws IOException if an I/O error occurs during response writing
      */
-    private void sendErrorResponse(int status, String message, HttpServletResponse response) throws IOException {
+    private void sendErrorResponse(int status, String message, String redirect, HttpServletResponse response) throws IOException {
         JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("message", message);
+        if (message != null)
+            jsonObject.addProperty("message", message);
+        if (redirect != null)
+            jsonObject.addProperty("redirect", redirect);
         response.setStatus(status);
         response.getWriter().write(gson.toJson(jsonObject));
     }
@@ -532,8 +536,10 @@ public class HomeServlet extends HttpServlet {
      */
     private void sendSuccessResponse(int status, String message, String redirect, HttpServletResponse response) throws IOException {
         JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("message", message);
-        jsonObject.addProperty("redirect", redirect);
+        if (message != null)
+            jsonObject.addProperty("message", message);
+        if (redirect != null)
+            jsonObject.addProperty("redirect", redirect);
         response.setStatus(status);
         response.getWriter().write(gson.toJson(jsonObject));
     }

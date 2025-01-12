@@ -87,7 +87,7 @@ public class IndexServlet extends HttpServlet {
             else
                 response.sendRedirect(request.getContextPath() + "/");
         } catch (JsonSyntaxException e) {
-            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Server error.", response);
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid JSON format. Please try again.", null, response);
             e.printStackTrace();
         }
     }
@@ -120,17 +120,17 @@ public class IndexServlet extends HttpServlet {
             }
             if (successSignUp && successCreateAlbum) {
                 request.getSession().setAttribute("user", user);
-                sendSuccessResponse(HttpServletResponse.SC_OK, request.getContextPath() + "/spa#home", response);
+                sendSuccessResponse(HttpServletResponse.SC_OK, null, request.getContextPath() + "/spa#home", response);
             } else if (successSignUp && !successCreateAlbum) {
                 userDAO.deleteUser(username);
-                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", response);
+                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", null, response);
                 return;
             } else {
-                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", response);
+                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", null, response);
                 return;
             }
         } catch (SQLException e) {
-            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", response);
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", null, response);
             e.printStackTrace();
         }
     }
@@ -157,13 +157,13 @@ public class IndexServlet extends HttpServlet {
                 user.setPassword(null);
                 user.setUsername(userDAO.getUsernameByEmail(user.getEmail()));
                 request.getSession().setAttribute("user", user);
-                sendSuccessResponse(HttpServletResponse.SC_OK, request.getContextPath() + "/spa#home", response);
+                sendSuccessResponse(HttpServletResponse.SC_OK, null, request.getContextPath() + "/spa#home", response);
             } else {
-                sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Wrong credentials. Please try again.", response);
+                sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Wrong credentials. Please try again.", null, response);
                 return;
             }
         } catch (SQLException e) {
-            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", response);
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", null, response);
             e.printStackTrace();
         }
     }
@@ -183,28 +183,28 @@ public class IndexServlet extends HttpServlet {
      */
     private boolean isSignUpValid(String email, String username, String password1, String password2, HttpServletResponse response) throws ServletException, IOException, SQLException {
         if (!StringUtil.isValidEmail(email)) {
-            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid email.", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid email.", null, response);
             return false;
         }
         if (!StringUtil.isValidUsername(username)) {
-            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid username.", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid username.", null, response);
             return false;
         }
         if (!StringUtil.isValidPassword(password1)) {
-            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid password.", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid password.", null, response);
             return false;
         }
         if (!password1.equals(password2)) {
-            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid password.", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid password.", null, response);
             return false;
         }
         UserDAO userDAO = new UserDAO();
         if (userDAO.isEmailTaken(email)) {
-            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Email already taken.", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Email already taken.", null, response);
             return false;
         }
         if (userDAO.isUsernameTaken(username)) {
-            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Username already taken.", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Username already taken.", null, response);
             return false;
         }
         return true;
@@ -223,30 +223,38 @@ public class IndexServlet extends HttpServlet {
      */
     private boolean isSignInValid(String email, String password, HttpServletResponse response) throws ServletException, IOException, SQLException {
         if (!StringUtil.isValidEmail(email)) {
-            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid email.", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid email.", null, response);
             return false;
         }
         if (!StringUtil.isValidPassword(password)) {
-            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid password.", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid password.", null, response);
             return false;
         }
         UserDAO userDAO = new UserDAO();
         if (!userDAO.isEmailTaken(email)) {
-            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Email not registered.", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Email not registered.", null, response);
             return false;
         }
         return true;
     }
 
     /**
-     *
+     * Checks if the username provided in the request is available.
+     * Validates the input and queries the database to verify if the username
+     * is already taken.
+     * Sends a JSON response with a boolean property `isUsernameTaken` indicating
+     * the availability of the username.
+     * @param jsonRequest the JSON object containing the username to be checked
+     * @param response    the HttpServletResponse object to send the JSON response
+     * @throws ServletException if an error occurs during request handling
+     * @throws IOException      if an I/O error occurs during response handling
      */
     private void handleCheckUsernameAvailability(JsonObject jsonRequest, HttpServletResponse response) throws ServletException, IOException {
         String username = jsonRequest.get("username").getAsString();
         try {
             UserDAO userDAO = new UserDAO();
             if (username == null || username.isEmpty()) {
-                sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Username is required.", response);
+                sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Username is required.", null, response);
                 return;
             }
             boolean isUsernameTaken = userDAO.isUsernameTaken(username);
@@ -255,35 +263,43 @@ public class IndexServlet extends HttpServlet {
             response.setStatus(HttpServletResponse.SC_OK);
             response.getWriter().write(gson.toJson(jsonResponse));
         } catch (SQLException e) {
-            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", response);
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", null, response);
             e.printStackTrace();
         }
     }
 
     /**
-     * Sends an error response to the client with the specified status code and message.
-     * @param status   the HTTP status code to set in the response
-     * @param message  the error message to include in the response
-     * @param response the HttpServletResponse to send the response to
+     * Sends an error response with the specified status, message, and redirect URL.
+     * @param status   the HTTP status code
+     * @param message  the error message
+     * @param redirect the redirect URL
+     * @param response the HTTP response object
      * @throws IOException if an I/O error occurs during response writing
      */
-    private void sendErrorResponse(int status, String message, HttpServletResponse response) throws IOException {
+    private void sendErrorResponse(int status, String message, String redirect, HttpServletResponse response) throws IOException {
         JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("message", message);
+        if (message != null)
+            jsonObject.addProperty("message", message);
+        if (redirect != null)
+            jsonObject.addProperty("redirect", redirect);
         response.setStatus(status);
         response.getWriter().write(gson.toJson(jsonObject));
     }
 
     /**
-     * Sends a success response to the client with the specified status code and redirect URL.
-     * @param status   the HTTP status code to set in the response
-     * @param redirect the URL to redirect the user to
-     * @param response the HttpServletResponse to send the response to
-     * @throws IOException if an I/O error occurs during response writing
+     * Sends a success response with the specified status, message, and redirect URL.
+     * @param status    the HTTP status code.
+     * @param message   the success message.
+     * @param redirect  the redirect URL.
+     * @param response  the HTTP response object.
+     * @throws IOException if an I/O error occurs during response writing.
      */
-    private void sendSuccessResponse(int status, String redirect, HttpServletResponse response) throws IOException {
+    private void sendSuccessResponse(int status, String message, String redirect, HttpServletResponse response) throws IOException {
         JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("redirect", redirect);
+        if (message != null)
+            jsonObject.addProperty("message", message);
+        if (redirect != null)
+            jsonObject.addProperty("redirect", redirect);
         response.setStatus(status);
         response.getWriter().write(gson.toJson(jsonObject));
     }

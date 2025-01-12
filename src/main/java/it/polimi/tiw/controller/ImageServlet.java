@@ -67,12 +67,13 @@ public class ImageServlet extends HttpServlet {
         ArrayList<Integer> imageAndAlbumIds = null;
         try {
             imageAndAlbumIds = getImageAndAlbumIds(request, response);
-            if (imageAndAlbumIds == null) {
+            if (imageAndAlbumIds == null || imageAndAlbumIds.isEmpty() || imageAndAlbumIds.contains(-1)) {
                 return;
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", response);
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", null, response);
+            return;
         }
         // Add Comment
         try {
@@ -83,7 +84,7 @@ public class ImageServlet extends HttpServlet {
             else
                 response.sendRedirect(request.getContextPath() + "/spa#album?albumId=" + imageAndAlbumIds.get(1) + "&page=0");
         } catch (JsonSyntaxException e) {
-            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Server error. Please try again.", response);
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid JSON format. Please try again.", null, response);
             e.printStackTrace();
         }
     }
@@ -114,13 +115,13 @@ public class ImageServlet extends HttpServlet {
         imageAndAlbumIds.add(imageId);
         imageAndAlbumIds.add(albumId);
         if (albumIdParam == null || albumIdParam.isEmpty()) {
-            sendErrorRedirect(HttpServletResponse.SC_BAD_REQUEST, "Invalid album id.", "#home", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid album id.", "#home", response);
             return null;
         }
         try {
             albumId = Integer.parseInt(albumIdParam);
         } catch (NumberFormatException e) {
-            sendErrorRedirect(HttpServletResponse.SC_BAD_REQUEST, "Invalid album id.", "#home", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid album id.", "#home", response);
             return null;
         }
         AlbumDAO albumDAO = new AlbumDAO();
@@ -128,30 +129,30 @@ public class ImageServlet extends HttpServlet {
         if (albumExists) {
             imageAndAlbumIds.set(1, albumId);
         } else {
-            sendErrorRedirect(HttpServletResponse.SC_BAD_REQUEST, "Invalid album id.", "#home", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid album id.", "#home", response);
             return null;
         }
         if (imageIdParam == null || imageIdParam.isEmpty()) {
-            sendErrorRedirect(HttpServletResponse.SC_BAD_REQUEST, "Invalid image id.", "#album?albumId=" + albumId + "&page=0", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image id.", "#album?albumId=" + albumId + "&page=0", response);
             return null;
         }
         try {
             imageId = Integer.parseInt(imageIdParam);
         } catch (NumberFormatException e) {
-            sendErrorRedirect(HttpServletResponse.SC_BAD_REQUEST, "Invalid image id.", "#album?albumId=" + albumId + "&page=0", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image id.", "#album?albumId=" + albumId + "&page=0", response);
             return null;
         }
         ImageDAO imageDAO = new ImageDAO();
         boolean imageExists = imageDAO.doesImageExist(imageId);
         if (!imageExists) {
-            sendErrorRedirect(HttpServletResponse.SC_BAD_REQUEST, "Invalid image id.", "#album?albumId=" + albumId + "&page=0", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image id.", "#album?albumId=" + albumId + "&page=0", response);
             return null;
         }
         boolean imageBelongToAlbum = imageDAO.doesImageBelongToAlbum(imageId, albumId);
         if (imageBelongToAlbum) {
             imageAndAlbumIds.set(0, imageId);
         } else {
-            sendErrorRedirect(HttpServletResponse.SC_BAD_REQUEST, "Invalid image id.", "#album?albumId=" + albumId + "&page=0", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid image id.", "#album?albumId=" + albumId + "&page=0", response);
             return null;
         }
         return imageAndAlbumIds;
@@ -172,7 +173,7 @@ public class ImageServlet extends HttpServlet {
     private void handleAddComment(JsonObject jsonRequest, HttpServletResponse response, String username, ArrayList<Integer> imageAndAlbumIds) throws ServletException, IOException {
         String commentText = jsonRequest.get("commentText").getAsString();
         if (!StringUtil.isValidText(commentText)) {
-            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid comment text.", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid comment text.", null, response);
             return;
         }
         Comment comment = new Comment(imageAndAlbumIds.get(0), username, commentText);
@@ -186,26 +187,12 @@ public class ImageServlet extends HttpServlet {
             if (success) {
                 sendSuccessResponse(HttpServletResponse.SC_OK, "Comment added successfully.", "#album?albumId=" + imageAndAlbumIds.get(1) + "&page=0", response);
             } else {
-                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", response);
+                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", null, response);
             }
         } catch (SQLException e) {
-            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", response);
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", null, response);
             e.printStackTrace();
         }
-    }
-
-    /**
-     * Sends an error response with the specified status and message.
-     * @param status   the HTTP status code.
-     * @param message  the error message.
-     * @param response the HTTP response object.
-     * @throws IOException if an I/O error occurs during response writing.
-     */
-    private void sendErrorResponse(int status, String message, HttpServletResponse response) throws IOException {
-        JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("message", message);
-        response.setStatus(status);
-        response.getWriter().write(gson.toJson(jsonObject));
     }
 
     /**
@@ -216,10 +203,12 @@ public class ImageServlet extends HttpServlet {
      * @param response the HTTP response object
      * @throws IOException if an I/O error occurs during response writing
      */
-    private void sendErrorRedirect(int status, String message, String redirect, HttpServletResponse response) throws IOException {
+    private void sendErrorResponse(int status, String message, String redirect, HttpServletResponse response) throws IOException {
         JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("message", message);
-        jsonObject.addProperty("redirect", redirect);
+        if (message != null)
+            jsonObject.addProperty("message", message);
+        if (redirect != null)
+            jsonObject.addProperty("redirect", redirect);
         response.setStatus(status);
         response.getWriter().write(gson.toJson(jsonObject));
     }
@@ -234,8 +223,10 @@ public class ImageServlet extends HttpServlet {
      */
     private void sendSuccessResponse(int status, String message, String redirect, HttpServletResponse response) throws IOException {
         JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("message", message);
-        jsonObject.addProperty("redirect", redirect);
+        if (message != null)
+            jsonObject.addProperty("message", message);
+        if (redirect != null)
+            jsonObject.addProperty("redirect", redirect);
         response.setStatus(status);
         response.getWriter().write(gson.toJson(jsonObject));
     }

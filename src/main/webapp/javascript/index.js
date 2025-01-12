@@ -13,8 +13,8 @@ async function signUp(event) {
     event.preventDefault();
     const email = document.getElementById("signUpEmail").value.trim();
     const username = document.getElementById("signUpUsername").value.trim();
-    const password1 = document.getElementById("signUpPassword1").value;
-    const password2 = document.getElementById("signUpPassword2").value;
+    const password1 = document.getElementById("signUpPassword1").value.trim();
+    const password2 = document.getElementById("signUpPassword2").value.trim();
     const errorDiv = document.getElementById("signUpError");
     // Reset errors
     errorDiv.textContent = "";
@@ -58,7 +58,7 @@ async function signUp(event) {
             errorDiv.classList.remove("hidden");
         }
     } catch (error) {
-        errorDiv.textContent = "Server error.";
+        errorDiv.textContent = "Internal server error. Please try again.";
         errorDiv.classList.remove("hidden");
     }
 }
@@ -74,7 +74,7 @@ async function signUp(event) {
 async function signIn(event) {
     event.preventDefault();
     const email = document.getElementById("signInEmail").value.trim();
-    const password = document.getElementById("signInPassword").value;
+    const password = document.getElementById("signInPassword").value.trim();
     const errorDiv = document.getElementById("signInError");
     errorDiv.textContent = "";
     errorDiv.classList.add("hidden");
@@ -106,7 +106,7 @@ async function signIn(event) {
             errorDiv.classList.remove("hidden");
         }
     } catch (error) {
-        errorDiv.textContent = "Server error.";
+        errorDiv.textContent = "Internal server error. Please try again.";
         errorDiv.classList.remove("hidden");
     }
 }
@@ -134,7 +134,7 @@ async function checkUsernameAvailability(username) {
         body: JSON.stringify({ action: "checkUsernameAvailability", username: username }),
     });
     if (!response.ok) {
-        throw new Error("Server error.");
+        throw new Error("Internal server error. Please try again.");
     }
     const result = await response.json();
     return result.isUsernameTaken;
@@ -162,7 +162,7 @@ document.getElementById("signUpUsername").addEventListener("blur", async (event)
                 successDiv.classList.remove("hidden");
             }
         } catch (error) {
-            errorDiv.textContent = "Server error.";
+            errorDiv.textContent = "Internal server error. Please try again.";
             errorDiv.classList.remove("hidden");
         }
     }

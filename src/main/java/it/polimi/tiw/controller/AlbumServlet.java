@@ -71,18 +71,19 @@ public class AlbumServlet extends HttpServlet {
         try {
             albumId = getAlbumId(request);
             if (albumId == -1) {
-                sendErrorRedirect(HttpServletResponse.SC_BAD_REQUEST, "Invalid album id.", "#home", response);
+                sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid album id.", "#home", response);
                 return;
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            sendErrorRedirect(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", "#home", response);
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", "#home", response);
+            return;
         }
         // Render Album Page
         try {
             Map<String, Object> albumData = renderAlbumPage(username, albumId);
             if (albumData == null || albumData.isEmpty()) {
-                sendErrorRedirect(HttpServletResponse.SC_BAD_REQUEST, "Invalid album id.", "#home", response);
+                sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid album id.", "#home", response);
                 return;
             }
             // Page Size
@@ -94,7 +95,7 @@ public class AlbumServlet extends HttpServlet {
             response.getWriter().write(jsonObject.toString());
         } catch (SQLException e) {
             e.printStackTrace();
-            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload the page.", response);
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload the page.", null, response);
         }
     }
 
@@ -124,19 +125,19 @@ public class AlbumServlet extends HttpServlet {
         try {
             albumId = getAlbumId(request);
             if (albumId == -1) {
-                sendErrorRedirect(HttpServletResponse.SC_BAD_REQUEST, "Invalid album id.", "#home", response);
+                sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid album id.", "#home", response);
                 return;
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            sendErrorRedirect(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", "#home", response);
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", "#home", response);
         }
         // Return To Home or Logout or Save Order
         try {
             JsonObject jsonRequest = gson.fromJson(request.getReader(), JsonObject.class);
             String action = jsonRequest.get("action").getAsString();
             if ("returnToHome".equals(action))
-                sendSuccessResponse(HttpServletResponse.SC_OK, "Back to home.", "#home", response);
+                sendSuccessResponse(HttpServletResponse.SC_OK, null, "#home", response);
             else if ("logoutAlbum".equals(action))
                 handleLogout(request, response);
             else if ("saveOrder".equals(action))
@@ -144,7 +145,7 @@ public class AlbumServlet extends HttpServlet {
             else
                 response.sendRedirect(request.getContextPath() + "/spa#album?albumId=" + albumId + "&page=0");
         } catch (JsonSyntaxException e) {
-            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Server error.", response);
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid JSON format. Please try again.", null, response);
             e.printStackTrace();
         }
     }
@@ -371,12 +372,12 @@ public class AlbumServlet extends HttpServlet {
         try {
             sortedImageIds = gson.fromJson(jsonRequest.getAsJsonArray("sortedImageIds"), new TypeToken<ArrayList<Integer>>() {}.getType());
         } catch (JsonSyntaxException e) {
-            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid sorted image list.", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid sorted image list.", null, response);
             return;
         }
         // Check sortedImageIds
         if (sortedImageIds == null || sortedImageIds.isEmpty()) {
-            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid sorted image list.", response);
+            sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid sorted image list.", null, response);
             return;
         }
         // Remove duplicates
@@ -389,16 +390,16 @@ public class AlbumServlet extends HttpServlet {
             if (userImageOrderDAO.userHasImagesOrderForAlbum(username, albumId)) {
                 // Delete existing custom sorting
                 if (!userImageOrderDAO.deleteUserImagesOrderForAlbum(username, albumId)) {
-                    sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload the page.", response);
+                    sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", null, response);
                     return;
                 }
             }
             if (!userImageOrderDAO.saveUserImagesOrderForAlbum(username, albumId, sortedImageIds))
-                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload the page.", response);
+                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", null, response);
             else
                 sendSuccessResponse(HttpServletResponse.SC_OK, "Custom sorting successfully saved.", "#album?albumId=" + albumId + "&page=0", response);
         } catch (SQLException e) {
-            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please reload the page.", response);
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", null, response);
             e.printStackTrace();
         }
     }
@@ -414,21 +415,7 @@ public class AlbumServlet extends HttpServlet {
         HttpSession session = request.getSession(false);
         if (session != null)
             session.invalidate();
-        sendSuccessResponse(HttpServletResponse.SC_OK, "Logout successful.", request.getContextPath() + "/", response);
-    }
-
-    /**
-     * Sends an error response with the specified status and message.
-     * @param status   the HTTP status code.
-     * @param message  the error message.
-     * @param response the HTTP response object.
-     * @throws IOException if an I/O error occurs during response writing.
-     */
-    private void sendErrorResponse(int status, String message, HttpServletResponse response) throws IOException {
-        JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("message", message);
-        response.setStatus(status);
-        response.getWriter().write(gson.toJson(jsonObject));
+        sendSuccessResponse(HttpServletResponse.SC_OK, null, request.getContextPath() + "/", response);
     }
 
     /**
@@ -439,10 +426,12 @@ public class AlbumServlet extends HttpServlet {
      * @param response the HTTP response object
      * @throws IOException if an I/O error occurs during response writing
      */
-    private void sendErrorRedirect(int status, String message, String redirect, HttpServletResponse response) throws IOException {
+    private void sendErrorResponse(int status, String message, String redirect, HttpServletResponse response) throws IOException {
         JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("message", message);
-        jsonObject.addProperty("redirect", redirect);
+        if (message != null)
+            jsonObject.addProperty("message", message);
+        if (redirect != null)
+            jsonObject.addProperty("redirect", redirect);
         response.setStatus(status);
         response.getWriter().write(gson.toJson(jsonObject));
     }
@@ -457,8 +446,10 @@ public class AlbumServlet extends HttpServlet {
      */
     private void sendSuccessResponse(int status, String message, String redirect, HttpServletResponse response) throws IOException {
         JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("message", message);
-        jsonObject.addProperty("redirect", redirect);
+        if (message != null)
+            jsonObject.addProperty("message", message);
+        if (redirect != null)
+            jsonObject.addProperty("redirect", redirect);
         response.setStatus(status);
         response.getWriter().write(gson.toJson(jsonObject));
     }

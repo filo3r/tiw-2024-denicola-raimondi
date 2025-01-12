@@ -99,7 +99,11 @@ async function loadHomePage() {
         initHomePageEventListeners();
         showSuccessMessage();
     } catch (error) {
-        spa.innerHTML = `<p>${error.message}</p>`;
+        spa.innerHTML = `
+            <div class="error-message">
+                <p>${error.message}</p>
+            </div>
+        `;
     }
 }
 
@@ -245,6 +249,7 @@ function buildHomeHTML(data) {
                 <button type="submit" id="logoutHomeButton">Logout</button>
             </form>
         </div>
+        <div class="error-message hidden" id="profileError"></div>
     </div>
     `;
     return html;
@@ -283,7 +288,11 @@ async function loadAlbumPage(albumId, page) {
         initImagePageEventListeners(data);
         showSuccessMessage();
     } catch (error) {
-        spa.innerHTML = `<p>${error.message}</p>`;
+        spa.innerHTML = `
+            <div class="error-message">
+                <p>${error.message}</p>
+            </div>
+        `;
     }
 }
 
@@ -331,6 +340,8 @@ function buildAlbumHTML(data, page) {
     </nav>
     <input type="radio" name="panel" id="imagesPanel" checked hidden>
     <input type="radio" name="panel" id="orderPanel" hidden>
+    <!-- General errors -->
+    <div class="error-message hidden" id="albumError"></div>
     <!-- Images panel -->
     <div class="content" id="imagesContent">
       <h1>Album images</h1>
