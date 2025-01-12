@@ -1,15 +1,15 @@
 // Import home.js
-import { initHomePageEventListeners } from './home.js';
+import { initHomePageEventListeners } from "./home.js";
 // Import album.js
-import { initAlbumPageEventListeners } from './album.js';
+import { initAlbumPageEventListeners } from "./album.js";
 // Import image.js
-import { initImagePageEventListeners } from './image.js';
+import { initImagePageEventListeners } from "./image.js";
 
 /**
  * Initializes the router when the DOM content is fully loaded.
  * Sets up the routing mechanism for single-page navigation.
  */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
     router();
 });
 

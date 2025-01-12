@@ -1,5 +1,5 @@
 // Import StringUtil class
-import StringUtil from './StringUtil.js';
+import StringUtil from "./StringUtil.js";
 
 /**
  * Handles user sign-up process.

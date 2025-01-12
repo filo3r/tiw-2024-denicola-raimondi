@@ -1,7 +1,7 @@
 // Import StringUtil class
-import StringUtil from './StringUtil.js';
+import StringUtil from "./StringUtil.js";
 // Import spa.js
-import { forceHashChange } from './spa.js';
+import { forceHashChange } from "./spa.js";
 
 /**
  * Initializes event listeners for the image page.
@@ -12,9 +12,9 @@ export function initImagePageEventListeners(data) {
     const imageItems = document.querySelectorAll('.image-item');
     // Add the "mouseover" and "mouseout" events to each thumbnail
     imageItems.forEach(img => {
-        img.addEventListener('mouseover', () => {
+        img.addEventListener("mouseover", () => {
             // Retrieve image index
-            const imageIndex = parseInt(img.getAttribute('data-image-index'), 10);
+            const imageIndex = parseInt(img.getAttribute("data-image-index"), 10);
             // Opens the modal with the image data
             openImageModal(data, imageIndex);
         });
@@ -22,7 +22,7 @@ export function initImagePageEventListeners(data) {
     // Close the modal by clicking on close button
     const closeButton = document.getElementById("closeModalButton");
     if (closeButton) {
-        closeButton.addEventListener('click', () => {
+        closeButton.addEventListener("click", () => {
             closeImageModal();
         });
     }

@@ -1,7 +1,7 @@
 // Import StringUtil class
-import StringUtil from './StringUtil.js';
+import StringUtil from "./StringUtil.js";
 // Import spa.js
-import { forceHashChange } from './spa.js';
+import { forceHashChange } from "./spa.js";
 
 /**
  * Handles the creation of a new album.

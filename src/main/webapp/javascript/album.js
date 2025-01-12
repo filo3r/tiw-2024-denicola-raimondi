@@ -1,5 +1,5 @@
 // Import spa.js
-import { forceHashChange } from './spa.js';
+import { forceHashChange } from "./spa.js";
 
 /**
  * Sends a POST request to log out the user and redirects them to the appropriate page.
