@@ -429,7 +429,6 @@ function buildAlbumHTML(data, page) {
       <div class="modal-content">
         <!-- Header -->
         <div class="modal-header">
-          <span id="closeModalButton" class="close">&times;</span>
           <h2 id="modalImageTitle">Image Title</h2>
         </div>
         <!-- Body -->
@@ -451,6 +450,10 @@ function buildAlbumHTML(data, page) {
             </form>
             <!-- Comments -->
             <div class="comments-list" id="commentsList"></div>
+          </div>
+          <!-- Close modal button -->
+          <div class="modal-footer">
+            <button type="button" id="closeModalButton" class="close-modal-button">Close</button>
           </div>
         </div>
       </div>

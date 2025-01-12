@@ -533,6 +533,7 @@ button[type="submit"]:hover {
 .comments-list ul {
     list-style-type: none;
     padding: 0;
+    margin: 0;
 }
 
 .comments-list li {
@@ -541,11 +542,16 @@ button[type="submit"]:hover {
     background-color: #f9f9f9;
 }
 
+.comments-list li::marker {
+    content: none;
+}
+
 .error-message {
     color: red;
     background-color: #ffeeee;
     padding: 1rem;
     text-align: center;
+    margin-top: 20px;
 }
 
 .success-message {
@@ -553,6 +559,44 @@ button[type="submit"]:hover {
     background-color: #eeffee;
     padding: 1rem;
     text-align: center;
+    margin-top: 20px;
+}
+
+.modal {
+    display: none;
+    margin-top: 100px;
+}
+
+#closeModalButton{
+    background-color: #007BFF;
+    color: white;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 9px;
+    margin: 15px auto;
+    display: block;
+    transition: background-color 0.3s;
+    box-shadow: 0 4px 8px #9e9e9e;
+    width: 80px;
+    height: 40px;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+#closeModalButton:hover {
+    background-color: #0056b3;
+}
+
+#imagesPanel:checked ~ #imageModal {
+    display: block;
+}
+
+#orderPanel:checked ~ #imageModal {
+    display: none !important;
 }
 
 /* ---------------------------------- Error Page Style---------------------------------- */

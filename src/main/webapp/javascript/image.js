@@ -19,7 +19,7 @@ export function initImagePageEventListeners(data) {
             openImageModal(data, imageIndex);
         });
     });
-    // Close the modal by clicking the X
+    // Close the modal by clicking on close button
     const closeButton = document.getElementById("closeModalButton");
     if (closeButton) {
         closeButton.addEventListener('click', () => {
