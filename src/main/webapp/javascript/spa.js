@@ -92,7 +92,7 @@ async function loadHomePage() {
         const response = await fetch("./home");
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.message || "Error loading home page. Please try again.");
+            throw new Error(errorData.message || "Internal server error. Please reload the page.");
         }
         const data = await response.json();
         spa.innerHTML = buildHomeHTML(data);
@@ -115,7 +115,11 @@ async function loadHomePage() {
  */
 function buildHomeHTML(data) {
     if (!data || !data.user || !data.myAlbums || !data.otherAlbums || !data.userStats) {
-        return `<p>Error loading home page. Please try again.</p>`;
+        return `
+            <div class="error-message">
+                <p>Internal server error. Please reload the page.</p>
+            </div>
+        `;
     }
     // Dynamic Home HTML
     let html = `
@@ -275,7 +279,7 @@ async function loadAlbumPage(albumId, page) {
                 window.location.hash = errorData.redirect;
                 return;
             } else {
-                throw new Error(errorData.message || "Error loading album page. Please try again.");
+                throw new Error(errorData.message || "Internal server error. Please reload the page.");
             }
         }
         const data = await response.json();
@@ -305,7 +309,11 @@ async function loadAlbumPage(albumId, page) {
  */
 function buildAlbumHTML(data, page) {
     if (!data || !data.album || !data.album.images || !data.pageSize) {
-        return `<p>Error loading album page. Please try again.</p>`;
+        return `
+            <div class="error-message">
+                <p>Internal server error. Please reload the page.</p>
+            </div>
+        `;
     }
     // Calculate navigation flags
     const hasPrevious = page > 0;
