@@ -41,4 +41,5 @@ public class SpaServlet extends HttpServlet {
         // Render the page
         request.getRequestDispatcher("/WEB-INF/view/spa.html").forward(request, response);
     }
+
 }
