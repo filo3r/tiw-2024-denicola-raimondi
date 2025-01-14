@@ -109,7 +109,7 @@ async function addComment(event) {
     const albumId = form.dataset.albumId;
     const imageId = form.dataset.imageId;
     // Comment text
-    const commentText = document.getElementById("commentText").value;
+    const commentText = document.getElementById("commentText").value.trim();
     // Reset errors
     const errorDiv = document.getElementById("addCommentError");
     const successDiv = document.getElementById("addCommentSuccess");

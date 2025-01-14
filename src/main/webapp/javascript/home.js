@@ -59,8 +59,8 @@ async function createAlbum(event) {
  */
 async function addImage(event) {
     event.preventDefault();
-    const imageTitle = document.getElementById("imageTitle").value;
-    const imageText = document.getElementById("imageText").value;
+    const imageTitle = document.getElementById("imageTitle").value.trim();
+    const imageText = document.getElementById("imageText").value.trim();
     const imageFile = document.getElementById("imageFile")
     const albumSelect = Array.from(document.querySelectorAll('input[name="albumSelect"]:checked')).map(cb => cb.value);
     const errorDiv = document.getElementById("addImageError");
