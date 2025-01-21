@@ -9,8 +9,8 @@ import { forceHashChange } from "./spa.js";
  */
 export function initImagePageEventListeners(data) {
     // Select all thumbnails
-    const imageItems = document.querySelectorAll('.image-item');
-    // Add the "mouseover" and "mouseout" events to each thumbnail
+    const imageItems = document.querySelectorAll(".image-item");
+    // Add the "mouseover" event to each thumbnail
     imageItems.forEach(img => {
         img.addEventListener("mouseover", () => {
             // Retrieve image index
@@ -30,6 +30,11 @@ export function initImagePageEventListeners(data) {
     const addCommentForm = document.getElementById("addCommentForm");
     if (addCommentForm) {
         addCommentForm.addEventListener("submit", addComment)
+    }
+    // Delete image
+    const deleteImageForm = document.getElementById("deleteImageForm");
+    if (deleteImageForm) {
+        deleteImageForm.addEventListener("submit", deleteImage)
     }
 }
 
@@ -84,6 +89,18 @@ function openImageModal(data, imageIndex) {
         // Listener
         newAddCommentForm.addEventListener("submit", addComment);
     }
+    // Adds listener on delete image form
+    const deleteImageForm = document.getElementById("deleteImageForm");
+    if (deleteImageForm) {
+        // Remove any previous listeners
+        deleteImageForm.replaceWith(deleteImageForm.cloneNode(true));
+        const newDeleteImageForm = document.getElementById("deleteImageForm");
+        // Save dataset
+        newDeleteImageForm.dataset.albumId = data.album.albumId;
+        newDeleteImageForm.dataset.imageId = image.imageId;
+        // Listener
+        newDeleteImageForm.addEventListener("submit", deleteImage);
+    }
     // Show modal
     modal.style.display = "block";
 }
@@ -128,7 +145,7 @@ async function addComment(event) {
         const response = await fetch(`./image?albumId=${encodeURIComponent(albumId)}&imageId=${encodeURIComponent(imageId)}`, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({action: "addComment", commentText: commentText}),
+            body: JSON.stringify({ action: "addComment", commentText: commentText }),
         });
         const result = await response.json();
         if (response.ok) {
@@ -140,6 +157,50 @@ async function addComment(event) {
             }
         } else {
             errorDiv.textContent = result.message || "Error adding comment.";
+            errorDiv.classList.remove("hidden");
+        }
+    } catch (error) {
+        errorDiv.textContent = "Internal server error. Please try again.";
+        errorDiv.classList.remove("hidden");
+    }
+}
+
+/**
+ * Handles the deletion of an image from the album.
+ * Sends a request to the server to delete the specified image and manages the response.
+ * Displays success or error messages depending on the outcome.
+ * @param {Event} event - The event triggered by submitting the delete form.
+ */
+async function deleteImage(event) {
+    event.preventDefault();
+    // Retrieve the <form> element that triggered the event and read the dataset
+    const form = event.currentTarget;
+    const albumId = form.dataset.albumId;
+    const imageId = form.dataset.imageId;
+    // Reset errors
+    const errorDiv = document.getElementById("deleteImageError");
+    const successDiv = document.getElementById("deleteImageSuccess");
+    errorDiv.textContent = "";
+    successDiv.textContent = "";
+    errorDiv.classList.add("hidden");
+    successDiv.classList.add("hidden");
+    // Send data to server
+    try {
+        const response = await fetch(`./image?albumId=${encodeURIComponent(albumId)}&imageId=${encodeURIComponent(imageId)}`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ action: "deleteImage" }),
+        });
+        const result = await response.json();
+        if (response.ok) {
+            if (result.message) {
+                sessionStorage.setItem("deleteImageSuccess", result.message);
+            }
+            if (result.redirect) {
+                forceHashChange(result.redirect);
+            }
+        } else {
+            errorDiv.textContent = result.message || "Error delete image.";
             errorDiv.classList.remove("hidden");
         }
     } catch (error) {

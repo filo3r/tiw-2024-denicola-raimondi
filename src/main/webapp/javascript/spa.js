@@ -308,7 +308,7 @@ async function loadAlbumPage(albumId, page) {
  * @returns {string} The generated HTML content for the Album Page.
  */
 function buildAlbumHTML(data, page) {
-    if (!data || !data.album || !data.album.images || !data.pageSize) {
+    if (!data || !data.album || !data.album.images || !data.pageSize || data.isOwnedByUser == null) {
         return `
             <div class="error-message">
                 <p>Internal server error. Please reload the page.</p>
@@ -380,7 +380,6 @@ function buildAlbumHTML(data, page) {
         const startIndex = page * data.pageSize;
         const endIndex = Math.min(startIndex + data.pageSize, data.album.images.length);
         let imagesOnPage = 0;
-
         // Display the images for the current page
         for (let i = startIndex; i < endIndex; i++) {
             const image = data.album.images[i];
@@ -443,6 +442,8 @@ function buildAlbumHTML(data, page) {
     <!-- Error and success messages -->
     <div class="error-message hidden" id="addCommentError"></div>
     <div class="success-message hidden" id="addCommentSuccess"></div>
+    <div class="error-message hidden" id="deleteImageError"></div>
+    <div class="success-message hidden" id="deleteImageSuccess"></div>
     <!-- Modal for image details -->
     <div class="modal" id="imageModal" style="display: none;">
       <div class="modal-content">
@@ -459,6 +460,17 @@ function buildAlbumHTML(data, page) {
             <p><strong>Description: </strong><span id="imageDescription"></span></p>
             <p><strong>Uploader: </strong><span id="imageUploader"></span></p>
             <p><strong>Date: </strong><span id="imageDate"></span></p>
+            `;
+            // Delete Image Button
+            if (data.isOwnedByUser) {
+                html += `
+                <!-- Delete Image Button -->
+                <form id="deleteImageForm">
+                  <button type="submit" id="deleteImageButton">Delete</button>
+                </form>
+                `;
+            }
+          html += `
           </div>
           <!-- Form Add Comment -->
           <div class="comment-container">
@@ -484,7 +496,7 @@ function buildAlbumHTML(data, page) {
 
 /**
  * Displays success messages stored in sessionStorage and clears them after showing.
- * Supports messages for album creation, image addition, and image order saving.
+ * Supports messages for album creation, image addition, image order saving and others.
  * @function showSuccessMessage
  */
 function showSuccessMessage() {
@@ -527,5 +539,15 @@ function showSuccessMessage() {
             successDiv.classList.remove("hidden");
         }
         sessionStorage.removeItem("addCommentSuccess");
+    }
+    // deleteImage
+    const deleteImageSuccess = sessionStorage.getItem("deleteImageSuccess");
+    if (deleteImageSuccess) {
+        const successDiv = document.getElementById("deleteImageSuccess");
+        if (successDiv) {
+            successDiv.textContent = deleteImageSuccess;
+            successDiv.classList.remove("hidden");
+        }
+        sessionStorage.removeItem("deleteImageSuccess");
     }
 }

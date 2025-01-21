@@ -86,10 +86,9 @@ public class AlbumServlet extends HttpServlet {
                 sendErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Invalid album id.", "#home", response);
                 return;
             }
-            // Page Size
-            int pageSize = PAGE_SIZE;
             JsonObject jsonObject = new JsonObject();
-            jsonObject.addProperty("pageSize", pageSize);
+            jsonObject.addProperty("pageSize", PAGE_SIZE);
+            jsonObject.addProperty("isOwnedByUser", isAlbumOwnedByUser(albumId, username));
             jsonObject.add("album", gson.toJsonTree(albumData));
             response.setStatus(HttpServletResponse.SC_OK);
             response.getWriter().write(jsonObject.toString());
@@ -178,6 +177,20 @@ public class AlbumServlet extends HttpServlet {
             return albumId;
         else
             return -1;
+    }
+
+    /**
+     * Checks if a specific album is owned by a given user.
+     * This method queries the database to verify whether the specified album ID
+     * is associated with the given username.
+     * @param albumId  the ID of the album to check.
+     * @param username the username of the potential album owner.
+     * @return true if the album is owned by the user, false otherwise or in case of a database error.
+     * @throws SQLException if a database access error occurs.
+     */
+    private boolean isAlbumOwnedByUser(int albumId, String username) throws SQLException {
+        AlbumDAO albumDAO = new AlbumDAO();
+        return albumDAO.isAlbumOwnedByUser(albumId, username);
     }
 
     /**

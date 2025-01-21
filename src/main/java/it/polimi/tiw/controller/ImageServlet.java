@@ -16,6 +16,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
@@ -81,6 +84,8 @@ public class ImageServlet extends HttpServlet {
             String action = jsonRequest.get("action").getAsString();
             if ("addComment".equals(action))
                 handleAddComment(jsonRequest, response, username, imageAndAlbumIds);
+            else if ("deleteImage".equals(action))
+                handleDeleteImage(response, username, imageAndAlbumIds);
             else
                 response.sendRedirect(request.getContextPath() + "/spa#album?albumId=" + imageAndAlbumIds.get(1) + "&page=0");
         } catch (JsonSyntaxException e) {
@@ -192,6 +197,69 @@ public class ImageServlet extends HttpServlet {
         } catch (SQLException e) {
             sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", null, response);
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Handles the deletion of an image.
+     * Validates that the image exists, belongs to the logged-in user, and is part of the specified album.
+     * Deletes the image from both the database and the disk storage if validation passes.
+     * Sends an appropriate success or error response based on the outcome.
+     * @param response         the HTTP response object.
+     * @param username         the username of the logged-in user.
+     * @param imageAndAlbumIds a list containing the image ID and album ID.
+     * @throws ServletException if an error occurs during request handling.
+     * @throws IOException      if an I/O error occurs during response handling.
+     */
+    private void handleDeleteImage(HttpServletResponse response, String username, ArrayList<Integer> imageAndAlbumIds) throws ServletException, IOException {
+        try {
+            ImageDAO imageDAO = new ImageDAO();
+            boolean imageExists = imageDAO.doesImageExist(imageAndAlbumIds.get(0));
+            if (!imageExists)
+                return;
+            boolean imageBelongToUser = imageDAO.doesImageBelongToUser(imageAndAlbumIds.get(0), username);
+            if (!imageBelongToUser)
+                return;
+            String imagePathString = imageDAO.getImagePathById(imageAndAlbumIds.get(0));
+            if (imagePathString == null)
+                return;
+            boolean successDatabase = imageDAO.deleteImageById(imageAndAlbumIds.get(0));
+            if (successDatabase) {
+                deleteImageFromDisk(imagePathString);
+                sendSuccessResponse(HttpServletResponse.SC_OK, "Image deleted successfully.", "#album?albumId=" + imageAndAlbumIds.get(1) + "&page=0", response);
+            } else {
+                sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", null, response);
+            }
+        } catch (SQLException e) {
+            sendErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error. Please try again.", null, response);
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Deletes an image file from the server's disk storage.
+     * @param imagePathString the path of the image file to be deleted.
+     * @return true if the file was successfully deleted, false otherwise.
+     * @throws ServletException if an error occurs during processing.
+     * @throws IOException      if an I/O error occurs.
+     */
+    private boolean deleteImageFromDisk(String imagePathString) throws ServletException, IOException {
+        // Get the image path
+        Path imagePath = Paths.get(imagePathString);
+        try {
+            // Attempt to delete the file
+            if (Files.exists(imagePath)) {
+                Files.delete(imagePath);
+                // Verify the file has been deleted
+                if (Files.exists(imagePath))
+                    return false;
+            } else {
+                return false;
+            }
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
         }
     }
 
