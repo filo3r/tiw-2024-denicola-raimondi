@@ -6,7 +6,7 @@ It is divided into two versions, organized through Git branches:
 - **Pure HTML**: basic version with features implemented using only HTML and CSS
 - **RIA (Rich Internet Application)**: advanced version with dynamic features and asynchronous interactions powered by JavaScript  
 
-[Requirements](/documets/project-specification.pdf)
+[Requirements](https://github.com/filo3r/tiw-2024-denicola-raimondi/tree/pure-HTML/documents/project-specification.pdf)
 
 
 ### Pure HTML
