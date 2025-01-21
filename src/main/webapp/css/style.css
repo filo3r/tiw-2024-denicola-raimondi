@@ -353,7 +353,6 @@ button[type="submit"]:hover {
 }
 
 .image-item {
-
     width: 270px;
     height: 240px;
     object-fit: cover;
@@ -551,7 +550,7 @@ button[type="submit"]:hover {
     background-color: #ffeeee;
     padding: 1rem;
     text-align: center;
-    margin-top: 20px;
+    margin-top: 40px;
 }
 
 .success-message {
@@ -559,7 +558,7 @@ button[type="submit"]:hover {
     background-color: #eeffee;
     padding: 1rem;
     text-align: center;
-    margin-top: 20px;
+    margin-top: 40px;
 }
 
 .modal {

@@ -403,6 +403,11 @@ function buildAlbumHTML(data, page) {
     // Close the images container
     html += `
       </div>
+      <!-- Error and success messages -->
+      <div class="error-message hidden" id="addCommentError"></div>
+      <div class="success-message hidden" id="addCommentSuccess"></div>
+      <div class="error-message hidden" id="deleteImageError"></div>
+      <div class="success-message hidden" id="deleteImageSuccess"></div>
     </div>
     <!-- Order panel -->
     <div class="content" id="orderContent">
@@ -439,11 +444,6 @@ function buildAlbumHTML(data, page) {
     `;
     // Image page (modal)
     html += `
-    <!-- Error and success messages -->
-    <div class="error-message hidden" id="addCommentError"></div>
-    <div class="success-message hidden" id="addCommentSuccess"></div>
-    <div class="error-message hidden" id="deleteImageError"></div>
-    <div class="success-message hidden" id="deleteImageSuccess"></div>
     <!-- Modal for image details -->
     <div class="modal" id="imageModal" style="display: none;">
       <div class="modal-content">
